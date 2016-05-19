@@ -1,0 +1,53 @@
+textarea.form-control
+{
+height:150px;
+resize:none;
+}
+
+div#id_core_btn_morespace
+{
+margin-top:10px;
+}
+
+hr
+{
+width:90%;
+display:block;
+}
+
+div.radio label
+{
+margin-right:20px;
+}
+
+.navbar-right
+{
+display:none;	
+}
+
+div#id_add_formgroup_spaces .row
+{
+padding-bottom:10px;
+}
+
+div.class_view_div_unitblock:nth-child(even)
+{
+background-color:#fafafa;
+}
+
+div.clickable:nth-child(1)
+{
+border-top: 1px solid #ccc;
+}
+
+div.clickable
+{
+padding:10px 5px;
+border-bottom: 1px solid #dedede;
+}
+
+	div.clickable:hover
+	{
+	cursor:pointer;
+	background-color:#f0f0f0;
+	}

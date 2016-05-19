@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang = "en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>examcopedia - one stop, many exams</title>
+	
+	<!-- JQ and BS delivered by CDN -->
+	<script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+	<link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	
+	<script src = "include/jquery.sha256.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src = "include/js.js"></script>
+	<link rel = "stylesheet" href = "include/css.css">
+	
+</head>
+<body>
+	<div id="id_core_modal_dp" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title">Choose dot point</h4>
+		  </div>
+		  <div class="modal-body">
+			<form role = "form">
+				<div class = "row form-group">
+					<label class = "control-label col-md-3" for = "id_modalchoosedp_select_lvl1">Level1</label>
+					<div class = "col-md-5">
+						<select type = "text" class = "form-control" id = "id_modalchoosedp_select_lvl1"></select>
+					</div>
+					<div class = "col-md-2">
+						<div class = "btn btn-default" id = "id_modalchoosedp_btn_addDP_lvl1">+ dot point</div>
+					</div>
+				</div>
+				<div class = "row form-group">
+					<label class = "control-label col-md-3" for = "id_modalchoosedp_select_lvl2">Level2</label>
+					<div class = "col-md-5">
+						<select type = "text" class = "form-control" id = "id_modalchoosedp_select_lvl2"></select>
+					</div>
+					<div class = "col-md-2">
+						<div class = "btn btn-default" id = "id_modalchoosedp_btn_addDP_lvl2">+ dot point</div>
+					</div>
+				</div>
+				<div class = "row form-group">
+					<label class = "control-label col-md-3" for = "id_modalchoosedp_select_lvl3">Level3</label>
+					<div class = "col-md-5">
+						<select type = "text" class = "form-control" id = "id_modalchoosedp_select_lvl3"></select>
+					</div>
+					<div class = "col-md-2">
+						<div class = "btn btn-default" id = "id_modalchoosedp_btn_addDP_lvl3">+ dot point</div>
+					</div>
+				</div>
+				<div class = "row form-group">
+					<label class = "control-label col-md-3" for = "id_modalchoosedp_select_lvl4">Level4</label>
+					<div class = "col-md-5">
+						<select type = "text" class = "form-control" id = "id_modalchoosedp_select_lvl4"></select>
+					</div>
+					<div class = "col-md-2">
+						<div class = "btn btn-default" id = "id_modalchoosedp_btn_addDP_lvl4">+ dot point</div>
+					</div>
+				</div>
+				<div class = "row form-group">
+					<label class = "control-label col-md-3" for = "id_modalchoosedp_select_lvl5">Level5</label>
+					<div class = "col-md-5">
+						<select type = "text" class = "form-control" id = "id_modalchoosedp_select_lvl5"></select>
+					</div>
+					<div class = "col-md-2">
+						<div class = "btn btn-default" id = "id_modalchoosedp_btn_addDP_lvl5">+ dot point</div>
+					</div>
+				</div>
+			</form>
+			<hr>
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div id="id_core_modal" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title"></h4>
+		  </div>
+		  <div class="modal-body">
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+
+	  </div>
+	</div>
+
+	<nav class = "navbar navbar-default">
+		<div class = "navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#collapse_navbar">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span> 
+			</button>
+			<a class = "navbar-brand" id = "id_navbar_home" href = "#">examcopedia</a>
+		</div>
+		<div class="collapse navbar-collapse" id="collapse_navbar">
+			<ul class = "nav navbar-nav" id = "id_navbar_ttcontrol">
+				<li><a href = "#" id = "id_navbar_add"><span class = "glyphicon glyphicon-plus"></span> add</a></li>
+				<li><a href = "#" id = "id_navbar_view"><span class = "glyphicon glyphicon-search"></span> view/ generate</a></li>
+				<li><a href = "#" id = "id_navbar_categorise"><span class = "glyphicon glyphicon-tags"></span> categorise</a></li>
+			</ul>
+			<ul class = "nav navbar-nav navbar-right">
+				<!--<li><a href = "#" id = "nav_students">Students Profiles</a></li>-->
+				<li><a href = "#" id = "nav_login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<div class = "container-fluid">
+		<div class = "row">
+			<div class = "col-md-6">
+				<div class = "panel panel-warning">
+					<div class = "panel-heading">
+						<h1>Generate/View Questions</h1>
+					</div>
+					<div class = "panel-body">
+						<form role = "form" class = "form-horizontal">
+							<div class = "class_view_div_unitblock">
+								<div class = "row">
+									<hr>
+									<div class = "form-group">
+										<label class = "control-label col-md-3" for = "id_select_syllabus">Syllabus</label>
+										<div class = "col-md-5">
+											<select class = "form-control" id = "id_select_syllabus">
+											
+											</select>
+										</div>
+										<div class = "btn btn-default col-md-2" id = "id_core_btn_addcurriculum">
+											+ curriculum
+										</div>
+									</div>
+								</div>
+								<div class = "row">
+									<div class = "form-group">
+										<label class = "control-label col-md-3" for = "id_core_btn_select_dp">Dot Point</label>
+											<div class = " col-md-5">
+												<div class = "btn btn-default" id = "id_core_btn_choosedp">
+													choose dot point
+												</div>
+											</div>
+									</div>
+								</div>
+								<hr>
+								<div class = "row">
+									<div class = "col-md-10 col-md-offset-2">
+										<div class = "form-group">
+											<div class = "radio form-inline">
+												<label><input type = "radio" name = "radio_mode" id = "id_radio_random">Random</label>
+												<input type = "text" class = "form-control" id = "id_input_random"></input>
+											</div>
+											<div class = "radio">
+												<label><input type = "radio" name = "radio_mode" id = "id_radio_all">All</label>
+											</div>
+											<div class = "radio form-inline">
+												<label><input type = "radio" name = "radio_mode" id = "id_radio_select">Select</label>
+												<input type = "text" class = "form-control" id = "id_input_select"></input>
+											</div>
+										</div>
+									</div>
+								</div>
+								<hr>
+							</div>
+							<div class = "col-md-12 text-center" id = "id_view_div_qsctrl">
+								<div class = "btn btn-danger" id = "id_view_btn_removeblock">remove questions </div>
+								<div class = "btn btn-success" id = "id_view_btn_addblock">add questions </div>
+							</div>
+						</form>
+					</div>
+					<div class = "panel-footer text-center">
+						<div class = "btn btn-warning btn-lg">Go</div>
+					</div>
+				</div>
+			</div>
+			<div class = "col-md-6">
+				<div class = "panel panel-info">
+					<div class = "panel-heading">
+						<h1>Preview</h1>
+					</div>
+					<div class = "panel-body">
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
