@@ -40,6 +40,41 @@ div.clickable:nth-child(1)
 border-top: 1px solid #ccc;
 }
 
+div#id_add_form_imgupload
+{
+height:136px;
+}
+
+.spaces_lines
+{
+border-bottom:1px solid #000;
+}
+
+.spaces_box
+{
+border-left:1px solid #000;
+border-right:1px solid #000;
+}
+	.spaces_box:first-child
+	{
+	border-top:1px solid #000;
+	}
+	
+	.spaces_box:last-child
+	{
+	border-bottom:1px solid #000;
+	}
+
+.spaces_blank
+{
+border:0;
+}
+
+.well
+{
+background-color:#fff;
+}
+
 div.clickable
 {
 padding:10px 5px;

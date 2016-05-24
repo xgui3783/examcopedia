@@ -1,7 +1,7 @@
 #!/bin/env node
 //  OpenShift sample Node application
 var http = require('http');
-
+var fs = require('fs');
 var express = require('express');
 var app = require('express')();
 var server = http.createServer(app);
@@ -9,7 +9,46 @@ var io = require('socket.io').listen(server);
 var mysql = require('mysql');
 var sha256 = require('js-sha256');
 var multer = require('multer');
-var upload = multer({dest: 'uploads/'});
+
+var storage = multer.diskStorage({
+	/* should check here if destination exist. if does not exist, create it. */
+	destination	: function (req, files, callback){
+		callback(null, 'uploads')
+	},
+	filename : function(req,files,callback){
+		callback(null, files.originalname);
+	}
+});
+
+var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
+
+/* apparently needed for parsing req.body */
+
+app.post('/upload',function(req,res){
+	upload(req,res,function(e){
+		fs.mkdir('public/img/'+req.body.hashedid + '/', function(e1){
+			if(!e1 || (e1 && e1.code == 'EEXIST')){
+				for (i = 0; i<req.files.length; i++){
+					var extension = req.files[i].originalname.substring(req.files[i].originalname.lastIndexOf('.'));
+					fs.rename('uploads/' + req.files[i].originalname,'public/img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
+						if(e2){
+							catch_error(e2);
+						}
+					});
+				}
+			}else{
+				catch_error(e1);
+			}
+		});
+		if(e){
+			catch_error(e);
+			res.end('Error!'+e);
+		}else{
+			var json = {};
+			res.send(json);
+		}
+	})
+});
 
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
@@ -59,6 +98,23 @@ io.on('connection',function(socket){
 	
 	/* user login db. to be implemented */
 	
+	/* socket id identifies which question the user is editing on */
+	socket.on('ping hashedid',function(i,callback){
+		socket.join(i);
+	})
+	
+	socket.on('delete thumbnail',function(i,callback){
+		var path = 'public/img/' + i.hashedid + '/' + i.filename;
+		fs.unlink(path,function(e){
+			if(e){
+				catch_error(e)
+				callback('error');
+			}else{
+				callback('done');
+			}
+		})
+	})
+	
 	socket.on('populate dot points',function(i,callback){
 		connection.query('SELECT DISTINCT lvl, description FROM ?? WHERE lvl LIKE "%info" ORDER BY lvl','curriculum_'+i,function(e,r){
 			if(e){
@@ -66,7 +122,30 @@ io.on('connection',function(socket){
 			}else{
 				callback(r)
 			}
-		});
+		})
+	})
+	
+	socket.on('view submit',function(i,callback){
+		connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ?',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
+			if(e){
+				catch_error(e);
+			}else{
+				var querystring = '';
+				for (i=0;i<r.length;i++){
+					if(querystring!=''){
+						querystring +=',';
+					}
+					querystring+=r[i].f_id;
+				}
+				connection.query('SELECT hashed_id, question, answer,space,mark FROM table_masterquestions WHERE id IN ('+querystring+');',function(e1,r1){
+					if(e1){
+						catch_error(e1);
+					}else{
+						callback(r1);
+					}
+				});
+			}
+		})
 	})
 	
 	socket.on('save dp',function(i,callback){
@@ -175,7 +254,7 @@ io.on('connection',function(socket){
 
 function catch_error(e){
 	console.log(e);
-	socket.emit('throw error',e)
+	//socket.emit('throw error',e)
 }
 
 app.use(express.static('public'));
@@ -195,6 +274,16 @@ app.get('/view',function(req,res){
 app.get('/categorise',function(req,res){
 	res.sendfile('categorise.html');
 });
+
+app.get('/img/*',function(req,res,next){
+	fs.access('public/'+req.url,function(err){
+		if(err){
+			res.sendfile('public/img/imageunlinked.png');
+		}else{
+			res.sendfile('public/'+req.url);
+		}
+	})
+})
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
