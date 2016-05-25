@@ -288,6 +288,10 @@ app.get('/categorise',function(req,res){
 	res.sendfile('categorise.html');
 });
 
+app.get('/mobileupload',function(req,res){
+	res.sendfile('mobileupload.html');
+});
+
 app.get('/img/*',function(req,res,next){
 	
 	fs.stat('public/'+req.url,function(e,s){
