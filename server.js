@@ -276,13 +276,19 @@ app.get('/categorise',function(req,res){
 });
 
 app.get('/img/*',function(req,res,next){
+	console.log('tack1');
 	fs.access('public/'+req.url,function(err){
+		console.log('tack2');
 		if(err){
+			console.log('tack3');
 			res.sendfile('public/img/imageunlinked.png');
 		}else{
+			console.log('tack4');
 			res.sendfile('public/'+req.url);
 		}
 	})
+	
+	console.log('tack5');
 })
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
