@@ -878,13 +878,20 @@ function modal_shown_focus(i){
 
 /* turn [img1] to true names */
 function submit_filter(){
-	$('#id_core_textarea_ans,#id_core_textarea_qn').val().replace(/\[img.*?\]/g,function(s){
+	$('#id_core_textarea_qn').val($('#id_core_textarea_qn').val().replace(/\[img.*?\]/g,function(s){
 		if($('.'+s.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
-			return '[img'+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id')+']';
+			return '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id')+']';
 		}else{
 			return s;
 		}
-	})
+	}));
+	$('#id_core_textarea_ans').val($('#id_core_textarea_ans').val().replace(/\[img.*?\]/g,function(s){
+		if($('.'+s.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
+			return '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id')+']';
+		}else{
+			return s;
+		}
+	}));
 }
 
 /* when submit is clicked in add tab */
