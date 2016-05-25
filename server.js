@@ -252,6 +252,12 @@ io.on('connection',function(socket){
 	});
 });
 
+function check_path(p){
+	// uploads, public, public/img, public/img/p
+	// check if the paths exist. if not, create them. 
+	
+}
+
 function catch_error(e){
 	console.log(e);
 	//socket.emit('throw error',e)
@@ -275,8 +281,22 @@ app.get('/categorise',function(req,res){
 	res.sendfile('categorise.html');
 });
 
+
+
 app.get('/img/*',function(req,res,next){
-	console.log('tack1');
+	
+	fs.stat('public/'+req.url,function(e,s){
+		if(e){
+			//probably does not exist
+			console.log(e)
+			res.send(e);
+		}else{
+			//probably exists
+			console.log(s)
+			res.send(s);
+		}
+	})
+	/*
 	fs.access('public/'+req.url,function(err){
 		console.log('tack2');
 		if(err){
@@ -289,6 +309,7 @@ app.get('/img/*',function(req,res,next){
 	})
 	
 	console.log('tack5');
+	*/
 })
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
