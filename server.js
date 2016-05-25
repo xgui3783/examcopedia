@@ -16,10 +16,13 @@ var storage = multer.diskStorage({
 		fs.stat('uploads',function(e,s){
 			if(e){
 				fs.mkdir('uploads',function(e1){
-					catch_error(e1);
-				}else{
-					callback(null, 'uploads')
-				})
+					if(e1){
+						catch_error(e1);
+					}
+					else{
+						callback(null, 'uploads');
+					}
+				});
 			}else{
 				callback(null, 'uploads')
 			}
