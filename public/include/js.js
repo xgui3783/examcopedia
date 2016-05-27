@@ -6,7 +6,6 @@ $(document).ready(function(){
 	/* mobile upload complete*/
 	socket.on('mobile upload',function(i){
 		
-		console.log(i);
 		var imgno = 1;
 		var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+i;
 		while($('.img'+imgno).length!=0){
@@ -30,7 +29,8 @@ $(document).ready(function(){
 		}
 		
 		/* should i disable fileinput and reinitialise it with the existing imgtank items? */
-		$('#id_add_file_file').fileinput('destroy').fileinput({
+		$('#id_add_file_file').fileinput('destroy');
+		$('#id_add_file_file').off().fileinput({
 			uploadUrl		:'/upload',
 			uploadAsync		:false,
 			showUpload		:false,
@@ -44,11 +44,11 @@ $(document).ready(function(){
 			initialPreviewConfig : stringInitialPreviewConfig,
 		})
 		.on('filedeleted',function(e,k){
-			var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':i}
+			var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':k}
 			//console.log($('#'+id+' .file-footer-caption').html());
 			socket.emit('delete thumbnail',json,function(o){
 				if(o=='done'){
-					$('.img'+i.replace('.','_')).remove();
+					$('.img'+k.replace('.','_')).remove();
 					return true;
 				}else if (o=='error'){
 					return false;

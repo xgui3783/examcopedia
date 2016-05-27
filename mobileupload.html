@@ -47,7 +47,7 @@ function sendImg(){
 			info_modal('Upload successful. Check the PC screen for confirmation. Close this dialogue if you no longer need to upload, or "Upload One More".')
 			},
 		error : function(e){
-			console.log(e);
+			info_modal(e);
 			}
 	})
 	
@@ -62,12 +62,19 @@ $(document).ready(function(){
 	/* prevent accidental double clicks and itchy finger */
 	$('.btn').off('click').click(function(){
 		if($(this).hasClass('disabled')){
-			//return false;
+			return false;
 		}
 		$(this).addClass('disabled');
 		
+		var _this = $(this);
+		
+		setTimeout(function(){
+			_this.removeClass('disabled');
+		},500);
+		
 		if($(this).attr('id')=='id_mobileupload_btn_upload'){
 			//upload the uncropped image
+			sendImg();
 		}else if($(this).attr('id')=='id_mobileupload_btn_cropupload'){
 			//upload the cropped image
 			sendImg();
@@ -76,8 +83,8 @@ $(document).ready(function(){
 	
 	$('input').off('change').change(function(e){
 	
-		$('#id_mobileupload_div_cropbox').removeClass('hidden');
-		$('#id_mobileupload_btn_upload').removeClass('hidden');
+		$('#id_mobileupload_div_cropbox').removeClass('hidden disabled');
+		$('#id_mobileupload_btn_upload').removeClass('hidden disabled');
 		$('#id_mobileupload_btn_cropupload').addClass('hidden');
 		$('#id_mobileupload_label_file').removeClass('disabled');
 		
