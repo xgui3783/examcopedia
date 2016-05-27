@@ -9,14 +9,167 @@
 	<link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 	
+	<!--
 	<script src="/socket.io/socket.io.js"></script>
 	<script src = "include/jquery.sha256.min.js"></script>
+	-->
 	
+	<script src = "include/cropper.min.js"></script>
+	<link rel = "stylesheet" href = "include/cropper.min.css">
+	
+	<script>
+function info_modal(i){
+	$('#id_mobileupload_modal_warning .modal-body').html(i);
+	$('#id_mobileupload_modal_warning').modal('show');
+}
+
+function sendImg(){
+	//var sendImg = $('#id_mobileupload_canvas_cropbody').cropper('getData');
+	var formData = new FormData();
+	
+	formData.append('cropdata',$('#id_mobileupload_canvas_cropbody').cropper('getData'));
+	formData.append('photo',$('#id_mobileupload_input_file')[0].files[0]);
+	formData.append('hashedid',$('#id_mobileupload_input_hashedid').val());
+	
+	$('.btn-success').off('click').on('click',function(){
+		location.reload();
+		$(this).addClass('disabled');
+		return false;
+	})
+	
+	$.ajax({
+		processData : false,
+		contentType : false,
+		type : 'POST',
+		url : '/mobileuploadphoto',
+		data : formData,
+		success : function(o){
+			info_modal('Upload successful. Check the PC screen for confirmation. Close this dialogue if you no longer need to upload, or "Upload One More".')
+			},
+		error : function(e){
+			console.log(e);
+			}
+	})
+	
+}
+	
+$(document).ready(function(){
+	
+	/* populate the hashed id input field. this will be sent with the photo to the server to identify the question in question */
+	$('#id_mobileupload_input_hashedid').val(window.location.search.substring(1));	
+	var newc = $('#id_mobileupload_canvas_cropbody')[0].outerHTML;
+	
+	/* prevent accidental double clicks and itchy finger */
+	$('.btn').off('click').click(function(){
+		if($(this).hasClass('disabled')){
+			//return false;
+		}
+		$(this).addClass('disabled');
+		
+		if($(this).attr('id')=='id_mobileupload_btn_upload'){
+			//upload the uncropped image
+		}else if($(this).attr('id')=='id_mobileupload_btn_cropupload'){
+			//upload the cropped image
+			sendImg();
+		}
+	})
+	
+	$('input').off('change').change(function(e){
+	
+		$('#id_mobileupload_div_cropbox').removeClass('hidden');
+		$('#id_mobileupload_btn_upload').removeClass('hidden');
+		$('#id_mobileupload_btn_cropupload').addClass('hidden');
+		$('#id_mobileupload_label_file').removeClass('disabled');
+		
+		$('#id_mobileupload_div_cropbox').html(newc);
+		c = document.getElementById('id_mobileupload_canvas_cropbody');
+		ctx = c.getContext('2d');
+		
+		var img = new Image;
+		img.onload = function(){
+			ctx.clearRect(0,0,c.width,c.height);
+			ctx.drawImage(img,0,0, img.width, img.height, 0, 0, c.width, c.height);
+			URL.revokeObjectURL(img.src);
+			
+			$('#id_mobileupload_canvas_cropbody').cropper({
+				autoCrop : false,
+				crop : function(e){
+					//cropped change btn
+					$('#id_mobileupload_btn_upload').addClass('hidden');
+					$('#id_mobileupload_btn_cropupload').removeClass('hidden');
+				}
+				})
+		}
+		
+		img.src = URL.createObjectURL(e.target.files[0]);
+	})
+})
+	</script>
+	<style>
+.btn
+{
+margin-top:5px;
+}
+	
+input
+{
+height:0.1px;
+width:0.1px;
+opacity:0;
+z-index:-1;
+}
+
+canvas
+{
+width:100%;
+}
+	</style>
+
 </head>
 <body>
-	<div class = "container-fluid">
+
+	<div id="id_mobileupload_modal_warning" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title">Info</h4>
+		  </div>
+		  <div class="modal-body">
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button type="button" class="btn btn-success" data-dismiss="modal">Upload One More</button>
+			
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div class = "container">
 		<div class = "row">
-			<input type = "file" accept = "image/*;capture=camera">
+			<div class = "col-xs-12">
+				<div class = "panel panel-primary">
+					<div class = "panel-heading">
+						<h4>examcopedia mobile uploader</h4>
+					</div>
+					<div class = "panel-body">
+						<input disabled id = "id_mobileupload_input_hashedid" class = "hidden">
+						<span>This is the mobile upload widget of examcopedia. If you arrived at this site via a QR code, the image uploaded here should automatically appear in the main window.</span>
+						<div class = "hidden col-xs-12" id = "id_mobileupload_div_cropbox">
+							<canvas id = "id_mobileupload_canvas_cropbody">
+							
+							</canvas>
+						</div>
+					</div>
+					<div class = "panel-footer">
+						<label id = "id_mobileupload_label_file" class = "btn btn-primary btn-block btn-lg" for = "id_mobileupload_input_file"><span class = "glyphicon glyphicon-picture"></span> Select</label><input name = "mobileuploadedphoto" id = "id_mobileupload_input_file" type = "file" accept = "image/*;capture=camera">
+						<div id = "id_mobileupload_btn_upload" class = "hidden btn btn-primary btn-block btn-lg"><span class = "glyphicon glyphicon-upload"></span> Upload</div>
+						<div id = "id_mobileupload_btn_cropupload" class = "hidden btn btn-primary btn-block btn-lg"><span class = "glyphicon glyphicon-scissors"></span> Crop & <span class = "glyphicon glyphicon-upload"></span> Upload</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </body>

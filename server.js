@@ -9,6 +9,7 @@ var io = require('socket.io').listen(server);
 var mysql = require('mysql');
 var sha256 = require('js-sha256');
 var multer = require('multer');
+var bodyparser = require('body-parser');
 
 var storage = multer.diskStorage({
 	/* should check here if destination exist. if does not exist, create it. */
@@ -31,9 +32,33 @@ var storage = multer.diskStorage({
 	filename : function(req,files,callback){
 		callback(null, files.originalname);
 	}
-});
+})
+
+var mobileStorage = multer.diskStorage({
+	destination : function (req,file,callback){
+		fs.stat('mobileuploads',function(e,s){
+			if(e){
+				catch_error(e);
+				fs.mkdir('mobileuploads',function(e1){
+					if(e1){
+						catch_error(e1);
+					}
+					else{
+						callback(null, 'mobileuploads');
+					}
+				});
+			}else{
+				callback(null, 'mobileuploads')
+			}
+		})
+	},
+	filename : function(req,file,callback){
+		callback(null, file.originalname);
+	}
+})
 
 var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
+var uploadMobile = multer({storage : mobileStorage}).single('photo');
 
 /* apparently needed for parsing req.body */
 
@@ -42,7 +67,6 @@ app.post('/upload',function(req,res){
 		fs.mkdir('public/img/'+req.body.hashedid + '/', function(e1){
 			if(!e1 || (e1 && e1.code == 'EEXIST')){
 				for (i = 0; i<req.files.length; i++){
-					var extension = req.files[i].originalname.substring(req.files[i].originalname.lastIndexOf('.'));
 					fs.rename('uploads/' + req.files[i].originalname,'public/img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
 						if(e2){
 							catch_error(e2);
@@ -61,6 +85,37 @@ app.post('/upload',function(req,res){
 			res.send(json);
 		}
 	})
+});
+
+app.post('/deletepreview', function(req,res){
+	var json = {};
+	res.send(json); 
+});
+
+app.post('/mobileuploadphoto',function(req,res){
+	uploadMobile(req,res,function(e){
+		if(e){
+			catch_error(e);
+			//res.send('Error!'+e);
+		}else{
+			fs.mkdir('public/img/'+req.body.hashedid+'/',function(e1){
+				if(!e1 || e1 && e1.code =='EEXIST'){
+					fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
+						if(e2){
+							catch_error(e2);
+						}else{
+							io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
+							
+							var json = {};
+							res.send(json);
+							/* potential future implementation of checking if the room is empty or not here */
+							
+						}
+					});
+				}
+			})
+		}
+	});
 });
 
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
@@ -114,6 +169,7 @@ io.on('connection',function(socket){
 	/* socket id identifies which question the user is editing on */
 	socket.on('ping hashedid',function(i,callback){
 		socket.join(i);
+		socket.join('hypothetical all');
 	})
 	
 	socket.on('delete thumbnail',function(i,callback){

@@ -3,6 +3,88 @@ var socket = io();
 
 $(document).ready(function(){
 	
+	/* mobile upload complete*/
+	socket.on('mobile upload',function(i){
+		
+		console.log(i);
+		var imgno = 1;
+		var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+i;
+		while($('.img'+imgno).length!=0){
+			imgno += 1;
+		}
+		$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+i.replace('.','_')+'" class = "col-md-12 img'+i.replace('.','_')+' img'+imgno+'">');
+		
+		var stringInitialPreview = [];
+		var stringInitialPreviewConfig = [];
+		
+		for (var i = 0; i<$('.imgtank img').length;i++){
+			var imgsrc = $('.imgtank').children('img').eq(i).attr('src');
+			var imgname = imgsrc.substring(imgsrc.lastIndexOf('/')+1);
+			
+			stringInitialPreview[i] = '<img src = "'+imgsrc+'" style = "width:160px;">' ;
+			stringInitialPreviewConfig[i] = {
+				caption : imgname,
+				url : 'deletepreview',
+				key : imgname
+				}
+		}
+		
+		/* should i disable fileinput and reinitialise it with the existing imgtank items? */
+		$('#id_add_file_file').fileinput('destroy').fileinput({
+			uploadUrl		:'/upload',
+			uploadAsync		:false,
+			showUpload		:false,
+			showRemove		:false,
+			dropZoneEnabled	:true,
+			overwriteInitial : false,
+			uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()},
+			
+			/* need to fix this. need to append all items in .imgtank */
+			initialPreview : stringInitialPreview,
+			initialPreviewConfig : stringInitialPreviewConfig,
+		})
+		.on('filedeleted',function(e,k){
+			var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':i}
+			//console.log($('#'+id+' .file-footer-caption').html());
+			socket.emit('delete thumbnail',json,function(o){
+				if(o=='done'){
+					$('.img'+i.replace('.','_')).remove();
+					return true;
+				}else if (o=='error'){
+					return false;
+				}
+			});
+		})
+		.on('filebatchselected',function(event,files){
+			$('#id_add_file_file').fileinput('upload');
+		})
+		.on('filesuccessremove',function(event,id){
+			var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':$('#'+id+' .file-footer-caption').html()}
+			//console.log($('#'+id+' .file-footer-caption').html());
+			socket.emit('delete thumbnail',json,function(o){
+				if(o=='done'){
+					$('.img'+$('#'+id+' .file-footer-caption').html().replace('.','_')).remove();
+					return true;
+				}else if (o=='error'){
+					return false;
+				}
+			});
+		})
+		.on('filebatchuploadsuccess',function(event, data, previewId, index){
+			//works. append <img> this somewhere 
+			//data.files[i].name
+			for(i=0;i<data.files.length;i++){
+				var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+data.files[i].name;
+				var imgno = i;
+				do{
+					imgno += 1;
+				}while($('.img'+imgno).length>0)
+				$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
+			}
+		})
+		
+	})
+	
 	/* socket io core functions */
 	socket.on('throw error',function(i){
 		info_modal(i);
@@ -104,6 +186,15 @@ $(document).ready(function(){
 		socket.emit('ping hashedid',$('#id_core_input_hashedid').val(),function(o){
 			
 		});
+		
+		/* use the hash id to generate a unique qr code for this page */
+		$('#id_add_div_qrcode').qrcode({
+			text : window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val(),
+			fill : '#337ab7',
+			background : '#fff'
+		});
+		console.log(window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val());
+		
 	}
 	
 	/* since js is sync, the fileinput needs to be attached AFTER the hashed id is populated */
@@ -114,10 +205,9 @@ $(document).ready(function(){
 				uploadAsync		:false,
 				showUpload		:false,
 				showRemove		:false,
-				minFileCount	:1,
-				maxFileCount	:5,
 				dropZoneEnabled	:true,
-				uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()}
+				overwriteInitial : false,
+				uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()},
 			})
 			.on('filebatchselected',function(event,files){
 				$('#id_add_file_file').fileinput('upload');
@@ -127,6 +217,7 @@ $(document).ready(function(){
 				//console.log($('#'+id+' .file-footer-caption').html());
 				socket.emit('delete thumbnail',json,function(o){
 					if(o=='done'){
+						$('.img'+$('#'+id+' .file-footer-caption').html().replace('.','_')).remove();
 						return true;
 					}else if (o=='error'){
 						return false;
@@ -179,9 +270,11 @@ $(document).ready(function(){
 					case 'addcurriculum':
 						addcurriculum();
 					break;
+					/*
 					case 'adddiagram':
 						adddiagram();
 					break;
+					*/
 					case 'choosedp':
 						if(!$(this).hasClass('disabled')){
 							choosedp();
@@ -382,24 +475,6 @@ function viewgo(){
 				}
 			});
 		})
-		
-		/*
-		var string = '';
-		$('.class_view_div_unitblock').each(function(){
-			if (string!=''){
-				string += '_';
-			}
-			string += $(this).find('input[type="radio"]:checked').val();
-			if($($(this).find('input[type="radio"]:checked').val())!='all'){
-				string += '.' + $(this).find('input[type="radio"]:checked').parent().parent().children('input').val();
-			}
-		})
-		var json = {
-			'syllabus' : $('#id_core_select_syllabus').val(),
-			'dp' : $('#id_core_input_dp').val(),
-			'string' : string
-			};
-		*/
 	}
 }
 
@@ -650,6 +725,7 @@ function escapeHtml(i){
 }
 
 /* might have became obsolete */
+/*
 function adddiagram(){
 	$('#id_core_modal .modal-title').html('Add diagrams');
 	
@@ -668,13 +744,6 @@ function adddiagram(){
 			maxFileCount	:5,
 			dropZoneEnabled	:true,
 			uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()}
-				/*
-				function(){
-				var json = {};
-				json['hello'] = 'kitty';
-				return json;
-				},
-				*/
 		})
 		.on('filebatchselected',function(event,files){
 			$('#id_modal_file_file').fileinput('upload');
@@ -687,6 +756,7 @@ function adddiagram(){
 		};
 	})
 }
+*/
 
 function choosedp(){
 	$('#id_core_modal_dp .row.form-group select').html('<option></option>');
