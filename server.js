@@ -98,22 +98,25 @@ app.post('/mobileuploadphoto',function(req,res){
 			catch_error(e);
 			//res.send('Error!'+e);
 		}else{
-			fs.mkdir('public/img/'+req.body.hashedid+'/',function(e1){
-				if(!e1 || e1 && e1.code =='EEXIST'){
-					fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
-						if(e2){
-							catch_error(e2);
-						}else{
-							io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
-							
-							var json = {};
-							res.send(json);
-							/* potential future implementation of checking if the room is empty or not here */
-							
-						}
-					});
-				}
-			})
+			if(io.sockets.adapter.rooms[req.body.hashedid]!=undefined){
+				fs.mkdir('public/img/'+req.body.hashedid+'/',function(e1){
+					if(!e1 || e1 && e1.code =='EEXIST'){
+						fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
+							if(e2){
+								catch_error(e2);
+							}else{
+								io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
+								
+								res.send('success');
+								/* potential future implementation of checking if the room is empty or not here */
+								
+							}
+						}); 
+					}
+				})
+			}else{
+				res.send('noroom');
+			}
 		}
 	});
 });
@@ -169,7 +172,7 @@ io.on('connection',function(socket){
 	/* socket id identifies which question the user is editing on */
 	socket.on('ping hashedid',function(i,callback){
 		socket.join(i);
-		socket.join('hypothetical all');
+		socket.hashedid=i;
 	})
 	
 	socket.on('delete thumbnail',function(i,callback){
@@ -290,13 +293,15 @@ io.on('connection',function(socket){
 			if(e1){
 				/* catch error */
 				catch_error(e1);
+				callback(e1);
 			}else{
-				callback('New cirriculum created!');
+				callback('New curriculum created!');
 			}
 		});
 	});
 	
 	socket.on('categorise',function(i,callback){
+		console.log('categorise');
 		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e,r){
 			if(e){
 				catch_error(e);
@@ -317,7 +322,27 @@ io.on('connection',function(socket){
 	});
 	
 	socket.on('disconnect',function(){
-		
+		/* should delete all file in socket.hashedid */
+		if(socket.hashedid!=undefined){
+			var path = 'public/img/' + socket.hashedid + '/';
+			fs.readdir(path,function(e,files){
+				if(e){
+					//catch_error(e);
+					return;
+				}
+				if(files==undefined){
+					console.log('files == undefined');
+					fs.rmdirSync(path);
+					return;
+				}else{
+					files.forEach(function(file,index){
+						var curPath = path + file;
+						fs.unlinkSync(curPath);
+					});
+					fs.rmdirSync(path);
+				}
+			})
+		}
 	});
 });
 

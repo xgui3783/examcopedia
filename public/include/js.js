@@ -180,27 +180,20 @@ $(document).ready(function(){
 	
 	/* generate a hashed_id for this question */
 	if($('#id_core_input_hashedid').length!=0){
+		
+		$('#id_core_input_hashedid').off('change').change(function(){
+			console.log('hashed id changed');
+		})
+		
 		$('#id_core_input_hashedid').val($.sha256(Date.now().toString()));
 		
-		/* after setting hashed id, call server to inform server of the hashed id. so that when images are uploaded, server could relay back to user */
-		socket.emit('ping hashedid',$('#id_core_input_hashedid').val(),function(o){
-			
-		});
-		
-		/* use the hash id to generate a unique qr code for this page */
-		$('#id_add_div_qrcode').qrcode({
-			text : window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val(),
-			fill : '#337ab7',
-			background : '#fff'
-		});
-		console.log(window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val());
-		
+		new_hashedid();
 	}
 	
 	/* since js is sync, the fileinput needs to be attached AFTER the hashed id is populated */
 	if($('#id_add_file_file').length>0){
 		$('#id_add_file_file')
-			.fileinput({
+			.fileinput('refresh',{
 				uploadUrl		:'/upload',
 				uploadAsync		:false,
 				showUpload		:false,
@@ -427,6 +420,24 @@ var addAFile =
 	
 /* functions */
 
+function new_hashedid(){
+	/* after setting hashed id, call server to inform server of the hashed id. so that when images are uploaded, server could relay back to user */
+	socket.emit('ping hashedid',$('#id_core_input_hashedid').val(),function(o){
+		
+	});
+	
+	/* use the hash id to generate a unique qr code for this page */
+	$('#id_add_div_qrcode').empty().qrcode({
+		text : window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val(),
+		fill : '#337ab7',
+		background : '#fff'
+	});
+	console.log(window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_core_input_hashedid').val());
+	
+	$('#id_add_file_file').fileinput('refresh',{
+		uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()}
+		});
+}
 
 function random(i) {
     var x = Math.sin(i++) * 10000;
@@ -587,7 +598,7 @@ function addsubject(){
 			return false;
 		}else{
 			modal_ok();
-			$('#id_core_modal').modal('hide');
+			return false;
 		}
 	});
 	
@@ -595,7 +606,6 @@ function addsubject(){
 	$('#id_core_modal').off('keypress').on('keypress',function(k){
 		if(k.which==13){
 			modal_ok();
-			$('#id_core_modal').modal('hide');
 			return false;
 		}
 	});
@@ -617,10 +627,19 @@ function update_dp(){
 }
 
 function modal_ok(){
+	var home = $('.btn-default.active').parent().parent().children('div').children('select');
+	for (var i = 0;i<home.children('option').length;i++){
+		if(home.children('option').eq(i).html()==$('#id_modal_input_input').val()){
+			info_modal('This name is already in use.');
+			return false;
+		}
+	}
+	
+	$('#id_core_modal').modal('hide');
 	
 	/* also check if the name is in use already */
-	$('.btn-default.active').parent().children('div').children('select').append('<option>'+$('#id_modal_input_input').val()+'</option>');
-	$('.btn-default.active').parent().children('div').children('select').val($('#id_modal_input_input').val());
+	$('.btn-default.active').parent().parent().children('div').children('select').append('<option>'+$('#id_modal_input_input').val()+'</option>');
+	$('.btn-default.active').parent().parent().children('div').children('select').val($('#id_modal_input_input').val());
 	$('#id_core_select_syllabus').change();
 }
 
@@ -650,11 +669,16 @@ function addcurriculum(){
 		}else{
 			/* add new cirriculum */
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
-				info_modal(o);
-				modal_ok();
-				$('#id_core_modal').modal('hide');
+				if(o=='New curriculum created!'){
+					info_modal(o);
+					reset_dp();
+					modal_ok();
+				}else if(o.code=='ER_TABLE_EXISTS_ERROR'){
+					info_modal('Curriculum name already in use!');
+				}else{
+					info_modal(o);
+				}
 			});
-			reset_dp();
 			return false;
 		}
 	});
@@ -662,11 +686,16 @@ function addcurriculum(){
 	$('#id_core_modal').off('keypress').on('keypress',function(k){
 		if(k.which==13){
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
-				info_modal(o);
-				modal_ok();
-				$('#id_core_modal').modal('hide');
+				if(o=='New curriculum created!'){
+					info_modal(o);
+					reset_dp();
+					modal_ok();
+				}else if(o.code=='ER_TABLE_EXISTS_ERROR'){
+					info_modal('Curriculum name already in use!');
+				}else{
+					info_modal(o);
+				}
 			});
-			reset_dp();
 			return false;			
 		}
 	})
@@ -994,6 +1023,22 @@ function addsubmit(){
 			}
 		if($('#id_core_select_syllabus').val()==''){
 			info_modal('Question added successfully.');
+			
+			/* resetting hashed id, qs and ans text fields */
+			$('#id_core_input_hashedid').val($.sha256(Date.now()));
+			$('#id_core_textarea_qn,#id_core_textarea_ans').val('');
+			
+			/* resetting suggested space */
+			$('#id_core_mixed_space_num').val('');
+			$('#id_core_mixed_space_type').val('lines');
+			$('#id_add_formgroup_spaces .row:not(:first-child)').remove();
+			
+			/* resetting suggested marks */
+			$('#id_core_input_marks').val('');
+			
+			
+			new_hashedid();
+			
 		}else{
 			socket.emit('categorise',json1,function(o1){
 				if(o1=='Categorise successful!'){
@@ -1010,6 +1055,8 @@ function addsubmit(){
 					
 					/* resetting suggested marks */
 					$('#id_core_input_marks').val('');
+					
+					new_hashedid();
 				}
 			});
 		}

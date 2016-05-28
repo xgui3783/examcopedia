@@ -24,6 +24,9 @@ function info_modal(i){
 }
 
 function sendImg(){
+
+
+	
 	//var sendImg = $('#id_mobileupload_canvas_cropbody').cropper('getData');
 	var formData = new FormData();
 	
@@ -36,21 +39,33 @@ function sendImg(){
 		$(this).addClass('disabled');
 		return false;
 	})
-	
-	$.ajax({
-		processData : false,
-		contentType : false,
-		type : 'POST',
-		url : '/mobileuploadphoto',
-		data : formData,
-		success : function(o){
-			info_modal('Upload successful. Check the PC screen for confirmation. Close this dialogue if you no longer need to upload, or "Upload One More".')
-			},
-		error : function(e){
-			info_modal(e);
-			}
-	})
-	
+		
+	$('#id_mobileupload_screen_loading').css('display','block').animate({
+		'opacity':'0.7',
+		},400,function(){
+			$.ajax({
+				processData : false,
+				contentType : false,
+				type : 'POST',
+				url : '/mobileuploadphoto',
+				data : formData,
+				success : function(o){
+					if (o == 'success'){
+					$('#id_mobileupload_screen_loading').animate({
+						'opacity':'0.0'
+						},200,function(){
+							$(this).css('display','none');
+							info_modal('Upload successful. Check the PC screen for confirmation. Close this dialogue if you no longer need to upload, or "Upload One More".')
+						})
+					}else if  (o=='noroom'){
+						info_modal('Login token expired. Please scan QR code again.')
+					}
+					},
+				error : function(e){
+					info_modal(e);
+					}
+			})
+		});
 }
 	
 $(document).ready(function(){
@@ -130,11 +145,38 @@ canvas
 {
 width:100%;
 }
+
+#id_mobileupload_screen_loading
+{
+display:none;
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-color:#000;
+opacity:0.0;
+z-index:100;
+}
+
+#id_mobileupload_screen_loading p
+{
+display:block;
+font-size:24pt;
+height:60%;
+margin-top:40%;
+text-align:center;
+color:#fff;
+}
 	</style>
 
 </head>
 <body>
-
+	<div id = "id_mobileupload_screen_loading">
+		<p>
+		uploading ...
+		</p>
+	</div>
 	<div id="id_mobileupload_modal_warning" class="modal fade" role="dialog">
 	  <div class="modal-dialog">
 
