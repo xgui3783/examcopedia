@@ -198,7 +198,7 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('view submit',function(i,callback){
-		connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ?',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
+		connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
 			if(e){
 				catch_error(e);
 			}else{

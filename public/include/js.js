@@ -504,18 +504,39 @@ function view_append_preview(mode, length, target, row){
 				append_one(i+1,target,row[i]);
 			}
 		break;
-		case 'selected':
-			if(length<row.length){
-				var l = length;
+		case 'select':
+			var decode_l = decode_select(length);
+			if(decode_l==null){
+				for (var i=0;i<row.length;i++){
+					append_one(i+1,target,row[i]);
+				}
 			}else{
-				var l = row.length;
-			}
-			for (i=0;i<l;i++){
-				append_one(i,target,row[i]);
+				/* introduction of upper and lower bound, in case user inputted a number outside the bound */
+				var upper_bound = Math.min(decode_l[1],row.length);
+				var lower_bound = Math.min(Number(decode_l[0])-1,Number(row.length)-1);
+				for (var i=lower_bound;i<upper_bound;i++){
+					append_one(i+1,target,row[i]);
+				}
 			}
 		break;
 		default:
 		break;
+	}
+}
+
+function decode_select(i){
+	var dec_i = i.replace(' ','').split('-');
+	switch (dec_i.length){
+		case 1:
+			return [dec_i[0],dec_i[0]];
+		break;
+		case 2:
+			return [Math.min(dec_i[0],dec_i[1]),Math.max(dec_i[0],dec_i[1])];
+		break;
+		default:
+			return null;
+		break;
+		
 	}
 }
 
@@ -753,40 +774,6 @@ function escapeHtml(i){
 	});
 }
 
-/* might have became obsolete */
-/*
-function adddiagram(){
-	$('#id_core_modal .modal-title').html('Add diagrams');
-	
-	$('#id_core_modal .modal-body')
-		.html(addAFile);
-	
-	$('#id_modal_hiddeninput_hashedid').val($('#id_core_input_hashedid').val());
-	$('#id_core_modal label').html('Select up to five files:');
-	$('#id_modal_file_file')
-		.fileinput({
-			uploadUrl		:'/upload',
-			uploadAsync		:false,
-			showUpload		:false,
-			showRemove		:true,
-			minFileCount	:1,
-			maxFileCount	:5,
-			dropZoneEnabled	:true,
-			uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()}
-		})
-		.on('filebatchselected',function(event,files){
-			$('#id_modal_file_file').fileinput('upload');
-		})
-	$('#id_core_modal').modal('show');
-	
-	$('#id_core_modal .btn-primary').off('click').on('click',function(c){
-		if(c.which!=1){
-			return;
-		};
-	})
-}
-*/
-
 function choosedp(){
 	$('#id_core_modal_dp .row.form-group select').html('<option></option>');
 	socket.emit('populate dot points',$('#id_core_select_syllabus').val(),function(o){
@@ -887,16 +874,12 @@ function appendspace(i){
 	var index = c.children('.row').length - 1;
 	switch (i){
 		case 'more':
-				$('<div class = "row">'+
-					'<div class = "col-md-9 col-md-offset-3 form-inline">'+
-						'<input  class = "form-control" type = "text" id = "id_core_mixed_space_num"></input> '+
-						'<select class = "form-control" id = "id_core_mixed_space_type">'+
-							'<option selected>lines</option>'+
-							'<option>box</option>'+
-							'<option>blank</option>'+
-						'</select>'+
-					'</div>'+
-				'</div>').insertAfter(c.children('.row').eq(index));
+			var newspace = $('#id_add_formgroup_spaces').children('.row').first().clone(true,true);
+			newspace.children('label').remove();
+			newspace.find('input').val('');
+			newspace.find('select').val('lines');
+			newspace.children('div').addClass('col-md-offset-3');
+			newspace.insertAfter(c.children('.row').eq(index));
 		break;
 		case 'less':
 			c.children('.row').eq(index).remove();
@@ -943,6 +926,7 @@ function changeblock(i){
 		case 'add':
 			var newblock = refblock.clone(true, true);
 			newblock.find('input[type="radio"]').attr('name','radio_mode_'+num);
+			newblock.find('#id_core_input_dp').val('');
 			newblock.insertBefore(ctrl);
 		break;
 		case 'remove':
