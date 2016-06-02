@@ -106,8 +106,9 @@ $(document).ready(function(){
 		$('#id_mobileupload_btn_upload').removeClass('hidden disabled');
 		$('#id_mobileupload_btn_cropupload').addClass('hidden');
 		$('#id_mobileupload_label_file').removeClass('disabled');
-
-		$('#id_mobileupload_canvas_cropbody').attr('src', URL.createObjectURL(e.target.files[0]));
+		
+		$('#id_mobileupload_canvas_cropbody').cropper('destroy');
+		$('#id_mobileupload_canvas_cropbody').attr({'src': URL.createObjectURL(e.target.files[0]),'width':'100%'});
 		$('#id_mobileupload_canvas_cropbody').cropper({
 			autoCrop : false,
 			viewMode : 1,
