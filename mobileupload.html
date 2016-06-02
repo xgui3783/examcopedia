@@ -23,16 +23,21 @@ function info_modal(i){
 	$('#id_mobileupload_modal_warning').modal('show');
 }
 
-function sendImg(){
+function sendImg(i){
 
-
-	
 	//var sendImg = $('#id_mobileupload_canvas_cropbody').cropper('getData');
 	var formData = new FormData();
-	
-	formData.append('cropdata',$('#id_mobileupload_canvas_cropbody').cropper('getData'));
-	formData.append('photo',$('#id_mobileupload_input_file')[0].files[0]);
 	formData.append('hashedid',$('#id_mobileupload_input_hashedid').val());
+	
+	if(i=='uncropped'){
+		formData.append('photo',$('#id_mobileupload_input_file')[0].files[0]);
+	}else if(i=='cropped'){
+		var imgsrc = $('#id_mobileupload_canvas_cropbody').cropper('getCroppedCanvas').toDataURL('image/jpeg');	
+		var imgname = $('#id_mobileupload_input_file')[0].files[0].name;
+		
+		formData.append('photo',imgsrc);
+		formData.append('name',imgname);
+	}
 	
 	$('.btn-success').off('click').on('click',function(){
 		location.reload();
@@ -71,8 +76,7 @@ function sendImg(){
 $(document).ready(function(){
 	
 	/* populate the hashed id input field. this will be sent with the photo to the server to identify the question in question */
-	$('#id_mobileupload_input_hashedid').val(window.location.search.substring(1));	
-	var newc = $('#id_mobileupload_canvas_cropbody')[0].outerHTML;
+	$('#id_mobileupload_input_hashedid').val(window.location.search.substring(1));
 	
 	/* prevent accidental double clicks and itchy finger */
 	$('.btn').off('click').click(function(){
@@ -89,12 +93,12 @@ $(document).ready(function(){
 		
 		if($(this).attr('id')=='id_mobileupload_btn_upload'){
 			//upload the uncropped image
-			sendImg();
+			sendImg('uncropped');
 		}else if($(this).attr('id')=='id_mobileupload_btn_cropupload'){
 			//upload the cropped image
-			sendImg();
+			sendImg('cropped');
 		}
-	})
+	});
 	
 	$('input').off('change').change(function(e){
 	
@@ -102,28 +106,17 @@ $(document).ready(function(){
 		$('#id_mobileupload_btn_upload').removeClass('hidden disabled');
 		$('#id_mobileupload_btn_cropupload').addClass('hidden');
 		$('#id_mobileupload_label_file').removeClass('disabled');
-		
-		$('#id_mobileupload_div_cropbox').html(newc);
-		c = document.getElementById('id_mobileupload_canvas_cropbody');
-		ctx = c.getContext('2d');
-		
-		var img = new Image;
-		img.onload = function(){
-			ctx.clearRect(0,0,c.width,c.height);
-			ctx.drawImage(img,0,0, img.width, img.height, 0, 0, c.width, c.height);
-			URL.revokeObjectURL(img.src);
-			
-			$('#id_mobileupload_canvas_cropbody').cropper({
-				autoCrop : false,
-				crop : function(e){
-					//cropped change btn
-					$('#id_mobileupload_btn_upload').addClass('hidden');
-					$('#id_mobileupload_btn_cropupload').removeClass('hidden');
+
+		$('#id_mobileupload_canvas_cropbody').attr('src', URL.createObjectURL(e.target.files[0]));
+		$('#id_mobileupload_canvas_cropbody').cropper({
+			autoCrop : false,
+			viewMode : 1,
+			crop : function(e){
+				//cropped change btn
+				$('#id_mobileupload_btn_upload').addClass('hidden');
+				$('#id_mobileupload_btn_cropupload').removeClass('hidden');
 				}
-				})
-		}
-		
-		img.src = URL.createObjectURL(e.target.files[0]);
+			});
 	})
 })
 	</script>
@@ -143,7 +136,7 @@ z-index:-1;
 
 canvas
 {
-width:100%;
+max-width:100%;
 }
 
 #id_mobileupload_screen_loading
@@ -206,10 +199,10 @@ color:#fff;
 					<div class = "panel-body">
 						<input disabled id = "id_mobileupload_input_hashedid" class = "hidden">
 						<span>This is the mobile upload widget of examcopedia. If you arrived at this site via a QR code, the image uploaded here should automatically appear in the main window.</span>
-						<div class = "hidden col-xs-12" id = "id_mobileupload_div_cropbox">
-							<canvas id = "id_mobileupload_canvas_cropbody">
+						<div class = " col-xs-12" id = "id_mobileupload_div_cropbox">
+							<img id = "id_mobileupload_canvas_cropbody">
 							
-							</canvas>
+							</img>
 						</div>
 					</div>
 					<div class = "panel-footer">

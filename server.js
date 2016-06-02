@@ -101,17 +101,29 @@ app.post('/mobileuploadphoto',function(req,res){
 			if(io.sockets.adapter.rooms[req.body.hashedid]!=undefined){
 				fs.mkdir('public/img/'+req.body.hashedid+'/',function(e1){
 					if(!e1 || e1 && e1.code =='EEXIST'){
-						fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
-							if(e2){
-								catch_error(e2);
-							}else{
-								io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
-								
-								res.send('success');
-								/* potential future implementation of checking if the room is empty or not here */
-								
-							}
-						}); 
+						if(req.file==undefined){
+							var str = req.body.photo.replace(/^data:image\/jpeg;base64,/, "");
+							var buf = new Buffer(str, 'base64'); 
+							fs.writeFile('public/img/'+req.body.hashedid + '/' + req.body.name, buf ,function(e2){
+								if(e2){
+									catch_error(e2);
+								}else{
+									io.sockets.to(req.body.hashedid).emit('mobile upload',req.body.name);
+									res.send('success');
+								}
+							})
+						}else{
+							/* saving uncropped */
+							fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
+								if(e2){
+									catch_error(e2);
+								}else{
+									io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
+									
+									res.send('success');
+								}
+							});
+						}
 					}
 				})
 			}else{

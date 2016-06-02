@@ -349,6 +349,31 @@ $(document).ready(function(){
 		return false;
 	})
 	
+	/* type check functionality */
+	if($('#id_input_random').length>0){
+		$('#id_input_random').off('keydown').on('keydown',function(k){
+			if(k.which==9||k.which==13||k.which==116||(k.which>47&&k.which<58)||(k.which>95&&k.which<106)){
+				$(this).tooltip('hide');
+			}else{
+				/* error message here */
+				$(this).tooltip('show');
+				return false;
+			}
+		})
+	}
+	
+	if($('#id_input_select').length>0){
+		$('#id_input_select').off('keydown').on('keydown',function(k){
+			if(k.which==9||k.which==13||k.which==116||(k.which>47&&k.which<58)||k.which==32||k.which==109||k.which==189||(k.which>95&&k.which<106)){
+				$(this).tooltip('hide');
+			}else{
+				/* error message here */
+				$(this).tooltip('show');
+				return false;
+			}
+		})
+	}
+	
 	/* preview functionality */
 	$('#id_core_textarea_qn,#id_core_mixed_space_num').off('keyup').keyup(function(){
 		if($('#id_core_textarea_qn').val()==''){
@@ -408,7 +433,8 @@ var addAButton =
 				'<div class = "btn btn-primary form-control" id = "id_modal_button_button"></div>'+
 			'</div>'+
 	'</form>';
-	
+
+/* might have become obsolete */
 var addAFile = 
 	'<form id = "id_add_form_imgupload" role = "form" method="post">'+
 		'<input class = "hidden" id = "id_modal_hiddeninput_hashedid" name = "hashed_id">'+
@@ -733,12 +759,26 @@ function parsing_preview(i,h_id){
 	var j = escaped_i.replace(/\[img.*?\]/g,function(s){
 		return parsing_img(s,h_id);
 	});
+	
 	var index = 0;
 	var k = j.replace(/\[mcq .*?\]/g,function(s){
 		index += 1;
 		return parsing_mcq(index,s);
 	});
-	return k;
+	
+	var l = k.replace(/\[su.*?\]/g,function(s){
+		if(s.indexOf('sub')==1){
+			s = s.replace(/\[sub /,'<sub>');
+			s = s.replace(/\]$/,'</sub>')
+		}
+		if(s.indexOf('sup')==1){
+			s = s.replace(/\[sup /,'<sup>');
+			s = s.replace(/\]$/,'</sup>')
+		}
+		return s;
+	});
+	
+	return l;
 }
 
 function parsing_mcq(i,s){
@@ -749,10 +789,63 @@ function parsing_mcq(i,s){
 
 function parsing_img(i,h_id){
 	if($('.'+i.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
-		return $('.'+i.replace(/\[|\]/g,'').split(' ')[0])[0].outerHTML;
+		var returnstring = $('.'+i.replace(/\[|\]/g,'').split(' ')[0])[0].outerHTML;
 	}else{
-		return '<img class = "col-md-12" src = img/'+ h_id +'/'+i.substring(4).split(/\ |\]|\_/g)[0]+'.'+i.substring(4).split(/\ |\]|\_/g)[1]+'>';
+		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+i.substring(4).split(/\ |\]|\_/g)[0]+'.'+i.substring(4).split(/\ |\]|\_/g)[1]+'>';
 	}
+	
+	if(i.replace(/\[|\]/g,'').split(' ').length>1){
+		for(var j=0;j<i.replace(/\[|\]/g,'').split(' ').length;j++){
+			var params = i.replace(/\[|\]/g,'').split(' ')[j].split('=');
+			if(params.length<2){
+				continue;
+			}
+			returnstring = concatstyle(returnstring,params);
+		}
+	}else{
+		return returnstring;
+	}
+	
+	return returnstring;
+}
+
+function concatstyle(i,p){
+	
+	var r = '';
+	var concatstring = '';
+	
+	switch(p[0]){
+		case 'r':
+			if(!$.isNumeric(p[1])){
+				return i;
+			}else{
+				concatstring = 
+					'-webkit-transform: rotate('+p[1]+'deg);'+
+					'-moz-transform: rotate('+p[1]+'deg);'+
+					'-o-transform: rotate('+p[1]+'deg);'+
+					'-ms-transform: rotate('+p[1]+'deg);'+ 
+					'transform: rotate('+p[1]+'deg);'
+			}
+		break;
+		case 'w':
+			if(!$.isNumeric(p[1])){
+				return i;
+			}else{
+				concatstring = 'width:'+p[1]+'%'
+				console.log(concatstring);
+			}
+		break;
+		default:
+		break;
+	}
+	
+	if(i.indexOf('style="')==-1){
+		r=i.slice(0,i.length-1).concat(' style="'+concatstring+'">')
+	}else{
+		r=i.replace(' style="',' style="'+concatstring);
+	}
+	
+	return r;
 }
 
 /* escape function */
