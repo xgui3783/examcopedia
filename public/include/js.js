@@ -794,6 +794,8 @@ function parsing_img(i,h_id){
 		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+i.substring(4).split(/\ |\]|\_/g)[0]+'.'+i.substring(4).split(/\ |\]|\_/g)[1]+'>';
 	}
 	
+	returnstring = returnstring.slice(0,returnstring.indexOf(' style="'))+'>';
+	
 	if(i.replace(/\[|\]/g,'').split(' ').length>1){
 		for(var j=0;j<i.replace(/\[|\]/g,'').split(' ').length;j++){
 			var params = i.replace(/\[|\]/g,'').split(' ')[j].split('=');
