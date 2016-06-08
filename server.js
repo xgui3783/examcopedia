@@ -147,6 +147,7 @@ var connection = mysql.createConnection({
 
 io.on('connection',function(socket){
 	
+	
 	/* check if db exist. if not, create db */
 	/* table_masterquestions */
 	connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "table_masterquestions"',function(e,r){
@@ -210,40 +211,65 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('view submit',function(i,callback){
-		connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
-			if(e){
-				catch_error(e);
-			}else{
-				var querystring = '';
-				for (i=0;i<r.length;i++){
-					if(querystring!=''){
-						querystring +=',';
-					}
-					querystring+=r[i].f_id;
+		switch(i.mode){
+			case 'subject':
+				if(i.subject.replace(' ','')==''||i.subject==undefined){
+					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions;',function(e,r){
+						if(e){
+							catch_error(e);
+						}else{
+							callback(r);
+						}
+					})
+				}else{
+					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE subject = ?;',i.subject,function(e,r){
+						if(e){
+							catch_error(e);
+						}else{
+							callback(r);
+						}
+					})
 				}
-				connection.query('SELECT hashed_id, question, answer,space,mark FROM table_masterquestions WHERE id IN ('+querystring+');',function(e1,r1){
-					if(e1){
-						catch_error(e1);
+			break;
+			case 'curriculum':
+				connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
+					if(e){
+						catch_error(e);
 					}else{
-						callback(r1);
+						var querystring = '';
+						for (i=0;i<r.length;i++){
+							if(querystring!=''){
+								querystring +=',';
+							}
+							querystring+=r[i].f_id;
+						}
+						connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE id IN ('+querystring+');',function(e1,r1){
+							if(e1){
+								catch_error(e1);
+							}else{
+								callback(r1);
+							}
+						});
 					}
-				});
-			}
-		})
+				})
+			break;
+			default:
+			break;
+		}
 	})
 	
 	socket.on('save dp',function(i,callback){
 		var target_syl = 'curriculum_'+i.target_syl;
-		var target_level = i.target_level+'.info';
-		var info = i.value;
+		var target_level = i.value.split(' ')[0]+'.info';
 		
-		info = info.substring(info.indexOf(info.split(/ /)[1]));
+		/* only split the first instance of a space. as description may contain spaces */
+		var info = i.value.substring(i.value.indexOf(' ')+1);
 		
 		connection.query('INSERT INTO ?? (lvl,description) VALUES (?,?);',[target_syl,target_level,info],function(e,r){
 			if(e){
 				catch_error(e);
 			}else{
-				
+				callback('success');
 			}
 		})
 	})

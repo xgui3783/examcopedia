@@ -4,6 +4,47 @@ height:150px;
 resize:none;
 }
 
+
+.class_dp_btn_createnew
+{
+border:none;
+}
+
+	.class_dp_btn_createnew:hover
+	{
+	display:inline-block;
+	cursor:pointer;
+	text-decoration:none;
+	}
+
+.hovershow + .tooltip > .tooltip-inner
+{
+width:200px;
+}
+
+#id_add_glyphicon_how:hover
+{
+cursor:pointer;
+}
+
+ul.list-group
+{
+margin-left:10px;
+margin-bottom:1px;
+}
+
+li.list-group-item
+{
+text-align:left;
+margin-bottom:1px;
+}
+
+.required.control-label:after
+{
+content:"*";
+color:red;
+}
+
 div#id_core_btn_morespace
 {
 margin-top:10px;
