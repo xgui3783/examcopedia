@@ -48,7 +48,7 @@ var mobileStorage = multer.diskStorage({
 					}
 				});
 			}else{
-				callback(null, 'mobileuploads')
+				callback(null, 'mobileuploads') 
 			}
 		})
 	},
