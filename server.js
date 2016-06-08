@@ -56,7 +56,7 @@ var mobileStorage = multer.diskStorage({
 		callback(null, file.originalname);
 	}
 })
-
+ 
 var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
 var uploadMobile = multer({storage : mobileStorage}).single('photo');
 
