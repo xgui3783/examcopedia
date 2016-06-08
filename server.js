@@ -241,7 +241,7 @@ io.on('connection',function(socket){
 							if(querystring!=''){
 								querystring +=',';
 							}
-							querystring+=r[i].f_id;
+							querystring+=r[i].f_id; 
 						}
 						connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE id IN ('+querystring+');',function(e1,r1){
 							if(e1){
