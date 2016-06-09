@@ -555,7 +555,7 @@ function viewgo(){
 	
 	/* add replace state and push state */
 	history.replaceState(null,null,'/view');
-	history.pushState(null,null,'/generated');
+	history.pushState(null,null,'/view');
 	window.addEventListener('popstate',function(e){
 		$('#id_view_div_form')
 			.css('opacity','1.0')
