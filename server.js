@@ -1,7 +1,7 @@
 #!/bin/env node
 //  OpenShift sample Node application
 var http = require('http');
-var fs = require('fs');
+var fs = require('fs-extra');
 var express = require('express');
 var app = require('express')();
 var server = http.createServer(app);
@@ -10,6 +10,8 @@ var mysql = require('mysql');
 var sha256 = require('js-sha256');
 var multer = require('multer');
 var bodyparser = require('body-parser');
+
+app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR);
 
 var storage = multer.diskStorage({
 	/* should check here if destination exist. if does not exist, create it. */
@@ -60,8 +62,6 @@ var mobileStorage = multer.diskStorage({
 var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
 var uploadMobile = multer({storage : mobileStorage}).single('photo');
 
-/* apparently needed for parsing req.body */
-
 app.post('/upload',function(req,res){
 	upload(req,res,function(e){
 		fs.mkdir('public/img/'+req.body.hashedid + '/', function(e1){
@@ -70,6 +70,12 @@ app.post('/upload',function(req,res){
 					fs.rename('uploads/' + req.files[i].originalname,'public/img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
 						if(e2){
 							catch_error(e2);
+						}else{
+							if(process.env.OPENSHIFT_DATA_DIR!=undefined){
+								console.log('not undefined');
+							}else{
+								console.log('is undefined');
+							}
 						}
 					});
 				}
@@ -146,7 +152,6 @@ var connection = mysql.createConnection({
 });
 
 io.on('connection',function(socket){
-	
 	
 	/* check if db exist. if not, create db */
 	/* table_masterquestions */
