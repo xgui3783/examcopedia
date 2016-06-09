@@ -64,14 +64,13 @@ var uploadMobile = multer({storage : mobileStorage}).single('photo');
 
 app.post('/upload',function(req,res){
 	upload(req,res,function(e){
-		fs.mkdir('public/img/'+req.body.hashedid + '/', function(e1){
+		fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid + '/', function(e1){
 			if(!e1 || (e1 && e1.code == 'EEXIST')){
 				for (i = 0; i<req.files.length; i++){
-					fs.rename('uploads/' + req.files[i].originalname,'public/img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
+					fs.rename('uploads/' + req.files[i].originalname,app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
 						if(e2){
 							catch_error(e2);
 						}else{
-							console.log(app.get('persistentDataDir'));
 						}
 					});
 				}
@@ -101,12 +100,12 @@ app.post('/mobileuploadphoto',function(req,res){
 			//res.send('Error!'+e);
 		}else{
 			if(io.sockets.adapter.rooms[req.body.hashedid]!=undefined){
-				fs.mkdir('public/img/'+req.body.hashedid+'/',function(e1){
+				fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid+'/',function(e1){
 					if(!e1 || e1 && e1.code =='EEXIST'){
 						if(req.file==undefined){
 							var str = req.body.photo.replace(/^data:image\/jpeg;base64,/, "");
 							var buf = new Buffer(str, 'base64'); 
-							fs.writeFile('public/img/'+req.body.hashedid + '/' + req.body.name, buf ,function(e2){
+							fs.writeFile(app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.body.name, buf ,function(e2){
 								if(e2){
 									catch_error(e2);
 								}else{
@@ -116,7 +115,7 @@ app.post('/mobileuploadphoto',function(req,res){
 							})
 						}else{
 							/* saving uncropped */
-							fs.rename('mobileuploads/' + req.file.originalname,'public/img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
+							fs.rename('mobileuploads/' + req.file.originalname,app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
 								if(e2){
 									catch_error(e2);
 								}else{
@@ -190,7 +189,7 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('delete thumbnail',function(i,callback){
-		var path = 'public/img/' + i.hashedid + '/' + i.filename;
+		var path = app.get('persistentDataDir')+'img/' + i.hashedid + '/' + i.filename;
 		fs.unlink(path,function(e){
 			if(e){
 				catch_error(e)
@@ -363,7 +362,7 @@ io.on('connection',function(socket){
 	socket.on('disconnect',function(){
 		/* should delete all file in socket.hashedid */
 		if(socket.hashedid!=undefined){
-			var path = 'public/img/' + socket.hashedid + '/';
+			var path = app.get('persistentDataDir')+'img/' + socket.hashedid + '/';
 			fs.readdir(path,function(e,files){
 				if(e){
 					//catch_error(e);
@@ -414,11 +413,11 @@ app.get('/mobileupload',function(req,res){
 
 app.get('/img/*',function(req,res,next){
 	
-	fs.stat('public/'+req.url,function(e,s){
+	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
-			res.sendfile('public/img/imageunlinked.png');
+			res.sendfile(app.get('persistentDataDir')+'img/imageunlinked.png');
 		}else{
-			res.sendfile('public/'+req.url);
+			res.sendfile(app.get('persistentDataDir')+req.url);
 		}
 	})
 })
