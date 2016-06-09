@@ -11,7 +11,7 @@ var sha256 = require('js-sha256');
 var multer = require('multer');
 var bodyparser = require('body-parser');
 
-app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR);
+app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
 var storage = multer.diskStorage({
 	/* should check here if destination exist. if does not exist, create it. */
@@ -71,11 +71,7 @@ app.post('/upload',function(req,res){
 						if(e2){
 							catch_error(e2);
 						}else{
-							if(process.env.OPENSHIFT_DATA_DIR!=undefined){
-								console.log('not undefined');
-							}else{
-								console.log('is undefined');
-							}
+							console.log(app.get('persistentDataDir'));
 						}
 					});
 				}
