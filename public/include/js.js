@@ -3,6 +3,13 @@ var socket = io();
 
 $(document).ready(function(){
 	
+	/*
+	//pasting image to be implemented in the future... maybe
+	window.addEventListener('paste',function(e){
+		console.log(e.clipboardData);
+		console.log(e.clipboardData.getData('image/bmp'));
+	})
+	*/
 	/* tooltip for question upload */
 	$('#id_add_glyphicon_how').tooltip({
 		html : 'true',
@@ -20,15 +27,16 @@ $(document).ready(function(){
 	})
 	
 	/* mobile upload complete*/
-	socket.on('mobile upload',function(i){
+	socket.on('append imgtank',function(i){
 		
 		var imgno = 1;
-		var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+i;
 		while($('.img'+imgno).length!=0){
 			imgno += 1;
 		}
-		$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+i.replace('.','_')+'" class = "col-md-12 img'+i.replace('.','_')+' img'+imgno+'">');
 		
+		appendImgTank($('#id_core_input_hashedid').val(),i,imgno);
+		
+		/*
 		var stringInitialPreview = [];
 		var stringInitialPreviewConfig = [];
 		
@@ -43,8 +51,11 @@ $(document).ready(function(){
 				key : imgname
 				}
 		}
+		*/
 		
 		/* should i disable fileinput and reinitialise it with the existing imgtank items? */
+		
+		/*
 		$('#id_add_file_file').fileinput('destroy');
 		$('#id_add_file_file').off().fileinput({
 			uploadUrl		:'/upload',
@@ -55,13 +66,14 @@ $(document).ready(function(){
 			overwriteInitial : false,
 			uploadExtraData	:{'hashedid':$('#id_core_input_hashedid').val()},
 			
-			/* need to fix this. need to append all items in .imgtank */
+			// need to fix this. need to append all items in .imgtank 
 			initialPreview : stringInitialPreview,
 			initialPreviewConfig : stringInitialPreviewConfig,
 		})
 		.on('filedeleted',function(e,k){
 			var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':k}
 			//console.log($('#'+id+' .file-footer-caption').html());
+			// probably no longer needed this. since unsaved question images gets automatically deleted, and housekeeping deletes unused images 
 			socket.emit('delete thumbnail',json,function(o){
 				if(o=='done'){
 					$('.img'+k.replace('.','_')).remove();
@@ -90,15 +102,21 @@ $(document).ready(function(){
 			//works. append <img> this somewhere 
 			//data.files[i].name
 			for(i=0;i<data.files.length;i++){
-				var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+data.files[i].name;
+				
 				var imgno = i;
 				do{
 					imgno += 1;
 				}while($('.img'+imgno).length>0)
-				$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
+					
+				
+				//$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
+				
+				
+				appendImgTank($('#id_core_input_hashedid').val(),data.files[i].name,imgno);
+				
 			}
 		})
-		
+		*/
 	})
 	
 	/* socket io core functions */
@@ -221,6 +239,7 @@ $(document).ready(function(){
 			.on('filebatchselected',function(event,files){
 				$('#id_add_file_file').fileinput('upload');
 			})
+			/*
 			.on('filesuccessremove',function(event,id){
 				var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':$('#'+id+' .file-footer-caption').html()}
 				//console.log($('#'+id+' .file-footer-caption').html());
@@ -233,17 +252,29 @@ $(document).ready(function(){
 					}
 				});
 			})
+			*/
 			.on('filebatchuploadsuccess',function(event, data, previewId, index){
 				//works. append <img> this somewhere 
 				//data.files[i].name
+				
+				$('#id_add_file_file').fileinput('clear');
+				
+				/*
 				for(i=0;i<data.files.length;i++){
-					var imgurl = 'img/'+$('#id_core_input_hashedid').val()+'/'+data.files[i].name;
+					
 					var imgno = i;
 					do{
 						imgno += 1;
 					}while($('.img'+imgno).length>0)
-					$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
+						
+					
+					//$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
+					
+					
+					appendImgTank($('#id_core_input_hashedid').val(),data.files[i].name,imgno);
+					
 				}
+				*/
 			})
 	}
 	
@@ -536,6 +567,36 @@ function random(i) {
     return Math.floor((x - Math.floor(x))*10000);
 }
 
+function appendImgTank(hashedid,imgname,imgno){
+	
+	var imgurl = 'img/'+hashedid+'/';
+	//imgname
+	var imgalt1 = imgname.substring(0,imgname.lastIndexOf('.'))+'_alt1'+imgname.substring(imgname.lastIndexOf('.'));
+	var imgalt2 = imgname.substring(0,imgname.lastIndexOf('.'))+'_alt2'+imgname.substring(imgname.lastIndexOf('.'));
+	
+	$('.imgtank').append(
+		'<div class = "row">'+
+			'<div class = "col-md-4">'+
+				'<div class = "panel panel-default">'+
+					'<div class = "panel-heading">[img'+imgname.replace('.','_')+']</div>'+
+					'<div class = "panel-body"><img src = "'+imgurl+imgname+'" id = "img'+imgname.replace('.','_')+'" class = "col-md-12 img'+imgname.replace('.','_')+' img'+imgno+'"></div>'+
+				'</div>'+
+			'</div>'+
+			'<div class = "col-md-4">'+
+				'<div class = "panel panel-default">'+
+					'<div class = "panel-heading">[img'+imgalt1.replace('.','_')+']</div>'+
+					'<div class = "panel-body"><img src = "'+imgurl+imgalt1+'" id = "img'+imgalt1.replace('.','_')+'" class = "col-md-12 img'+imgalt1.replace('.','_')+' img'+imgno+'_alt1"></div>'+
+				'</div>'+
+			'</div>'+
+			'<div class = "col-md-4">'+
+				'<div class = "panel panel-default">'+
+					'<div class = "panel-heading">[img'+imgalt2.replace('.','_')+']</div>'+
+					'<div class = "panel-body"><img src = "'+imgurl+imgalt2+'" id = "img'+imgalt2.replace('.','_')+'" class = "col-md-12 img'+imgalt2.replace('.','_')+' img'+imgno+'_alt2"></div>'+
+				'</div>'+
+			'</div>'+
+		'</div>');
+}
+
 function viewgo(){
 	var flag = true;
 	$('.class_view_div_unitblock').each(function(){
@@ -800,20 +861,22 @@ function update_dp(){
 }
 
 function modal_ok(){
-	var home = $('.btn-default.active').parent().parent().children('div').children('select');
+	var home = $('.btn-default.active').parent().prev().children('select');
 	for (var i = 0;i<home.children('option').length;i++){
 		if(home.children('option').eq(i).html()==$('#id_modal_input_input').val()){
-			info_modal('This name is already in use.');
+			$('.btn-default.active').parent().prev().children('select').val($('#id_modal_input_input').val());
+			
+			$('#id_core_modal').modal('hide');
 			return false;
 		}
 	}
 	
-	$('#id_core_modal').modal('hide');
-	
 	/* also check if the name is in use already */
-	$('.btn-default.active').parent().parent().children('div').children('select').append('<option>'+$('#id_modal_input_input').val()+'</option>');
-	$('.btn-default.active').parent().parent().children('div').children('select').val($('#id_modal_input_input').val());
+	$('.btn-default.active').parent().prev().children('select').append('<option>'+$('#id_modal_input_input').val()+'</option>');
+	$('.btn-default.active').parent().prev().children('select').val($('#id_modal_input_input').val());
 	$('#id_core_select_syllabus').change();
+	
+	$('#id_core_modal').modal('hide');
 }
 
 function info_modal(i){
@@ -932,7 +995,6 @@ function parsing_img(i,h_id){
 	}else{
 		return returnstring;
 	}
-	
 	return returnstring;
 }
 
@@ -959,7 +1021,6 @@ function concatstyle(i,p){
 				return i;
 			}else{
 				concatstring = 'width:'+p[1]+'%'
-				console.log(concatstring);
 			}
 		break;
 		default:
@@ -1288,14 +1349,22 @@ function modal_shown_focus(i){
 function submit_filter(){
 	$('#id_core_textarea_qn').val($('#id_core_textarea_qn').val().replace(/\[img.*?\]/g,function(s){
 		if($('.'+s.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
-			return '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id')+']';
+			var returnstring = '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id');
+			for(var i = 1; i<s.replace(/\[|\]/g,'').split(' ').length;i++){
+				returnstring += ' ' + s.replace(/\[|\]/g,'').split(' ')[i];
+			}
+			return returnstring + ']';
 		}else{
 			return s;
 		}
 	}));
 	$('#id_core_textarea_ans').val($('#id_core_textarea_ans').val().replace(/\[img.*?\]/g,function(s){
 		if($('.'+s.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
-			return '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id')+']';
+			var returnstring = '['+$('.'+s.replace(/\[|\]/g,'').split(' ')[0]).attr('id');
+			for(var i = 1; i<s.replace(/\[|\]/g,'').split(' ').length;i++){
+				returnstring += ' ' + s.replace(/\[|\]/g,'').split(' ')[i];
+			}
+			return returnstring + ']';
 		}else{
 			return s;
 		}

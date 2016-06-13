@@ -9,7 +9,7 @@ var io = require('socket.io').listen(server);
 var mysql = require('mysql');
 var sha256 = require('js-sha256');
 var multer = require('multer');
-var bodyparser = require('body-parser');
+var gm = require('gm').subClass({imageMagick:true})
 
 app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
@@ -67,31 +67,288 @@ app.post('/upload',function(req,res){
 		fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid + '/', function(e1){
 			if(!e1 || (e1 && e1.code == 'EEXIST')){
 				for (i = 0; i<req.files.length; i++){
+					var originalname = req.files[i].originalname;
+					resizeImage('uploads/',app.get('persistentDataDir')+'img/'+req.body.hashedid + '/',req.files[i].originalname,function(o){
+						if(o=='done'){
+							io.sockets.to(req.body.hashedid).emit('append imgtank',originalname);
+							var json = {};
+							res.send(json);
+						}else{
+							catch_error(o);
+							res.send(o);
+						}
+					})
+					
+					/*
 					fs.rename('uploads/' + req.files[i].originalname,app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
 						if(e2){
 							catch_error(e2);
 						}else{
 						}
 					});
+					*/
 				}
 			}else{
 				catch_error(e1);
 			}
 		});
-		if(e){
-			catch_error(e);
-			res.end('Error!'+e);
-		}else{
-			var json = {};
-			res.send(json);
-		}
 	})
 });
 
+function altCostume(dir,filename,callback){
+	var alt1name = filename.substring(0,filename.lastIndexOf('.'))+'_alt1'+filename.substring(filename.lastIndexOf('.'));
+	var alt2name = filename.substring(0,filename.lastIndexOf('.'))+'_alt2'+filename.substring(filename.lastIndexOf('.'));
+	
+	gm(dir+filename).edge(1).negative().write(dir+alt1name,function(e1){
+		if(e1){
+			catch_error(e1);
+		}else{
+			gm(dir+filename).edge(2).negative().write(dir+alt2name,function(e3){
+				if(e3){
+					catch_error(e3);
+				}else{
+					callback('done');
+				}
+			});
+		}
+	});
+	
+	/*
+	fs.mkdir(dir+'alt1/',function(e){
+		if(e && e.code != 'EEXIST'){
+			catch_error(e);
+		}
+		gm(dir+filename).edge(1).negative().write(dir+'alt1/'+filename,function(e1){
+			if(e1){
+				catch_error(e1);
+			}else{
+				fs.mkdir(dir+'alt2/',function(e2){
+					if(e2 && e2.code != 'EEXIST'){
+						catch_error(e2);
+					}
+					gm(dir+filename).edge(2).negative().write(dir+'alt2/'+filename,function(e3){
+						if(e3){
+							catch_error(e3);
+						}else{
+							callback('done');
+						}
+					});
+				})
+			}
+		});
+		
+	})
+	*/
+}
+
+/* when files are uploaded, they are stored on a temporary storage loc, and then they are resized and written to the permanent loc */
+function resizeImage(srcDir,destDir,filename,callback){
+	gm(srcDir+filename).size(function(e,r){
+		if(e){
+			catch_error(e);
+		}else{
+			if(r.width!=undefined){
+				if(r.width>1024){
+					gm(srcDir+filename).resize(1024).write(destDir+filename,function(e){
+						altCostume(destDir,filename,function(o){
+							if(o=='done'){
+								callback('done')
+							}
+						})
+					});
+				}else{
+					gm(srcDir+filename).write(destDir+filename,function(e){
+						altCostume(destDir,filename,function(o){
+							if(o=='done'){
+								callback('done')
+							}
+						})
+
+					});
+				}
+				
+				/* after resize, alt costume are created */
+			}
+		}
+	})
+}
+
+/* do the rotation, delete files not needed by the question */
+function cleanup(hashedid,q,a){
+	var path = app.get('persistentDataDir')+'img/'+hashedid+'/';
+	var toBeRotated=[];
+	
+	/* delete unused images */
+	fs.readdir(path,function(e,f){
+		f.forEach(function(v){
+			var filename = v.substring(0,v.lastIndexOf('.'));
+			/* .jpg .png etc */
+			var extension = v.substring(v.lastIndexOf('.')); 
+			var containAlt = (filename.substring(filename.length-5)=='_alt1'||filename.substring(filename.length-5)=='_alt2');
+			if(containAlt){
+				fs.stat(path+filename.substring(0,filename.length-5)+extension,function(e,s){
+					if(e){
+						/* probably does not exist */
+						/* filename = filename */
+					}else{
+						/* probably exist */
+						filename = filename.substring(0,filename.length-5);
+					}
+					
+					var inUseQ = (q.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+					var inUseA = (a.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+					
+					if(!inUseQ&&!inUseA){
+						fs.unlink(path+filename+extension,function(e){
+							if(e){
+								catch_error(e);
+							}
+						});
+						fs.unlink(path+filename+'_alt1'+extension,function(e){
+							if(e){
+								catch_error(e);
+							}
+						});
+						fs.unlink(path+filename+'_alt2'+extension,function(e){
+							if(e){
+								catch_error(e);
+							}
+						});
+					}
+					
+				});
+			}else{
+				var inUseQ = (q.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+				var inUseA = (a.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+				
+				if(!inUseQ&&!inUseA){
+					fs.unlink(path+filename+extension,function(e){
+						if(e){
+							catch_error(e);
+						}
+					});
+					fs.unlink(path+filename+'_alt1'+extension,function(e){
+						if(e){
+							catch_error(e);
+						}
+					});
+					fs.unlink(path+filename+'_alt2'+extension,function(e){
+						if(e){
+							catch_error(e);
+						}
+					});
+				}
+			}
+			
+		})
+	})
+	
+	/* imgs that were requested to be rotated and remove rotation param */
+	cleaned_q = q.replace(/\[img.*?\]/g,function(s){
+		s_split = s.replace(/\[|\]/g,'').split(' ');
+		var returnstring = '['+s_split[0];
+		for (var i = 1; i<s_split.length;i++){
+			if(s_split[i].substring(0,2)=='r='){
+				var r = s_split[i].split('=')[1];
+				if(r==90||r==180||r==270){
+					toBeRotated.push([s_split[0],r]);
+				}
+			}else{
+				returnstring +=' '+s_split[i];
+			}
+		}
+		return returnstring+']';
+	})
+	
+	cleaned_a = a.replace(/\[img.*?\]/g,function(s){
+		s_split = s.replace(/\[|\]/g,'').split(' ');
+		var returnstring = '['+s_split[0];
+		for (var i = 0; i<s_split.length;i++){
+			if(s_split[i].substring(0,2)=='r='){
+				var r = s_split[i].split('=')[1];
+				if(r==90||r==180||r==270){
+					toBeRotated.push([s_split[0],r]);
+				}
+			}else{
+				returnstring +=' '+s_split[i];
+			}
+		}
+		return returnstring+']';
+	})
+	
+	rotateImage(hashedid,toBeRotated);
+	
+	return [hashedid,cleaned_q,cleaned_a];
+}
+
+/* need to figure out what if different alt costume was used at different places */
+function rotateImage(hashed_id,arrayIn){
+	var path = app.get('persistentDataDir')+'img/'+hashed_id+'/';
+	var arrayDone = [];
+	
+	for(var j = 0; j<arrayIn.length; j++){
+		var filename = arrayIn[j][0].substring(0,arrayIn[j][0].lastIndexOf('_')).substring(3);
+		var extension = '.'+arrayIn[j][0].substring(arrayIn[j][0].lastIndexOf('_')+1);
+		var containAlt = (filename.substring(filename.length-5)=='_alt1'||filename.substring(filename.length-5)=='_alt2');
+		if(containAlt){
+			fs.stat(path+filename.substring(0,filename.length-5)+extension,function(e,s){
+				if(e){
+					/* probably does not exist */
+					/* filename = filename */
+				}else{
+					/* probably exist */
+					filename = filename.substring(0,filename.length-5);
+				}
+				
+				var flag = true;
+				for(var k = 0;k<arrayDone.length;k++){
+					if(arrayDone[k]==filename){
+						flag = false;
+					}
+				}
+				if(flag){
+					arrayDone.push(filename);
+					rotateImageBackend(hashed_id,filename,extension,arrayIn[j][1]);
+				}
+			});
+		}else{
+			var flag = true;
+			for(var k = 0;k<arrayDone.length;k++){
+				if(arrayDone[k]==filename){
+					flag = false;
+				}
+			}
+			if(flag){
+				arrayDone.push(filename);
+				rotateImageBackend(path,hashed_id,filename,extension,arrayIn[j][1]);
+			}
+		}
+	}
+}
+
+function rotateImageBackend(path,hashed_id,filename,extension,r){
+	gm(path+filename+extension).rotate('#ffffff',r).write(path+filename+extension,function(e){
+		if(e){
+			catch_error(e);
+		}
+	});
+	gm(path+filename+'_alt1'+extension).rotate('#ffffff',r).write(path+filename+'_alt1'+extension,function(e){
+		if(e){
+			catch_error(e);
+		}
+	});
+	gm(path+filename+'_alt2'+extension).rotate('#ffffff',r).write(path+filename+'_alt2'+extension,function(e){
+		if(e){
+			catch_error(e);
+		}
+	});
+}
+/*
 app.post('/deletepreview', function(req,res){
 	var json = {};
 	res.send(json); 
 });
+*/
 
 app.post('/mobileuploadphoto',function(req,res){
 	uploadMobile(req,res,function(e){
@@ -103,27 +360,47 @@ app.post('/mobileuploadphoto',function(req,res){
 				fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid+'/',function(e1){
 					if(!e1 || e1 && e1.code =='EEXIST'){
 						if(req.file==undefined){
+							/* saving cropped */
 							var str = req.body.photo.replace(/^data:image\/jpeg;base64,/, "");
 							var buf = new Buffer(str, 'base64'); 
+							fs.writeFile('mobileuploads/'+req.body.name,buf,function(e2){
+								resizeImage('mobileuploads/',app.get('persistentDataDir')+'img/'+req.body.hashedid + '/', req.body.name,function(o){
+									if(o=='done'){
+										io.sockets.to(req.body.hashedid).emit('append imgtank',req.body.name);
+										res.send('success');
+									}
+								});
+							})
+							/*
 							fs.writeFile(app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.body.name, buf ,function(e2){
 								if(e2){
 									catch_error(e2);
 								}else{
-									io.sockets.to(req.body.hashedid).emit('mobile upload',req.body.name);
+								}
+							})
+							*/
+						}else{
+							/* saving uncropped */
+							
+							resizeImage('mobileuploads/', app.get('persistentDataDir')+'img/'+req.body.hashedid + '/',req.file.originalname,function(o){
+								if(o=='done'){
+									io.sockets.to(req.body.hashedid).emit('append imgtank',req.file.originalname);
 									res.send('success');
 								}
 							})
-						}else{
-							/* saving uncropped */
-							fs.rename('mobileuploads/' + req.file.originalname,app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
+							
+							/*
+							fs.rename('mobileuploads/' + req.file.originalname, app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
 								if(e2){
 									catch_error(e2);
 								}else{
+									
 									io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
 									
 									res.send('success');
 								}
 							});
+							*/
 						}
 					}
 				})
@@ -188,6 +465,8 @@ io.on('connection',function(socket){
 		socket.hashedid=i;
 	})
 	
+	/* probably don't need this, since on disconnection, everything gets deleted any way */
+	/*
 	socket.on('delete thumbnail',function(i,callback){
 		var path = app.get('persistentDataDir')+'img/' + i.hashedid + '/' + i.filename;
 		fs.unlink(path,function(e){
@@ -199,7 +478,7 @@ io.on('connection',function(socket){
 			}
 		})
 	})
-	
+	*/
 	socket.on('populate dot points',function(i,callback){
 		connection.query('SELECT DISTINCT lvl, description FROM ?? WHERE lvl LIKE "%info" ORDER BY lvl','curriculum_'+i,function(e,r){
 			if(e){
@@ -275,12 +554,20 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('add submit',function(i,callback){
+		
+		var r=cleanup(i.hashed_id,i.question,i.answer);
+		var hashedid = r[0];
+		var question = r[1];
+		var answer = r[2];
+		
 		connection.query(
-			'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark) VALUES (?,?,?,?,?,?);',[i.hashed_id,i.subject,i.question,i.answer,i.space,i.mark],function(e,r){
+			'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark) VALUES (?,?,?,?,?,?);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
 				if(e){
 					catch_error(e);
 				}else{
 					callback('Addition of question successful!');
+					
+					/* trash cleaning function here. do the rotation, remove the unneeded photos */
 				}
 			})
 	});
@@ -339,7 +626,6 @@ io.on('connection',function(socket){
 	});
 	
 	socket.on('categorise',function(i,callback){
-		console.log('categorise');
 		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e,r){
 			if(e){
 				catch_error(e);
@@ -363,6 +649,13 @@ io.on('connection',function(socket){
 		/* should delete all file in socket.hashedid */
 		if(socket.hashedid!=undefined){
 			var path = app.get('persistentDataDir')+'img/' + socket.hashedid + '/';
+			fs.remove(path,function(e){
+				if(e){
+					catch_error(e);
+				}
+			})
+			
+			/*
 			fs.readdir(path,function(e,files){
 				if(e){
 					//catch_error(e);
@@ -380,6 +673,7 @@ io.on('connection',function(socket){
 					fs.rmdirSync(path);
 				}
 			})
+			*/
 		}
 	});
 });
