@@ -779,7 +779,7 @@ app.get('/logout',function(req,res){
 })
 
 app.get('/changelog',function(res,res){
-	res.send('changelog.txt');
+	res.sendfile('changelog.txt');
 })
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
