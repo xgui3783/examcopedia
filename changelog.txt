@@ -1,0 +1,17 @@
+Known issues:
+- filename unescaped
+- uploading image with same filename will overwrite the original
+- potential vulnerability via uploaded image
+- view/generate > random repeats questions
+
+Future updates:
+- implement pasting of image from clipboard
+- generate printable PDF
+- swap out button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random questions
+- implement login/register/signin via google/FB/etc, moderator status
+- implement moderator approval process of addition/edition of questions
+- implement cold-edit of questions, prior to PDF generation
+- API allowing others to interact with the webapp
+
+Change log
+v0.1.0 - 15/06/2016 - Initial commit. 

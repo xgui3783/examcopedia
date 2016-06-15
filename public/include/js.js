@@ -378,8 +378,8 @@ $(document).ready(function(){
 	/* when anchor links are clicked */
 	$('a').click(function(){
 		a_id_split = $(this).attr('id').split('_');
+			console.log(a_id_split[1]);
 		switch(a_id_split[1]){
-			
 			/* when anchors in navbar is clicked */
 			case 'navbar':
 				if(a_id_split[2]=='home'){

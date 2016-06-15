@@ -1,5 +1,4 @@
 #!/bin/env node
-//  OpenShift sample Node application
 var http = require('http');
 var fs = require('fs-extra');
 var express = require('express');
@@ -10,6 +9,21 @@ var mysql = require('mysql');
 var sha256 = require('js-sha256');
 var multer = require('multer');
 var gm = require('gm').subClass({imageMagick:true})
+var passport = require('passport');
+var localStrategy = require('passport-local').Strategy;
+var flash = require('connect-flash');
+var bodyParser = require('body-parser');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
+
+
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts'}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(flash());
 
 app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
@@ -683,21 +697,64 @@ function catch_error(e){
 	//socket.emit('throw error',e)
 }
 
+/* using local strategy to authenticate user. implement 3rd party authentication process later */
+passport.use('local',new localStrategy(
+	function(username,password,done){
+		/* temporary username and password */
+		if(username=='panda'&&password=='pandaeatsbamboo'){
+			return done(null, username);
+		}else{
+			return done(null, false, {message : 'Incorrect username or password!'});
+		}
+}));
+
+passport.serializeUser(function(user,done){
+	done(null,'123testingtesting123');
+})
+
+passport.deserializeUser(function(id,done){
+	done(null,'panda');
+})
+
 app.use(express.static('public'));
 
-app.get('/',function(req,res){
+function checkAuth(req,res,next){
+	if(!req.user){
+		res.redirect('/login');
+	}else{
+		return next();
+	}
+}
+
+/*
+app.post('/logging',function(req,res){
+	console.log('logging');
+	passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true})
+})
+*/
+app.post('/logging',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
+
+app.get('/login',function(req,res){
+	if(!req.user){
+		res.sendfile('login.html');
+	}else{
+		res.redirect('/');
+	}
+})
+
+app.get('/',checkAuth,function(req,res){
 	res.sendfile('landing.html');
 });
 
-app.get('/add',function(req,res){
+app.get('/add',checkAuth,function(req,res){
 	res.sendfile('add.html');
 });
 
-app.get('/view',function(req,res){
+app.get('/view',checkAuth,function(req,res){
 	res.sendfile('view.html');
 });
 
-app.get('/categorise',function(req,res){
+app.get('/categorise',checkAuth,function(req,res){
 	res.sendfile('categorise.html');
 });
 
@@ -705,7 +762,7 @@ app.get('/mobileupload',function(req,res){
 	res.sendfile('mobileupload.html');
 });
 
-app.get('/img/*',function(req,res,next){
+app.get('/img/*',checkAuth,function(req,res,next){
 	
 	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
@@ -714,6 +771,15 @@ app.get('/img/*',function(req,res,next){
 			res.sendfile(app.get('persistentDataDir')+req.url);
 		}
 	})
+})
+
+app.get('/logout',function(req,res){
+	req.logout();
+	res.redirect('/login');
+})
+
+app.get('/changelog',function(res,res){
+	res.send('changelog.txt');
 })
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
