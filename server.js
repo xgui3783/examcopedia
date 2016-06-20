@@ -719,6 +719,10 @@ passport.deserializeUser(function(id,done){
 app.use(express.static('public'));
 
 function checkAuth(req,res,next){
+	
+	/* free pass. comment to add password protection */
+	return next();
+	
 	if(!req.user){
 		res.redirect('/login');
 	}else{
