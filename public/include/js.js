@@ -979,7 +979,10 @@ function parsing_img(i,h_id){
 	if($('.'+i.replace(/\[|\]/g,'').split(' ')[0]).length!=0){
 		var returnstring = $('.'+i.replace(/\[|\]/g,'').split(' ')[0])[0].outerHTML;
 	}else{
-		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+i.substring(4).split(/\ |\]|\_/g)[0]+'.'+i.substring(4).split(/\ |\]|\_/g)[1]+'>';
+		var isplit = i.split(' ');
+		var filename = isplit[0].substring(0,isplit[0].lastIndexOf('_'));
+		var fileextension = isplit[0].substring(isplit[0].lastIndexOf('_')+1);
+		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+filename+'.'+fileextension+'>';
 	}
 	
 	returnstring = returnstring.slice(0,returnstring.indexOf(' style="'))+'>';
