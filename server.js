@@ -194,21 +194,47 @@ function cleanup(hashedid,q,a){
 	
 	/* delete unused images */
 	fs.readdir(path,function(e,f){
-		f.forEach(function(v){
-			var filename = v.substring(0,v.lastIndexOf('.'));
-			/* .jpg .png etc */
-			var extension = v.substring(v.lastIndexOf('.')); 
-			var containAlt = (filename.substring(filename.length-5)=='_alt1'||filename.substring(filename.length-5)=='_alt2');
-			if(containAlt){
-				fs.stat(path+filename.substring(0,filename.length-5)+extension,function(e,s){
-					if(e){
-						/* probably does not exist */
-						/* filename = filename */
-					}else{
-						/* probably exist */
-						filename = filename.substring(0,filename.length-5);
-					}
-					
+		if(f==undefined){
+			/* if no images were uploaded, then life's but a dream */
+		}else{
+			f.forEach(function(v){
+				var filename = v.substring(0,v.lastIndexOf('.'));
+				/* .jpg .png etc */
+				var extension = v.substring(v.lastIndexOf('.')); 
+				var containAlt = (filename.substring(filename.length-5)=='_alt1'||filename.substring(filename.length-5)=='_alt2');
+				if(containAlt){
+					fs.stat(path+filename.substring(0,filename.length-5)+extension,function(e,s){
+						if(e){
+							/* probably does not exist */
+							/* filename = filename */
+						}else{
+							/* probably exist */
+							filename = filename.substring(0,filename.length-5);
+						}
+						
+						var inUseQ = (q.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+						var inUseA = (a.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
+						
+						if(!inUseQ&&!inUseA){
+							fs.unlink(path+filename+extension,function(e){
+								if(e){
+									catch_error(e);
+								}
+							});
+							fs.unlink(path+filename+'_alt1'+extension,function(e){
+								if(e){
+									catch_error(e);
+								}
+							});
+							fs.unlink(path+filename+'_alt2'+extension,function(e){
+								if(e){
+									catch_error(e);
+								}
+							});
+						}
+						
+					});
+				}else{
 					var inUseQ = (q.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
 					var inUseA = (a.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
 					
@@ -229,32 +255,10 @@ function cleanup(hashedid,q,a){
 							}
 						});
 					}
-					
-				});
-			}else{
-				var inUseQ = (q.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(q.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
-				var inUseA = (a.indexOf('img'+filename+'_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt1_'+extension.substring(1))>-1)||(a.indexOf('img'+filename+'_alt2_'+extension.substring(1))>-1);
-				
-				if(!inUseQ&&!inUseA){
-					fs.unlink(path+filename+extension,function(e){
-						if(e){
-							catch_error(e);
-						}
-					});
-					fs.unlink(path+filename+'_alt1'+extension,function(e){
-						if(e){
-							catch_error(e);
-						}
-					});
-					fs.unlink(path+filename+'_alt2'+extension,function(e){
-						if(e){
-							catch_error(e);
-						}
-					});
 				}
-			}
-			
-		})
+				
+			})
+		}
 	})
 	
 	/* imgs that were requested to be rotated and remove rotation param */
