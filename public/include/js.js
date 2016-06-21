@@ -980,7 +980,7 @@ function parsing_img(i,h_id){
 		var returnstring = $('.'+i.replace(/\[|\]/g,'').split(' ')[0])[0].outerHTML;
 	}else{
 		var isplit = i.replace(/\[|\]/g,'').split(' ');
-		var filename = isplit[0].substring(0,isplit[0].lastIndexOf('_'));
+		var filename = isplit[0].substring(3,isplit[0].lastIndexOf('_'));
 		var fileextension = isplit[0].substring(isplit[0].lastIndexOf('_')+1);
 		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+filename+'.'+fileextension+'>';
 	}
