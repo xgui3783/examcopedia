@@ -618,9 +618,9 @@ io.on('connection',function(socket){
 	
 	socket.on('add new curriculum',function(i,callback){
 		/* check if curriculum has name */
-		
+		var newcurrname = 'curriculum_'+i;
 		connection.query(
-		'CREATE TABLE curriculum_'+i+' ('+
+		'CREATE TABLE ?? ('+
 		'id int(8) NOT NULL AUTO_INCREMENT,'+
 		'f_id int(8),'+
 		
@@ -632,13 +632,20 @@ io.on('connection',function(socket){
 		'notes varchar(8192),'+
 		
 		'FOREIGN KEY(f_id) REFERENCES table_masterquestions(id),'+
-		'PRIMARY KEY(id));',function(e1){
+		'PRIMARY KEY(id));',newcurrname,function(e1){
 			if(e1){
 				/* catch error */
 				catch_error(e1);
 				callback(e1);
 			}else{
-				callback('New curriculum created!');
+				connection.query('INSERT INTO ?? (`id`, `f_id`, `lvl`, `description`, `notes`) VALUES (NULL, NULL, "0.info", "irrelevant", NULL);',newcurrname,function(e2,r2){
+					if(e2){
+						catch_error(e2);
+						callback(e2);
+					}else{
+						callback('New curriculum created!');						
+					}
+				})
 			}
 		});
 	});
@@ -784,6 +791,10 @@ app.get('/img/*',checkAuth,function(req,res,next){
 app.get('/logout',function(req,res){
 	req.logout();
 	res.redirect('/login');
+})
+
+app.get('/about',function(req,res){
+	res.sendfile('about.html');
 })
 
 app.get('/changelog',function(res,res){

@@ -27,7 +27,7 @@
 		  <div class="modal-body">
 		  </div>
 		  <div class="modal-footer">
-			<button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+			<button type="button" class="btn btn-primary">Save</button>
 			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 		  </div>
 		</div>
@@ -59,7 +59,7 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span> 
 			</button>
-			<a class = "navbar-brand" id = "id_navbar_home" href = "#">examcopedia</a>
+			<a class = "navbar-brand" id = "id_navbar_home" href = "/">examcopedia</a>
 		</div>
 		<div class="collapse navbar-collapse" id="collapse_navbar">
 			<ul class = "nav navbar-nav" id = "id_navbar_ttcontrol">
@@ -68,6 +68,7 @@
 				<li><a href = "/categorise" id = "id_navbar_categorise"><span class = "glyphicon glyphicon-tags"></span> categorise</a></li>
 			</ul>
 			<ul class = "nav navbar-nav navbar-right">
+				<!--<li><a href = "#" id = "nav_students">About</a></li>-->
 				<li><a href = "/about" id = "id_navbar_about"><span class = "glyphicon glyphicon-tint"></span> about</a></li>
 				<li><a href = "/logout" id = "id_navbar_logout"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
 			</ul>
@@ -76,21 +77,33 @@
 
 	<div class = "container-fluid">
 		<div class = "row">
-			<div class = "col-md-3 col-md-offset-1">
-				<div class = "btn btn-primary btn-lg col-md-12" id = "id_landing_btn_add">
-					<h1>Add </h1>
+		<div class = "col-md-8 col-md-offset-2">
+			<div class = "panel panel-default">
+				<div class = "panel-heading">
+					<h1>About</h1>
+				</div>
+				<div class = "panel-body">
+					examcopedia is an exam questions repository webapp, developed by pandamakes. Our mission is to create a platform where exam questions can be crowd created, crowd rated and crowd used. Free of charge. Forever.
+					<hr>
+					We created this app out of the frustration of the process of finding the right set of questions at the right time. Comparing to fellow private tutors, we have a lot of resources. Loose past papers, trial exams and half yearlies here and there. But the quality, quantity and relevance of the questions and the time taken to collect and compile the questions kept letting us down. Not to mention that one hand-out/print-out that was the photocopy of a photocopy of a photocopy (you all know what I am talking about).
+					<hr>
+					That is why we created examcopedia. It is currently in its beta stage. We are collecting feedbacks. Contact us, let us know if you have any recommendations/suggestions. But please, check the /changelog to see if your suggestion is already a part of future updates
+					<hr>
+					<div class = "row">
+						<div class = "col-md-4">
+							<a id = "id_about_a_pitch" href = "http://www.pandamakes.com.au/pitch/public-appeal-for-examcopedia/" class = "btn btn-default btn-block text-center"><h1><span class = "glyphicon glyphicon-piggy-bank"></span><span class = "glyphicon glyphicon-comment"></span><span class = "glyphicon glyphicon-bullhorn"></span></h1><br>Blog post of the public drive page. <br>Find out how you can help.</a>
+						</div>
+						<div class = "col-md-4">
+							<a id = "id_about_a_changelog" href = "/changelog" class = "btn btn-default btn-block text-center"><h1><span class = "glyphicon glyphicon-list-alt"></span></h1><br>changelog.txt<br>&nbsp;</a>
+						</div>
+						<div class = "col-md-4 text-center">
+							<h1><span class = "glyphicon glyphicon-user"></span></h1><br>e: panda@pandamakes.com.au<br> located in Sydney, happy to chat over coffee
+						</div>
+					</div>
 				</div>
 			</div>
-			<div class = "col-md-4">
-				<div class = "btn btn-warning btn-lg col-md-12" id = "id_landing_btn_view">
-					<h1>View/Generate</h1>
-				</div>
-			</div>
-			<div class = "col-md-3">
-				<div class = "btn btn-success btn-lg col-md-12" id = "id_landing_btn_categorise">
-					<h1>Categorise</h1>
-				</div>
-			</div>
+		</div>
+		
 		</div>
 	</div>
 </body>

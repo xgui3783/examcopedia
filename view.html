@@ -60,15 +60,14 @@
 								<div class = "radio form-inline">
 									<label><input type = "radio" name = "radio_mode_1" id = "id_radio_select" value = "select">Select</label>
 									<input type = "text" class = "form-control" disabled id = "id_input_select" data-toggle="tooltip" data-placement="right" title="Only numbers and a single dash (-) in this field.">
-									<span><i>e.g. for range: 2-5; for single 7</i></span>
+									<span class = "hovershow glyphicon glyphicon-question-sign" id = "id_view_glyphicon_select"></span>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class = "modal-footer">
-					<button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
-					<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				</div>
 			</div>
 		</div>
@@ -117,17 +116,18 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span> 
 			</button>
-			<a class = "navbar-brand" id = "id_navbar_home" href = "#">examcopedia</a>
+			<a class = "navbar-brand" id = "id_navbar_home" href = "/">examcopedia</a>
 		</div>
 		<div class="collapse navbar-collapse" id="collapse_navbar">
 			<ul class = "nav navbar-nav" id = "id_navbar_ttcontrol">
-				<li><a href = "#" id = "id_navbar_add"><span class = "glyphicon glyphicon-plus"></span> add</a></li>
-				<li><a href = "#" id = "id_navbar_view"><span class = "glyphicon glyphicon-search"></span> view/ generate</a></li>
-				<li><a href = "#" id = "id_navbar_categorise"><span class = "glyphicon glyphicon-tags"></span> categorise</a></li>
+				<li><a href = "/add" id = "id_navbar_add"><span class = "glyphicon glyphicon-plus"></span> add</a></li>
+				<li><a href = "/view" id = "id_navbar_view"><span class = "glyphicon glyphicon-search"></span> view/ generate</a></li>
+				<li><a href = "/categorise" id = "id_navbar_categorise"><span class = "glyphicon glyphicon-tags"></span> categorise</a></li>
 			</ul>
 			<ul class = "nav navbar-nav navbar-right">
 				<!--<li><a href = "#" id = "nav_students">Students Profiles</a></li>-->
-				<li><a href = "#" id = "nav_navbar_logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+				<li><a href = "/about" id = "id_navbar_about"><span class = "glyphicon glyphicon-tint"></span> about</a></li>
+				<li><a href = "/logout" id = "id_navbar_logout"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
 			</ul>
 		</div>
 	</nav>

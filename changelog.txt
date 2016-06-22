@@ -7,12 +7,19 @@ Known issues:
 Future updates:
 - implement pasting of image from clipboard
 - generate printable PDF
-- swap out button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random questions
+- implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
 - implement login/register/signin via google/FB/etc, moderator status
 - implement moderator approval process of addition/edition of questions
 - implement cold-edit of questions, prior to PDF generation
 - API allowing others to interact with the webapp
 
 Change log
+v0.1.2 - 22/06/2016	- implemented new tag [spaces INTEGER lines|box|blank]
+			- implemented preview/view marks
+			- fixed bug where upon submitting, the more space and less space buttons are reset
+			- minor fix changed the way anchor on navbar functions. so now, middle clicks should work as per normal
+			- added the tooltip in view/generate > option
+			- added about page
+			- fixed potential sql injection exploit
 v0.1.1 - 21/06/2016 - fixed bug:saving question without image crashes the server. bugfix: underscores in filename should now display properly
 v0.1.0 - 15/06/2016 - Initial commit. 

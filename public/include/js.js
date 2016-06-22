@@ -10,6 +10,20 @@ $(document).ready(function(){
 		console.log(e.clipboardData.getData('image/bmp'));
 	})
 	*/
+	/* tooltip for view/generation > option */
+	$('#id_view_glyphicon_select').tooltip({
+		html : 'true',
+		placement : 'right',
+		trigger : 'click',
+		title : '<div class = "text-left">'+
+				'for single question: <br>'+
+				'e.g. 7<br>'+
+				'e.g. 14<br><br>'+
+				'for multiple questions: <br>'+
+				'e.g. 5-16'+
+				'</div>',
+	})
+	
 	/* tooltip for question upload */
 	$('#id_add_glyphicon_how').tooltip({
 		html : 'true',
@@ -19,6 +33,9 @@ $(document).ready(function(){
 				'To include uploaded images:<br>'+
 				'e.g. [imgChem_JPG w=50]<br>'+
 				'e.g. [img2 r=90]<br><br>'+
+				
+				'To add spaces:<br>'+
+				'e.g. [space INTEGER lines|blank|box] <br><br>'+
 				
 				'To format questions or answers:<br>'+
 				'e.g. [mcq MULTIPLE CHOICES]<br>'+
@@ -278,13 +295,6 @@ $(document).ready(function(){
 			})
 	}
 	
-	$('input[type="radio"]').off('change').change(function(){
-		$(this).parent().parent().parent().children('div').children('input')
-			.prop('disabled',true)
-			.val('');
-		$(this).parent().parent().children('input').prop('disabled',false);
-	});
-	
 	/* when .btn is clicked */
 	$('.btn').click(function(){
 		if($(this).attr('id')==undefined||$(this).prop('disabled')==true||$(this).hasClass('disabled')){
@@ -378,14 +388,16 @@ $(document).ready(function(){
 	/* when anchor links are clicked */
 	$('a').click(function(){
 		a_id_split = $(this).attr('id').split('_');
-			console.log(a_id_split[1]);
 		switch(a_id_split[1]){
 			/* when anchors in navbar is clicked */
+			case 'about':
+				return true;
+			break;
 			case 'navbar':
-				if(a_id_split[2]=='home'){
-					window.location.href = '/';
+				if($(this).attr('id')=='id_navbar_logout'){
+					info_modal('In the live version of the webapp, you will be able to login/logout.');
 				}else{
-					window.location.href = '/'+a_id_split[2];
+					return true;
 				}
 			break;
 			case 'view':
@@ -437,6 +449,14 @@ $(document).ready(function(){
 		})
 	}
 	
+	$('#id_core_input_marks').keyup(function(){
+		if($(this).val()==''||!$.isNumeric($(this).val())){
+			
+		}else{
+			$('#id_core_div_previewmark h4').html($(this).val());
+		}
+	})
+	
 	/* preview functionality */
 	$('#id_core_textarea_qn,#id_core_mixed_space_num').off('keyup').keyup(function(){
 		if($('#id_core_textarea_qn').val()==''){
@@ -445,7 +465,16 @@ $(document).ready(function(){
 			if($('#id_core_well_qn').hasClass('hidden')){
 				$('#id_core_well_qn')
 					.removeClass('hidden')
-					.html('<div class = "row"><div class = "col-md-2"><h4>5.</h4></div><div class = "col-md-9" id = "id_core_div_previewbody"><h4></h4><div class = "row" id = "id_add_div_previewspaces"></div></div></div>');
+					.html(
+					'<div class = "row">'+
+						'<div class = "col-md-2">'+
+							'<h4>5.</h4>'+
+						'</div>'+
+						'<div class = "col-md-9" id = "id_core_div_previewbody"><h4></h4>'+
+							'<div class = "row" id = "id_add_div_previewspaces"></div>'+
+						'</div>'+
+						'<div class = "col-md-1" id = "id_core_div_previewmark"><strong><h4></h4></strong></div>'+
+					'</div>');
 			}
 			$('#id_core_div_previewbody h4').html(parsing_preview($('#id_core_textarea_qn').val(),null));
 			
@@ -528,17 +557,22 @@ function viewoption(){
 		$('.btn-option.disabled').removeClass('disabled');
 	});
 	
-	$('#id_view_modal_option .btn').off('click').click(function(){
-		if($(this).hasClass('btn-primary')){
-			if($('input:checked').val()=='all'){
-				var outputString = $('input:checked').val();
-			}else{
-				var outputString = $('input:checked').val() + ' : ' + $('input:checked').parent().next().val();
-			}
-			$('.btn-option.disabled').parent().prev().children('input').val(outputString);
+	$('#id_view_modal_option').find('input').off('change').on('change',function(){
+		
+		if($(this).prop('type')=='radio'){
+			$(this).parent().parent().parent().children('div').children('input')
+				.prop('disabled',true)
+				.val('');
+			$(this).parent().parent().children('input').prop('disabled',false);
 		}
-		$('#id_view_modal_option').modal('hide');
-	});
+		
+		if($('input:checked').val()=='all'){
+			var outputString = $('input:checked').val();
+		}else{
+			var outputString = $('input:checked').val() + ' : ' + $('input:checked').parent().next().val();
+		}
+		$('.btn-option.disabled').parent().prev().children('input').val(outputString);
+	})
 	
 	$('#id_view_modal_option').modal('show');
 }
@@ -758,13 +792,15 @@ function append_one(counter,target,json){
 		'<div class = "row id_sync_active">'+
 			'<div class = "col-md-1 col-md-offset-1"><h4>'+counter+'.</h4>'+
 			'</div>'+
-			'<div class = "col-md-9" id = "id_view_div_qncontainer"><h4></h4>'+
+			'<div class = "col-md-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
 			'</div>'+
+			'<div class = "col-md-offset-1 col-md-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
 	target.append(qn_container);
 	$('.id_sync_active').find('#id_view_div_qncontainer').children('h4').html(parsing_preview(json.question,json.hashed_id));
 	append_spaces($('.id_sync_active #id_view_div_spaces'),json.space+'_1.blank');
+	$('.id_sync_active #id_view_div_mark').find('h4').html(json.mark);
 	$('.id_sync_active').removeClass('id_sync_active');
 }
 
@@ -903,6 +939,11 @@ function addcurriculum(){
 		if(c.which!=1){
 			return false;
 		}else{
+			if(/^[a-zA-Z0-9\w]*$/.test($('#id_modal_input_input').val())==false){
+				info_modal('New curriculum name must only contain letters, numbers or underscores');
+				$('#id_modal_input_input').parent().parent().addClass('has-error');
+				return false;
+			}
 			/* add new cirriculum */
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
 				if(o=='New curriculum created!'){
@@ -921,6 +962,12 @@ function addcurriculum(){
 	
 	$('#id_core_modal').off('keypress').on('keypress',function(k){
 		if(k.which==13){
+			if(/^[a-zA-Z0-9\w]*$/.test($('#id_modal_input_input').val())==false){
+				info_modal('New curriculum name must only contain letters, numbers or underscores');
+				$('#id_modal_input_input').parent().parent().addClass('has-error');
+				return false;
+			}
+			/* add new cirriculum */
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
 				if(o=='New curriculum created!'){
 					info_modal(o);
@@ -932,7 +979,7 @@ function addcurriculum(){
 					info_modal(o);
 				}
 			});
-			return false;			
+			return false;		
 		}
 	})
 }
@@ -966,7 +1013,13 @@ function parsing_preview(i,h_id){
 		return s;
 	});
 	
-	return l;
+	var m = l.replace(/\[space .*?\]/g,function(s){
+		s = s.replace(/\[space |\]/g,'');
+		ssplit = s.split(' ');
+		return parsing_space(ssplit[0],ssplit[1]);
+	})
+	
+	return m;
 }
 
 function parsing_mcq(i,s){
@@ -998,6 +1051,18 @@ function parsing_img(i,h_id){
 	}else{
 		return returnstring;
 	}
+	return returnstring;
+}
+
+function parsing_space(num,type){
+	if(!$.isNumeric(num)||(type!='lines'&&type!='blank'&&type!='box')){
+		return '';
+	}
+	var returnstring = '<div class = "row">';
+	for(var j=0;j<num;j++){
+		returnstring += '<div class = "col-md-12 spaces_'+type+'"><h4>&nbsp;</h4></div>';
+	}
+	returnstring +='</div>';
 	return returnstring;
 }
 
@@ -1206,7 +1271,6 @@ function adddp(i){
 					$('#id_core_input_dp').val(json['value'].split(' ')[0]);
 					$('#id_core_modal_dp').modal('hide');
 					$('#id_core_modal').modal('hide');
-					info_modal('New dot point saved!');
 				}else{
 					info_modal(o);
 				}
@@ -1224,7 +1288,7 @@ function adddp(i){
 				if(o=='success'){
 					$('#id_core_input_dp').val(json['value'].split(' ')[0]);
 					$('#id_core_modal_dp').modal('hide');
-					info_modal('New dot point saved!');
+					$('#id_core_modal').modal('hide');
 				}else{
 					info_modal(o);
 				}
@@ -1408,12 +1472,17 @@ function addsubmit(){
 		'space'		:space,
 		'mark'		:$('#id_core_input_marks').val()
 		}
+		
+	$('#id_core_input_addsubmit').addClass('disabled');
+	
 	socket.emit('add submit',json,function(o){
 		
 		if(o!='Addition of question successful!'){
 			info_modal('Addition unsuccessful. Contact a system administrator.');
 			return;
 		}
+		
+		$('#id_core_input_addsubmit').removeClass('disabled');
 		
 		/* empty img tank after submission is complete */
 		$('.imgtank').empty();
@@ -1438,10 +1507,11 @@ function addsubmit(){
 			$('#id_core_mixed_space_num').val('');
 			$('#id_core_mixed_space_type').val('lines');
 			$('#id_add_formgroup_spaces .row:not(:first-child)').remove();
+			$('#id_add_btn_lessspace').addClass('disabled');
+			$('#id_add_btn_morespace').removeClass('disabled');
 			
 			/* resetting suggested marks */
 			$('#id_core_input_marks').val('');
-			
 			
 			new_hashedid();
 			
@@ -1458,6 +1528,8 @@ function addsubmit(){
 					$('#id_core_mixed_space_num').val('');
 					$('#id_core_mixed_space_type').val('lines');
 					$('#id_add_formgroup_spaces .row:not(:first-child)').remove();
+					$('#id_add_btn_lessspace').addClass('disabled');
+					$('#id_add_btn_morespace').removeClass('disabled');
 					
 					/* resetting suggested marks */
 					$('#id_core_input_marks').val('');

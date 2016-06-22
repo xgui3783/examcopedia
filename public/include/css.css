@@ -22,6 +22,11 @@ border:none;
 width:200px;
 }
 
+#id_view_glyphicon_select:hover
+{
+cursor:pointer;
+}
+
 #id_add_glyphicon_how:hover
 {
 cursor:pointer;
