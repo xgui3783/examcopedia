@@ -20,6 +20,7 @@ v0.1.2 - 22/06/2016	- implemented new tag [spaces INTEGER lines|box|blank]
 			- minor fix changed the way anchor on navbar functions. so now, middle clicks should work as per normal
 			- added the tooltip in view/generate > option
 			- added about page
+			- added guard against double submit
 			- fixed potential sql injection exploit
 v0.1.1 - 21/06/2016 - fixed bug:saving question without image crashes the server. bugfix: underscores in filename should now display properly
 v0.1.0 - 15/06/2016 - Initial commit. 
