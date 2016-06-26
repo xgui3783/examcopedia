@@ -736,15 +736,28 @@ function viewgo(){
 	
 }
 
+/* shuffle array */
+/* http://stackoverflow.com/a/12646864/6059235 */
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+
 /* according to mode and length, append row units to appropriate targets */
 function view_append_preview(mode, length, target, row){
 	switch (mode){
 		case 'random':
 			var counter = 1;
+			var randomArray = shuffleArray(row);
 			do{
-				append_one(counter,target,row[random(counter)%(row.length)]);
+				append_one(counter,target,row[counter-1]);
 				counter ++;
-			}while(counter - 1 < length)
+			}while(counter - 1 < length && counter < row.length)
 		break;
 		case 'all':
 			for (var i=0;i<row.length;i++){
@@ -947,7 +960,6 @@ function addcurriculum(){
 			/* add new cirriculum */
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
 				if(o=='New curriculum created!'){
-					info_modal(o);
 					reset_dp();
 					modal_ok();
 				}else if(o.code=='ER_TABLE_EXISTS_ERROR'){
@@ -970,7 +982,6 @@ function addcurriculum(){
 			/* add new cirriculum */
 			socket.emit('add new curriculum',$('#id_modal_input_input').val(),function(o){
 				if(o=='New curriculum created!'){
-					info_modal(o);
 					reset_dp();
 					modal_ok();
 				}else if(o.code=='ER_TABLE_EXISTS_ERROR'){

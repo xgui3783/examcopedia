@@ -2,7 +2,6 @@ Known issues:
 - filename unescaped
 - uploading image with same filename will overwrite the original
 - potential vulnerability via uploaded image
-- view/generate > random repeats questions
 
 Future updates:
 - implement pasting of image from clipboard
@@ -14,6 +13,8 @@ Future updates:
 - API allowing others to interact with the webapp
 
 Change log
+v0.1.3 - 26/06/2016 - fixed random repeats questions. Now if number of random questions requested are more than available questions, only the max number of questions will be shown.
+`			- added background
 v0.1.2 - 22/06/2016	- implemented new tag [spaces INTEGER lines|box|blank]
 			- implemented preview/view marks
 			- fixed bug where upon submitting, the more space and less space buttons are reset
