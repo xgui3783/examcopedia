@@ -3,6 +3,36 @@ body
 background-color:#fcfcfc;
 }
 
+.imgcontainer img
+{
+visibility:hidden;
+}
+
+.imgcontainer
+{
+display:inline-block;
+}
+
+	.imgcontainer:hover
+	{
+	cursor:pointer;
+}
+
+#id_login_img_googlesignin
+{
+background: url('signinwithgoogle.png') no-repeat;
+}
+
+	#id_login_img_googlesignin:hover
+	{
+	background: url('signinwithgooglehover.png') no-repeat;
+	}
+
+#id_login_img_facebooksignin
+{
+background: url('signinwithfacebook.png') no-repeat;
+}
+
 .jumbotron
 {
 position:absolute;

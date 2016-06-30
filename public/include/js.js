@@ -395,6 +395,7 @@ $(document).ready(function(){
 			break;
 			case 'navbar':
 				if($(this).attr('id')=='id_navbar_logout'){
+					return true;
 					info_modal('In the live version of the webapp, you will be able to login/logout.');
 				}else{
 					return true;

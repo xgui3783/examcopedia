@@ -11,6 +11,8 @@ var multer = require('multer');
 var gm = require('gm').subClass({imageMagick:true})
 var passport = require('passport');
 var localStrategy = require('passport-local').Strategy;
+var googleStrategy = require('passport-google-oauth').OAuth2Strategy;
+var facebookStrategy = require('passport-facebook').Strategy;
 var flash = require('connect-flash');
 var bodyParser = require('body-parser');
 var session = require('express-session');
@@ -19,7 +21,7 @@ var cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts'}));
+app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts',cookie:{maxAge : 86400000}}));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -717,22 +719,114 @@ passport.use('local',new localStrategy(
 		}else{
 			return done(null, false, {message : 'Incorrect username or password!'});
 		}
-}));
+	}
+));
+
+/* login with facebook */
+
+passport.use('facebookAuth',new facebookStrategy({
+	'clientID' : '148560108885548',
+	'clientSecret' : '046bec94bef4180776b5b630663f9020',
+	'callbackURL' : '/auth/facebook/callback',
+	'profileFields' : ['id', 'emails', 'name']},
+	function(accessToken, refreshToken, profile, done){
+		thirdpartylogin('facebook',profile,accessToken,function(user){
+			return done(null,user);
+		})
+	}
+))
+
+/* login with google */
+passport.use('googleAuth',new googleStrategy({
+	'clientID' : '151214178438-15sjnpj6qb0p49cn59j2aaqamjqoh3s0.apps.googleusercontent.com',
+	'clientSecret' : 'nY5MQYeyZVC24eRmMPYfcrZv',
+	'callbackURL' : '/auth/google/callback'},function (token,tokenSecret, profile, done){
+		thirdpartylogin('google',profile,token,function(user){
+			return done(null,user);
+		})
+		/*
+		console.log('profile.id '+profile.id);
+		console.log('token '+token);
+		console.log('profile.displayname '+profile.displayName);
+		console.log('profile.id '+profile.emails[0].value);
+		*/
+	}
+	
+))
 
 passport.serializeUser(function(user,done){
-	done(null,'123testingtesting123');
+	done(null,user.email);
 })
 
-passport.deserializeUser(function(id,done){
-	done(null,'panda');
+passport.deserializeUser(function(sessionID,done){
+	connection.query('SELECT displayName, admin,email, sessionID FROM user_db WHERE email = ?;',sessionID,function(e,r){
+		if(e){
+			return done(e);
+		}else{
+			if(r.length==0){
+				return done(null,null);
+			}else{
+				return done(null,r[0]);
+			}
+		}
+	})
 })
 
 app.use(express.static('public'));
 
-function checkAuth(req,res,next){
+function thirdpartylogin(mode,profile,token,callback){
+	/* callback(user) */
+	/* define the items to be stored in user_db */
+	var name;
+	var email;
+	var id;
+	var passtoken;
+	var salt = sha256(String(Date.now())); /* may not be necessary if already has an account */
+	var passtoken;
+	var sessionID = sha256(String(Date.now()));
 	
+	
+	switch(mode){
+		case 'google':
+			name = profile.displayName;
+			email = profile.emails[0].value;
+			id = profile.id;
+			passtoken = sha256(token+salt);
+		break;
+		case 'facebook':
+			name = profile.name.givenName + ' ' + profile.name.familyName;
+			email = profile.emails[0].value;
+			id = profile.id;
+			passtoken = sha256(token+salt);
+		break;
+		default:
+		break;
+	}
+	
+	connection.query('SELECT displayName, admin, email, sessionID FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
+		if(e){
+			callback(null);
+		}else{
+			if(r.length==0){
+				/* new login */
+				connection.query('INSERT INTO user_db (authMethod, authID, displayName, email, salt, passtoken, sessionID, admin) VALUES (?,?,?,?,?,?,?,0)',[mode,id, name,email,salt,passtoken,sessionID,0],function(e1,r1){
+					if(e1){
+						callback(null);
+					}else{
+						var user = {'name':name,'admin':0,'sessionID':sessionID};
+						callback(user);
+					}
+				})
+			}else{
+				callback(r[0]);
+			}
+		}
+	})
+}
+
+function checkAuth(req,res,next){
 	/* free pass. comment to add password protection */
-	return next();
+	//return next();
 	
 	if(!req.user){
 		res.redirect('/login');
@@ -741,19 +835,45 @@ function checkAuth(req,res,next){
 	}
 }
 
-/*
-app.post('/logging',function(req,res){
-	console.log('logging');
-	passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true})
-})
-*/
-app.post('/logging',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
+/* routes auth with fb */
+app.get('/auth/facebook',passport.authenticate('facebookAuth',{scope : 'email'}));
+app.get('/auth/facebook/callback',passport.authenticate('facebookAuth',{successRedirect : '/',failureRedirect : '/login'}));
 
+/* routes auth local */
+app.post('/logging',function(req,res){
+	passport.authenticate('local',
+	{successRedirect : '/', failureRedirect : '/login', failureFlash : true})
+})
+app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
+
+/* toues auth google */
+app.get('/auth/google',passport.authenticate('googleAuth',{scope : ['profile','email']}));
+app.get('/auth/google/callback', 
+	passport.authenticate('googleAuth',{failureRedirect : '/login'}),
+	function(req,res){
+		res.redirect('/')
+	})
+
+/* send login page */
 app.get('/login',function(req,res){
 	if(!req.user){
 		res.sendfile('login.html');
 	}else{
 		res.redirect('/');
+	}
+})
+
+connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "user_db"',function(e,r){
+	if(e){
+		catch_error(e);
+	}else if(r.length==0){
+		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+			if(e1){
+				
+			}else{
+				
+			}
+		})
 	}
 })
 

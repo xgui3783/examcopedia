@@ -13,6 +13,7 @@ Future updates:
 - API allowing others to interact with the webapp
 
 Change log
+v0.1.4 - 30/06/2016 - added authentication (google + facebook)
 v0.1.3 - 26/06/2016 - fixed random repeats questions. Now if number of random questions requested are more than available questions, only the max number of questions will be shown.
 `			- added background
 v0.1.2 - 22/06/2016	- implemented new tag [spaces INTEGER lines|box|blank]
