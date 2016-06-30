@@ -791,6 +791,7 @@ function thirdpartylogin(mode,profile,token,callback){
 	var passtoken;
 	var sessionID = sha256(String(Date.now()));
 	
+	console.log('pass1');
 	
 	switch(mode){
 		case 'google':
@@ -809,14 +810,18 @@ function thirdpartylogin(mode,profile,token,callback){
 		break;
 	}
 	
+	console.log('pass2');
+	
 	connection.query('SELECT displayName, admin, email, sessionID FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
 		if(e){
+			catch_error(e);
 			callback(null);
 		}else{
 			if(r.length==0){
 				/* new login */
 				connection.query('INSERT INTO user_db (authMethod, authID, displayName, email, salt, passtoken, sessionID, admin) VALUES (?,?,?,?,?,?,?,0)',[mode,id, name,email,salt,passtoken,sessionID,0],function(e1,r1){
 					if(e1){
+						catch_error(e1);
 						callback(null);
 					}else{
 						var user = {'email':email,'name':name,'admin':0,'sessionID':sessionID};
