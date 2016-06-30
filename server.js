@@ -715,7 +715,8 @@ passport.use('local',new localStrategy(
 	function(username,password,done){
 		/* temporary username and password */
 		if(username=='panda'&&password=='pandaeatsbamboo'){
-			return done(null, username);
+			var user = {'email':'panda@pandamakes.com.au','name':'Panda Makes','admin':0,'sessionID':'no sessionID'};
+			return done(null, user);
 		}else{
 			return done(null, false, {message : 'Incorrect username or password!'});
 		}
@@ -725,8 +726,8 @@ passport.use('local',new localStrategy(
 /* login with facebook */
 
 passport.use('facebookAuth',new facebookStrategy({
-	'clientID' : '148560108885548',
-	'clientSecret' : '046bec94bef4180776b5b630663f9020',
+	'clientID' : process.env.FACEBOOK_ID || '148560108885548',
+	'clientSecret' : process.env.FACEBOOK_SECRET || '046bec94bef4180776b5b630663f9020',
 	'callbackURL' : '/auth/facebook/callback',
 	'profileFields' : ['id', 'emails', 'name']},
 	function(accessToken, refreshToken, profile, done){
@@ -758,8 +759,8 @@ passport.serializeUser(function(user,done){
 	done(null,user.email);
 })
 
-passport.deserializeUser(function(sessionID,done){
-	connection.query('SELECT displayName, admin,email, sessionID FROM user_db WHERE email = ?;',sessionID,function(e,r){
+passport.deserializeUser(function(email,done){
+	connection.query('SELECT displayName, admin,email, sessionID FROM user_db WHERE email = ?;',email,function(e,r){
 		if(e){
 			return done(e);
 		}else{
@@ -775,6 +776,9 @@ passport.deserializeUser(function(sessionID,done){
 app.use(express.static('public'));
 
 function thirdpartylogin(mode,profile,token,callback){
+	
+	console.log('thirdpartylogin called');
+	
 	/* callback(user) */
 	/* define the items to be stored in user_db */
 	var name;
@@ -813,7 +817,7 @@ function thirdpartylogin(mode,profile,token,callback){
 					if(e1){
 						callback(null);
 					}else{
-						var user = {'name':name,'admin':0,'sessionID':sessionID};
+						var user = {'email':email,'name':name,'admin':0,'sessionID':sessionID};
 						callback(user);
 					}
 				})
