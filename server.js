@@ -778,6 +778,8 @@ app.use(express.static('public'));
 function thirdpartylogin(mode,profile,token,callback){
 	
 	console.log('thirdpartylogin called');
+	console.log(profile);
+	
 	
 	/* callback(user) */
 	/* define the items to be stored in user_db */
