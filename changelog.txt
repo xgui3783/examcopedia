@@ -13,6 +13,7 @@ Future updates:
 - API allowing others to interact with the webapp
 
 Change log
+v0.1.5 - 01/07/2016 - redesigned login page. added random question functionality
 v0.1.4 - 30/06/2016 - added authentication (google + facebook)
 v0.1.3 - 26/06/2016 - fixed random repeats questions. Now if number of random questions requested are more than available questions, only the max number of questions will be shown.
 `			- added background

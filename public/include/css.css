@@ -3,6 +3,21 @@ body
 background-color:#fcfcfc;
 }
 
+#id_login_nav_randomQuestionNav
+{
+min-height:0;
+}
+
+#id_login_panelbody_randomQuestionPanelBody
+{
+padding:0;
+}
+
+#id_login_panelheading_loginpanelheading:hover
+{
+//cursor:pointer
+}
+
 .imgcontainer img
 {
 visibility:hidden;

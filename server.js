@@ -777,10 +777,6 @@ app.use(express.static('public'));
 
 function thirdpartylogin(mode,profile,token,callback){
 	
-	console.log('thirdpartylogin called');
-	console.log(profile);
-	
-	
 	/* callback(user) */
 	/* define the items to be stored in user_db */
 	var name;
@@ -790,8 +786,6 @@ function thirdpartylogin(mode,profile,token,callback){
 	var salt = sha256(String(Date.now())); /* may not be necessary if already has an account */
 	var passtoken;
 	var sessionID = sha256(String(Date.now()));
-	
-	console.log('pass1');
 	
 	switch(mode){
 		case 'google':
@@ -809,8 +803,6 @@ function thirdpartylogin(mode,profile,token,callback){
 		default:
 		break;
 	}
-	
-	console.log('pass2');
 	
 	connection.query('SELECT displayName, admin, email, sessionID FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
 		if(e){
@@ -835,9 +827,12 @@ function thirdpartylogin(mode,profile,token,callback){
 	})
 }
 
+function restricting_access(socket, req, res, callback){
+	
+}
+
 function checkAuth(req,res,next){
 	/* free pass. comment to add password protection */
-	//return next();
 	
 	if(!req.user){
 		res.redirect('/login');
@@ -874,11 +869,12 @@ app.get('/login',function(req,res){
 	}
 })
 
+/* creates user_db table */
 connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "user_db"',function(e,r){
 	if(e){
 		catch_error(e);
 	}else if(r.length==0){
-		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL,`sessionID` varchar(64),`admin` int(1) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				
 			}else{
@@ -908,7 +904,7 @@ app.get('/mobileupload',function(req,res){
 	res.sendfile('mobileupload.html');
 });
 
-app.get('/img/*',checkAuth,function(req,res,next){
+app.get('/img/*',function(req,res){
 	
 	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
@@ -919,12 +915,32 @@ app.get('/img/*',checkAuth,function(req,res,next){
 	})
 })
 
+/* ping question for login random question or later on for speciality use (api etc?) */
+app.post('/pingQ',function(req,res){
+	var subject = req.body.subject;
+	var mode = req.body.mode;
+	connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE subject = ?;',subject,function(e,r){
+		if(e){
+			catch_error(e);
+		}else{
+			switch (mode){
+				case 'random':
+					var choose = Math.floor(Math.random()*r.length);
+					res.send(r[choose]);
+				break;
+				default:
+				break;
+			}
+		}
+	})
+})
+
 app.get('/logout',function(req,res){
 	req.logout();
 	res.redirect('/login');
 })
 
-app.get('/about',function(req,res){
+app.get('/about',checkAuth,function(req,res){
 	res.sendfile('about.html');
 })
 
