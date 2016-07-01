@@ -917,9 +917,9 @@ app.get('/img/*',function(req,res){
 
 /* ping question for login random question or later on for speciality use (api etc?) */
 app.post('/pingQ',function(req,res){
-	var subject = req.body.subject;
+	var subject = req.body.subject == '' ? '%' : req.body.subject;
 	var mode = req.body.mode;
-	connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE subject = ?;',subject,function(e,r){
+	connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE subject LIKE "%";',function(e,r){
 		if(e){
 			catch_error(e);
 		}else{
