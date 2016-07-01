@@ -12,7 +12,33 @@ $(document).ready(function(){
 		$('.page').css('min-height',$(window).height());
 	});
 	
-	queryRandomQ();
+	$('#id_login_btn_playpause').click(function(){
+		if($('#id_login_btn_playpause span').first().hasClass('hidden')){
+			if($('#id_login_nav_randomQuestionNavBg').is(':animated')){
+				$('#id_login_nav_randomQuestionNavBg').stop();
+				$('#id_login_btn_playpause span').toggleClass('hidden');
+			}
+		}else{
+			tickflag=false;
+			tick();
+			$('#id_login_btn_playpause span').toggleClass('hidden');
+		}
+	});
+	
+	$('#id_login_btn_next').click(function(){
+		if($('#id_login_btn_playpause span').last().hasClass('hidden')||$('#id_login_nav_randomQuestionNavBg').is(':animated')){	
+			$('#id_login_btn_playpause span').first().addClass('hidden');
+			$('#id_login_btn_playpause span').last().removeClass('hidden');
+			$('#id_login_nav_randomQuestionNavBg').stop();
+			$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
+				$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
+				queryRandomQ('recur');
+			})
+		}
+	})
+	
+	queryRandomQ('start');
+	tick();
 });
 
 
@@ -94,6 +120,43 @@ function parsing_space(num,type){
 	return returnstring;
 }
 
+function concatstyle(i,p){
+	
+	var r = '';
+	var concatstring = '';
+	
+	switch(p[0]){
+		case 'r':
+			if(!$.isNumeric(p[1])){
+				return i;
+			}else{
+				concatstring = 
+					'-webkit-transform: rotate('+p[1]+'deg);'+
+					'-moz-transform: rotate('+p[1]+'deg);'+
+					'-o-transform: rotate('+p[1]+'deg);'+
+					'-ms-transform: rotate('+p[1]+'deg);'+ 
+					'transform: rotate('+p[1]+'deg);'
+			}
+		break;
+		case 'w':
+			if(!$.isNumeric(p[1])){
+				return i;
+			}else{
+				concatstring = 'width:'+p[1]+'%'
+			}
+		break;
+		default:
+		break;
+	}
+	
+	if(i.indexOf('style="')==-1){
+		r=i.slice(0,i.length-1).concat(' style="'+concatstring+'">')
+	}else{
+		r=i.replace(' style="',' style="'+concatstring);
+	}
+	
+	return r;
+}
 
 /* escape function */
 var entityMap = {
@@ -114,8 +177,22 @@ function escapeHtml(i){
 	});
 }
 
+var tickflag = false;
+function tick(){
+	if(tickflag){
+		return;
+	}
+	tickflag = true;
+	var timeRemaining = parseInt($('#id_login_nav_randomQuestionNavBg').css('width'))/parseInt($('#id_login_nav_randomQuestionNav').css('width'))*6000;
+	$('#id_login_nav_randomQuestionNavBg').animate({'width':0},timeRemaining,'linear',function(){
+		$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
+			$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
+			queryRandomQ('recur');
+		})
+	})
+}
 
-function queryRandomQ(){
+function queryRandomQ(i){
 	var json = {
 		'mode':'random',
 		'subject':'',
@@ -126,7 +203,14 @@ function queryRandomQ(){
 		url : 'pingQ',
 		data : json,
 		success : function(o){
-			$('#id_login_div_randomQuestionRenderer').html(parsing_preview(o.question,o.hashed_id))
+			$('#id_login_span_subjectIndicator').html(o.subject);
+			$('#id_login_div_randomQuestionRenderer').html(parsing_preview(o.question,o.hashed_id));
+			tickflag=false;
+			$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'1.0'},400,function(){
+				if(i!='start'){
+					tick();
+				}
+			})
 		}
 	})
 }

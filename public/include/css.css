@@ -3,9 +3,26 @@ body
 background-color:#fcfcfc;
 }
 
+#id_login_div_randomQuestionRenderer
+{
+padding-top:20px;
+padding-bottom:70px;
+}
+
+#id_login_nav_randomQuestionNavBg
+{
+height:100%;
+width:100%;
+background-color:#eee;
+position:absolute;
+right:0;
+top:0;
+}
+
 #id_login_nav_randomQuestionNav
 {
 min-height:0;
+position:relative;
 }
 
 #id_login_panelbody_randomQuestionPanelBody
