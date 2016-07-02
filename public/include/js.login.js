@@ -39,7 +39,6 @@ $(document).ready(function(){
 	})
 	
 	queryRandomQ('start');
-	tick();
 });
 
 
@@ -192,10 +191,8 @@ function tick(){
 	var timeRemaining = parseInt($('#id_login_nav_randomQuestionNavBg').css('width'))/parseInt($('#id_login_nav_randomQuestionNav').css('width'))*10000;
 	$('#id_login_nav_randomQuestionNavBg').animate({'width':0},timeRemaining,'linear',function(){
 		$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
-			if($(this).attr('id')=='id_login_div_randomQuestionRenderer'){
-				$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
-				queryRandomQ('recur');
-			}
+			$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
+			queryRandomQ('recur');
 		})
 	})
 }
@@ -220,9 +217,8 @@ function queryRandomQ(i){
 			$('#id_login_div_randomQuestionRenderer').html(parsing_preview(o.question,o.hashed_id));
 			tickflag=false;
 			$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'1.0'},400,function(){
-				if(i!='start'){
-					tick();
-				}
+				queryflag = false;
+				tick();
 			})
 		}
 	})
