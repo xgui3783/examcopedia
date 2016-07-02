@@ -3,6 +3,12 @@ body
 background-color:#fcfcfc;
 }
 
+#id_login_span_subjectIndicator
+{
+padding-left:30px;
+font-weight:600;
+}
+
 #id_login_div_randomQuestionRenderer
 {
 padding-top:20px;
