@@ -21,7 +21,7 @@ app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
 app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
 app.set('mysqldb','examcopedia');
-
+ 
 var MySQLStore = require('connect-mysql')(express);
 var options = {
 	config: {
