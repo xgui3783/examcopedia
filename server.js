@@ -16,16 +16,43 @@ var facebookStrategy = require('passport-facebook').Strategy;
 var flash = require('connect-flash');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-var cookieParser = require('cookie-parser');
 
+app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
+app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
+app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
+app.set('mysqldb','examcopedia');
 
-app.use(cookieParser());
+var MySQLStore = require('connect-mysql')(express);
+var options = {
+	config: {
+		user : app.get('mysqluser'),
+		password : app.get('mysqlpswd'),
+		database : app.get('mysqldb'),
+		}
+	};
+	
+var passportSocketIO = require('passport.socketio');
+
+var sessionStore = new MySQLStore(options);
+
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts',cookie:{maxAge : 86400000}}));
+app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts', store : sessionStore ,cookie:{maxAge : 86400000}}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
+
+io.use(passportSocketIO.authorize({
+	secret : 'pandaeatspeanuts',
+	store : sessionStore,
+	success : function(obj,accept){
+		/* funciton to call when passport socketio auth succeeds. needs to call accept(); */
+		accept();
+		},
+	fail : function(obj){
+		/* function to call when passport socket io auth fails for whatever reason */
+		},
+}))
 
 app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
@@ -128,33 +155,6 @@ function altCostume(dir,filename,callback){
 			});
 		}
 	});
-	
-	/*
-	fs.mkdir(dir+'alt1/',function(e){
-		if(e && e.code != 'EEXIST'){
-			catch_error(e);
-		}
-		gm(dir+filename).edge(1).negative().write(dir+'alt1/'+filename,function(e1){
-			if(e1){
-				catch_error(e1);
-			}else{
-				fs.mkdir(dir+'alt2/',function(e2){
-					if(e2 && e2.code != 'EEXIST'){
-						catch_error(e2);
-					}
-					gm(dir+filename).edge(2).negative().write(dir+'alt2/'+filename,function(e3){
-						if(e3){
-							catch_error(e3);
-						}else{
-							callback('done');
-						}
-					});
-				})
-			}
-		});
-		
-	})
-	*/
 }
 
 /* when files are uploaded, they are stored on a temporary storage loc, and then they are resized and written to the permanent loc */
@@ -408,19 +408,6 @@ app.post('/mobileuploadphoto',function(req,res){
 									res.send('success');
 								}
 							})
-							
-							/*
-							fs.rename('mobileuploads/' + req.file.originalname, app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.file.originalname,function(e2){
-								if(e2){
-									catch_error(e2);
-								}else{
-									
-									io.sockets.to(req.body.hashedid).emit('mobile upload',req.file.originalname);
-									
-									res.send('success');
-								}
-							});
-							*/
 						}
 					}
 				})
@@ -430,11 +417,6 @@ app.post('/mobileuploadphoto',function(req,res){
 		}
 	});
 });
-
-app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
-app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
-app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
-app.set('mysqldb','examcopedia');
 
 var connection = mysql.createConnection({
 	host	:app.get('mysqlhost'),
@@ -575,21 +557,36 @@ io.on('connection',function(socket){
 	
 	socket.on('add submit',function(i,callback){
 		
+		console.log('add submit log ');
+		console.log(socket.request.user);
+		
 		var r=cleanup(i.hashed_id,i.question,i.answer);
 		var hashedid = r[0];
 		var question = r[1];
 		var answer = r[2];
 		
-		connection.query(
-			'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark) VALUES (?,?,?,?,?,?);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
-				if(e){
-					catch_error(e);
-				}else{
-					callback('Addition of question successful!');
-					
-					/* trash cleaning function here. do the rotation, remove the unneeded photos */
-				}
-			})
+		var json = {
+			'hashedid' : r[0],
+			'question' : r[1],
+			'answer' : r[2]}
+		
+		restricting_access(socket.request.user,'addSubmit',i,null,function(o){
+			
+			if(o){
+				connection.query(
+					'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark) VALUES (?,?,?,?,?,?);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
+						if(e){
+							catch_error(e);
+						}else{
+							callback('Addition of question successful!');
+							
+							/* trash cleaning function here. do the rotation, remove the unneeded photos */
+						}
+					})
+			}else{
+				
+			}
+		});
 	});
 	
 	socket.on('populate select',function(i,callback){
@@ -681,26 +678,6 @@ io.on('connection',function(socket){
 					catch_error(e);
 				}
 			})
-			
-			/*
-			fs.readdir(path,function(e,files){
-				if(e){
-					//catch_error(e);
-					return;
-				}
-				if(files==undefined){
-					console.log('files == undefined');
-					fs.rmdirSync(path);
-					return;
-				}else{
-					files.forEach(function(file,index){
-						var curPath = path + file;
-						fs.unlinkSync(curPath);
-					});
-					fs.rmdirSync(path);
-				}
-			})
-			*/
 		}
 	});
 });
@@ -745,12 +722,6 @@ passport.use('googleAuth',new googleStrategy({
 		thirdpartylogin('google',profile,token,function(user){
 			return done(null,user);
 		})
-		/*
-		console.log('profile.id '+profile.id);
-		console.log('token '+token);
-		console.log('profile.displayname '+profile.displayName);
-		console.log('profile.id '+profile.emails[0].value);
-		*/
 	}
 	
 ))
@@ -827,13 +798,31 @@ function thirdpartylogin(mode,profile,token,callback){
 	})
 }
 
-function restricting_access(socket, req, res, callback){
+function restricting_access(user, mode, json, res, callback){
+	/* actual request should be stored in a txt file or s th */
 	
+	connection.query('INSERT INTO ?? (requester) VALUES (?);',['req_log',user.displayName],function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8');
+		}
+	})
+	
+	/*
+	*/
+	/*
+	http://stackoverflow.com/a/14939404/6059235
+	to retrieve the json object, do:
+	
+	var json = require('./path/filename.json')
+	
+	*/
+	
+	callback(true);
 }
 
 function checkAuth(req,res,next){
-	/* free pass. comment to add password protection */
-	
 	if(!req.user){
 		res.redirect('/login');
 	}else{
@@ -869,6 +858,35 @@ app.get('/login',function(req,res){
 	}
 })
 
+/* making reqlog */
+fs.stat(app.get('persistentDataDir')+'reqlog',function(e,s){
+	if(e){
+		fs.mkdir(app.get('persistentDataDir')+'reqlog',function(e1){
+			if(e1){
+				catch_error(e1);
+			}
+		});
+	}
+})
+
+/* creates req_log table */
+connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "req_log"',function(e,r){
+	if(e){
+		catch_error(e);
+	}else{
+		if(r.length!=0){
+			return;
+		}
+		connection.query('CREATE TABLE `req_log` ( `id` int(16) NOT NULL AUTO_INCREMENT, `requster` varchar(256) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+			if(e1){
+				catch_error(e1);
+			}else{
+				
+			}
+		});
+	}
+})
+
 /* creates user_db table */
 connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "user_db"',function(e,r){
 	if(e){
@@ -876,7 +894,7 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 	}else if(r.length==0){
 		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL,`sessionID` varchar(64),`admin` int(1) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
-				
+				catch_error(e1)
 			}else{
 				
 			}
@@ -889,6 +907,8 @@ app.get('/',checkAuth,function(req,res){
 });
 
 app.get('/add',checkAuth,function(req,res){
+	//console.log(req.sessionID);
+	console.log(req.user);
 	res.sendfile('add.html');
 });
 
@@ -947,6 +967,7 @@ app.get('/about',checkAuth,function(req,res){
 app.get('/changelog',function(res,res){
 	res.sendfile('changelog.txt');
 })
+
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");

@@ -10,6 +10,7 @@ $(document).ready(function(){
 		console.log(e.clipboardData.getData('image/bmp'));
 	})
 	*/
+	
 	/* tooltip for view/generation > option */
 	$('#id_view_glyphicon_select').tooltip({
 		html : 'true',

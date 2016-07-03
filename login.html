@@ -19,7 +19,7 @@
 <div class = "container-fluid">
 	<div class = "row page">
 		<div class = "col-md-12">
-		&nbsp;
+			&nbsp;
 		</div>
 		<div class = "col-md-8 col-md-offset-2">
 			<div class = "panel panel-primary">
@@ -27,7 +27,7 @@
 					<h3>Login</h3>
 				</div>
 				<div class = "panel-body collapse" id = "id_login_panelbody_loginpanelbody">
-					<div class = "col-md-6">
+					<div class = "col-md-6 class_login_div_halflogin">
 						<form class = "form-horizontal" role = "form" action = "/loggingLocal" method = "post">
 							<div class = "form-group">
 								<label class = "col-md-4 control-label" for = "username">Username : </label>
@@ -46,7 +46,7 @@
 							</div>
 						</form>
 					</div>
-					<div class = "col-md-6">
+					<div class = "col-md-6 class_login_div_halflogin">
 						<div class = "text-center">
 							<div class = "imgcontainer" id = "id_login_img_googlesignin">
 								<img src = "include/signinwithgoogle.png">
@@ -67,7 +67,7 @@
 		<div class = "col-md-8 col-md-offset-2">
 			<div class = "panel panel-warning">
 				<div class = "panel-heading text-center">
-					<h3>Random Quiz</h3>
+					<h3>Sampler</h3>
 				</div>
 				<div class = "panel-body" id = "id_login_panelbody_randomQuestionPanelBody">
 					<nav class = "navbar navbar-default" id = "id_login_nav_randomQuestionNav">
@@ -77,24 +77,22 @@
 								<li><h5><span id = "id_login_span_subjectIndicator">Subject</span></h5></li>
 							</ul>
 							
-							<ul class = "nav navbar-nav navbar-right">
+							<ul class = "nav navbar-nav navbar-right hidden-xs">
 								<li><div class = "btn btn-default" id = "id_login_btn_playpause"><span class = "glyphicon glyphicon-play hidden"></span><span class = "glyphicon glyphicon-pause"></span></div></li>
 								<li><div class = "btn btn-default" id = "id_login_btn_next"><span class = "glyphicon glyphicon-step-forward"></span></div></li>
 							</ul>
 						</div>
 					</nav>
-					<h1 class = "col-md-10 col-md-offset-1" id = "id_login_div_randomQuestionRenderer">
-					</h1>
+					<h2 class = "col-md-10 col-md-offset-1" id = "id_login_div_randomQuestionRenderer">
+					</h2>
 				</div>
 			</div>
 		</div>
 	</div>
-	<div class = "row">
-		<div class = "col-md-12">
-		</div>
-	</div>
 	
 	<div class = "row page">
+		<div id = "id_login_div_jumbotron2">
+		</div>
 		<div class = "col-md-12">
 		&nbsp;
 		</div>

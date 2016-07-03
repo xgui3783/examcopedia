@@ -29,7 +29,7 @@ $(document).ready(function(){
 		if($('#id_login_btn_playpause span').last().hasClass('hidden')||$('#id_login_nav_randomQuestionNavBg').is(':animated')){	
 			$('#id_login_btn_playpause span').first().addClass('hidden');
 			$('#id_login_btn_playpause span').last().removeClass('hidden');
-			$('#id_login_nav_randomQuestionNavBg').stop();
+			$('#id_login_nav_randomQuestionNavBg').stop().clearQueue();
 			queryflag = false;
 			$('#id_login_div_randomQuestionRenderer,#id_login_span_subjectIndicator,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
 				$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
@@ -40,7 +40,6 @@ $(document).ready(function(){
 	
 	queryRandomQ('start');
 });
-
 
 /* parsing in [img] tags */
 function parsing_preview(i,h_id){

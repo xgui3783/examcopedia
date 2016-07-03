@@ -3,6 +3,17 @@ body
 background-color:#fcfcfc;
 }
 
+.page
+{
+position:relative;
+}
+
+.class_login_div_halflogin
+{
+padding-top:50px;
+padding-bottom:50px;
+}
+
 #id_login_span_subjectIndicator
 {
 padding-left:30px;
@@ -71,6 +82,25 @@ background: url('signinwithgoogle.png') no-repeat;
 background: url('signinwithfacebook.png') no-repeat;
 }
 
+#id_login_div_jumbotron2
+{
+position:absolute;
+top:0;
+left:0;
+margin:0;
+padding:0;
+display:block;
+background:none;
+width:100%;
+height:100%;
+overflow:hidden;
+z-index:-1;
+opacity:0.2;
+background: url('login_about.jpg') no-repeat;
+background-size:cover;
+background-position:center;
+}
+	
 .jumbotron
 {
 position:absolute;
