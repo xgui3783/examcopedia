@@ -21,40 +21,38 @@ app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
 app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
 app.set('mysqldb','examcopedia');
- /*
-var MySQLStore = require('connect-mysql')(express);
+
+var MySQLStore = require('express-mysql-session')(session);
 var options = {
-	config: {
+		host : app.get('mysqlhost'),
 		user : app.get('mysqluser'),
 		password : app.get('mysqlpswd'),
 		database : app.get('mysqldb'),
-		}
 	};
 	
 var passportSocketIO = require('passport.socketio');
 
 var sessionStore = new MySQLStore(options);
-*/
+
 app.use(bodyParser.urlencoded({extended:true}));
-app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts',cookie:{maxAge : 86400000}}));
+app.use(session({resave:true,saveUninitialized:true,secret : 'pandaeatspeanuts', store : sessionStore ,cookie:{maxAge : 86400000}}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
 
-/*
 io.use(passportSocketIO.authorize({
 	secret : 'pandaeatspeanuts',
 	store : sessionStore,
 	success : function(obj,accept){
-		/* funciton to call when passport socketio auth succeeds. needs to call accept(); 
+		/* funciton to call when passport socketio auth succeeds. needs to call accept(); */
 		accept();
 		},
 	fail : function(obj){
-		/* function to call when passport socket io auth fails for whatever reason 
+		/* function to call when passport socket io auth fails for whatever reason */
 		},
 }))
-*/
+
 app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
 var storage = multer.diskStorage({
