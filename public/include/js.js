@@ -1490,7 +1490,7 @@ function addsubmit(){
 	
 	socket.emit('add submit',json,function(o){
 		
-		if(o!='Addition of question successful!'){
+		if(o!='Addition of question successful!'&&o!='Submission of question received. A moderator will assess the submission ASAP.'){
 			info_modal('Addition unsuccessful. Contact a system administrator.');
 			return;
 		}
@@ -1510,7 +1510,7 @@ function addsubmit(){
 			'lvl'			:$('#id_core_input_dp').val()
 			}
 		if($('#id_core_select_syllabus').val()==''){
-			info_modal('Question added successfully.');
+			info_modal(o);
 			
 			/* resetting hashed id, qs and ans text fields */
 			$('#id_core_input_hashedid').val($.sha256(Date.now()));
@@ -1530,8 +1530,12 @@ function addsubmit(){
 			
 		}else{
 			socket.emit('categorise',json1,function(o1){
-				if(o1=='Categorise successful!'){
-					info_modal('Question added successfully. Categorised into '+json1['target_syl']+' under '+json1['lvl']);
+				if(o1.error){
+					info_modal('Error: '+o1.error);
+					return;
+				}
+				if(o1=='successful!'||o1=='pending approval.'){
+					info_modal(o + ' Categorisationg into '+json1['target_syl']+' under '+json1['lvl']+' '+o1);
 					
 					/* resetting hashed id, qs and ans text fields */
 					$('#id_core_input_hashedid').val($.sha256(Date.now()));

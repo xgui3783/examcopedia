@@ -556,8 +556,7 @@ io.on('connection',function(socket){
 	
 	socket.on('add submit',function(i,callback){
 		
-		console.log('add submit log ');
-		console.log(socket.request.user);
+		/* console.log(socket.request.user); */
 		
 		var r=cleanup(i.hashed_id,i.question,i.answer);
 		var hashedid = r[0];
@@ -569,9 +568,8 @@ io.on('connection',function(socket){
 			'question' : r[1],
 			'answer' : r[2]}
 		
-		restricting_access(socket.request.user,'addSubmit',i,null,function(o){
-			
-			if(o){
+		restricting_access(socket.request.user,'add submit',i,null,function(o){
+			if(o=='true'){
 				connection.query(
 					'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark) VALUES (?,?,?,?,?,?);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
 						if(e){
@@ -583,7 +581,11 @@ io.on('connection',function(socket){
 						}
 					})
 			}else{
-				
+				if(o.error){
+					callback(o);
+				}else{
+					callback('Submission of question received. A moderator will assess the submission ASAP.');
+				}
 			}
 		});
 	});
@@ -649,23 +651,34 @@ io.on('connection',function(socket){
 	});
 	
 	socket.on('categorise',function(i,callback){
-		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e,r){
-			if(e){
-				catch_error(e);
-			}else{
-				if(r.length>0){
-					connection.query('INSERT INTO ?? (f_id,lvl) VALUES (?,?);',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e1,r1){
-						if(e1){
-							catch_error(e1);
+		restricting_access(socket.request.user,'categorise',i,null,function(o){
+			if(o=='true'){
+				connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e,r){
+					if(e){
+						catch_error(e);
+					}else{
+						if(r.length>0){
+							connection.query('INSERT INTO ?? (f_id,lvl) VALUES (?,?);',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e1,r1){
+								if(e1){
+									catch_error(e1);
+								}else{
+									callback('successful!');
+								}
+							})
 						}else{
-							callback('Categorise successful!');
+							callback({'error':'hash id not found'});
+							catch_error('hash id not found.');
 						}
-					})
+					}
+				})
+			}else{
+				if(o.error){
+					callback(o);
 				}else{
-					catch_error('hash id not found.');
+					callback('pending approval.');
 				}
 			}
-		})
+		});
 	});
 	
 	socket.on('disconnect',function(){
@@ -798,22 +811,21 @@ function thirdpartylogin(mode,profile,token,callback){
 }
 
 function restricting_access(user, mode, json, res, callback){
-	/* actual request should be stored in a txt file or s th */
 	
-	//console.log(user);
+	var control = 'true';
+	//var control = 'restricted';
 	
-	connection.query('INSERT INTO ?? (requester) VALUES (?);',['req_log',user.displayName],function(e,r){
+	connection.query('INSERT INTO ?? (requester,mode,notes1) VALUES (?,?,?);',['req_log',user.displayName,mode,control],function(e,r){
 		if(e){
-			catch_error(e)
+			catch_error(e);
+			callback({'error' : e});
 		}else{
 			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8',function(){
-				callback(true);
+				callback(control);
 			});
 		}
 	})
 	
-	/*
-	*/
 	/*
 	http://stackoverflow.com/a/14939404/6059235
 	to retrieve the json object, do:
@@ -879,7 +891,7 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 		if(r.length!=0){
 			return;
 		}
-		connection.query('CREATE TABLE `req_log` ( `id` int(16) NOT NULL AUTO_INCREMENT, `requster` varchar(256) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+		connection.query('CREATE TABLE `req_log` ( `id` int(16) NOT NULL AUTO_INCREMENT, `requester` varchar(256) NOT NULL, `mode` varchar(32) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1);
 			}else{
@@ -909,8 +921,10 @@ app.get('/',checkAuth,function(req,res){
 });
 
 app.get('/add',checkAuth,function(req,res){
-	//console.log(req.sessionID);
-	console.log(req.user);
+	/* 
+	//this stores the logged in user info
+	console.log(req.user); 
+	*/
 	res.sendfile('add.html');
 });
 
