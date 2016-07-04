@@ -800,11 +800,15 @@ function thirdpartylogin(mode,profile,token,callback){
 function restricting_access(user, mode, json, res, callback){
 	/* actual request should be stored in a txt file or s th */
 	
+	//console.log(user);
+	
 	connection.query('INSERT INTO ?? (requester) VALUES (?);',['req_log',user.displayName],function(e,r){
 		if(e){
 			catch_error(e)
 		}else{
-			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8');
+			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8',function(){
+				callback(true);
+			});
 		}
 	})
 	
@@ -818,7 +822,6 @@ function restricting_access(user, mode, json, res, callback){
 	
 	*/
 	
-	callback(true);
 }
 
 function checkAuth(req,res,next){
