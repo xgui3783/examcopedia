@@ -1058,7 +1058,7 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 	if(e){
 		catch_error(e);
 	}else if(r.length==0){
-		connection.query('CREATE TABLE `comment_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `username` varchar(256) NOT NULL, `comment` varchar(8196) NOT NULL, `ref` varchar(64) NOT NULL, `note1` varchar(256) NOT NULL, `note2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+		connection.query('CREATE TABLE `comment_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, `username` varchar(256) NOT NULL, `comment` varchar(8196) NOT NULL, `ref` varchar(64) NOT NULL, `note1` varchar(256) NOT NULL, `note2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1);
 			}else{
