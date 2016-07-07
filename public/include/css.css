@@ -3,6 +3,11 @@ body
 background-color:#fcfcfc;
 }
 
+#id_view_div_preview div.panel-body > div.row
+{
+overflow-x:hidden;
+}
+
 .page
 {
 position:relative;

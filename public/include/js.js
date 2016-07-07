@@ -44,7 +44,7 @@ $(document).ready(function(){
 	})
 	
 	socket.on('receive general chat',function(o){
-		appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell');
+		appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell',true);
 		if(!$('#id_core_well_chatterbox').hasClass('in')){
 			redPill('add','#id_navbar_chatter');
 		}
@@ -52,7 +52,7 @@ $(document).ready(function(){
 	
 	socket.emit('retrieve general chat',function(o){
 		for (var i = 0; i<o.length; i++){
-			appendComment(o[i].username, o[i].comment, o[i].created, '#id_view_well_generalChatWell');
+			appendComment(o[i].username, o[i].comment, o[i].created, '#id_view_well_generalChatWell',false);
 		}
 	})
 	
@@ -837,7 +837,7 @@ function viewgo(){
 				}
 			socket.emit('send comment',json,function(o){
 				if(o.user){
-					appendComment(o.user,comment,'Just nowT.','#id_view_well_comment');
+					appendComment(o.user,comment,'Just nowT.','#id_view_well_comment',true);
 					$('#id_view_input_chatbox').val('');
 					$('#id_view_btn_sendcomment').removeClass('disabled');
 				}
@@ -908,7 +908,7 @@ function viewlocaledit(mode){
 	$('#id_view_modal_editcomment').modal('hide');
 }
 
-function appendComment(name,comment,timestamp,target){
+function appendComment(name,comment,timestamp,target,animation){
 	var appendCommentString = '<div class ="row">'+
 				'<blockquote>'+
 					escapeHtml(comment)+
@@ -917,21 +917,33 @@ function appendComment(name,comment,timestamp,target){
 					'</footer>'+
 				'</blockquote>'+
 			'</div>';
+			
+	var newComment = $(appendCommentString);
 	if($(target).children('.row').length==0){
-		$(target).append(appendCommentString);
+		$(target).append(newComment);
 	}else{
-		$(appendCommentString).insertBefore($(target).children('.row').first());
+		newComment.insertBefore($(target).children('.row').first());
+	}
+	
+	if(animation){
+		var targetHeight = newComment.css('height');
+		newComment.css('height','0');
+		newComment.animate({'height':targetHeight},400,function(){
+			
+		})
 	}
 }
 
 function bind_viewdiv_overlay(target){
 	target.children('.row').hover(function(){
-			$(this).css({
-				'background-color' : 'rgba(220,220,220,0.2)',
-			})
+			$(this).animate({
+				'background-color' : 'rgb(220,220,220,0.2)',
+			},200)
 		},function(){
-			$(this).css({
-				'background' : 'none',
+			$(this).animate({
+				'background-color' : 'rgba(220,220,220,0.0)',
+			},400,function(){
+				
 			})
 		})
 		.click(function(){
@@ -944,7 +956,7 @@ function bind_viewdiv_overlay(target){
 				
 			socket.emit('retrieve comments',json.hashed_id,function(o){
 				for(var i=0;i<o.length;i++){
-					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment')
+					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment',false)
 				}
 			});
 			
