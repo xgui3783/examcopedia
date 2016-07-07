@@ -13,6 +13,8 @@ Future updates:
 - API allowing others to interact with the webapp
 
 Change log
+v0.1.6 - 07/07/2016 - added comment system for individual questions and general chat
+			- refined user delete/edit questions
 v0.1.5.1 - 03/07/2016 - added passportjs socketio. implemented possibility for moderator control
 v0.1.5 - 01/07/2016 - redesigned login page. added random question functionality
 v0.1.4 - 30/06/2016 - added authentication (google + facebook)
