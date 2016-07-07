@@ -204,7 +204,6 @@ function queryRandomQ(i){
 	queryflag = true;
 	var json = {
 		'mode':'random',
-		'subject':'',
 		'quantity':1,
 		'searchstring':''}
 	$.ajax({

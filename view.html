@@ -9,13 +9,213 @@
 	<link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
 	<script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 	
+	<script src = "include/canvas-to-blob.min.js"></script>
+	<script src = "include/fileinput.min.js"></script>
+	<link rel = "stylesheet" href = "include/fileinput.min.css">
+	
+	<script src = "include/jquery.qrcode-0.12.0.min.js"></script>
+	
 	<script src = "include/jquery.sha256.min.js"></script>
+	
 	<script src="/socket.io/socket.io.js"></script>
+	
 	<script src = "include/js.js"></script>
 	<link rel = "stylesheet" href = "include/css.css">
 	
 </head>
 <body>
+	<div class = "col-md-4 collapse" id = "id_core_well_chatterbox">
+		<div class = "col-md-9">
+			<div class = "row">
+				<input id = "id_view_input_generalChatBox" class = "form-control col-md-8" placeholder = "General Chat ...">
+			</div>
+		</div>
+		<div class = "col-md-3">
+			<div class = "row">
+				<div id = "id_view_btn_sendGeneralChat" class = "btn btn-default btn-block">send</div>
+			</div>
+		</div>
+		<div id = "id_view_div_generalChatContainer" class = "col-md-12">
+			<div class = "row">
+				<div id = "id_view_well_generalChatWell" class = "well">
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="id_view_modal_editcomment" class="modal fade" role="dialog">
+	  <div class="col-md-10 col-md-offset-1">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title">Edit/Comment</h4>
+		  </div>
+		  <div class="modal-body">
+			<div class = "row">
+				<div id = "id_view_div_LH" class = "col-md-6 col-md-offset-1">
+					<form role = "form" class = "form form-horizontal">
+						<div class = "form-group hidden">
+							<label class = "control-label col-md-3" for = "id_view_input_hashedid">hashed id</label>
+							<div class = "col-md-5">
+								<input disabled id = "id_view_input_hashedid" type = "text" class = "form-control">
+							</div>
+						</div>
+						<div class = "form-group">
+							<label class = "required control-label col-md-2" for = "id_core_select_subject">Subject</label>
+							<div class = "col-md-5">
+								<select class = "form-control" id = "id_core_select_subject">
+									<option></option>
+								</select>
+							</div>
+							<div class = "col-md-3">
+								<div class = "btn btn-default btn-block" id = "id_core_btn_addsubject">+ subject</div>
+							</div>
+						</div>
+						<hr>
+					</form>
+						
+						<div class = "row">
+							<div class = "form-group col-md-10 col-md-offset-1">
+								<label class = "required control-label col-md-5" for = "id_core_textarea_qn">Question</label>
+								<div class = "col-md-12">
+									<textarea class = "form-control" id = "id_core_textarea_qn"></textarea>
+								</div>		
+							</div>
+						</div>
+						<div class = "row">
+							<div class = "col-md-10 col-md-offset-1 text-right">
+								<div class = "col-md-12">
+									<span class = "hovershow glyphicon glyphicon-question-sign" id = "id_add_glyphicon_how"></span>
+								</div>
+							</div>
+						</div>
+						<div class = "row">
+						&nbsp;
+						</div>
+						<div class = "panel panel-default">
+							<div class = "panel-heading btn btn-default btn-block" data-toggle = "collapse" data-target="#id_add_div_answer">
+								<span class = "glyphicon glyphicon-exclamation-sign"></span> Answer
+							</div>
+							<div class = "panel-body collapse" id = "id_add_div_answer">
+								<div class = "col-md-12">
+									<textarea class = "form-control" id = "id_core_textarea_ans"></textarea>
+								</div>
+							</div>
+						</div>
+						<div class = "row hidden">
+							<div class = "col-md-10 col-md-offset-1">
+							<i>[img? r=rotation w=width] ? = 1,2,3 ... or filename_extension e.g., [img1 r=90 w=50] or [imgchemistry_JPG r=180]</i><br>
+							<i>[sup text] [sub text]</i>
+							</div>
+						</div>
+						<div class = "panel panel-default">
+							<div class = "panel-heading btn btn-block btn-default" data-toggle="collapse" data-target="#id_add_div_uploadimages">
+								<span class = "glyphicon glyphicon-picture"></span> Attach Images
+							</div>
+							<div class = "panel-body collapse" id = "id_add_div_uploadimages">
+								<div class = "col-md-7 col-md-offset-1">
+									<input data-allowed-file-extensions='["jpg", "gif", "png", "svg" , "pdf", "tiff"]' id = "id_add_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
+								</div>
+								<div class = "col-md-4 ">
+									<div class = "col-md-12">
+										<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+									</div>
+									<div class = "col-md-12" id = "id_add_div_qrcode">
+									</div>
+								</div>
+							</div>
+						</div>
+						<hr>
+					<form role = "form" class = "form form-horizontal">
+						<div class = "panel panel-default">
+							<div class = "panel-heading btn btn-default btn-block" data-toggle="collapse" data-target="#id_add_div_moreoptions">
+								<span class = "glyphicon glyphicon-cog"></span> Options
+							</div>
+							<div class = "panel-body collapse" id = "id_add_div_moreoptions">
+								
+								<div class = "form-group">
+									<label class = "control-label col-md-3" for ="id_core_input_marks">Suggested Marks</label>
+									<div class = "col-md-5">
+										<input class = "form-control" id = "id_core_input_marks"></input>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div id = "id_view_div_RH" class = "col-md-5">
+					<div class = "col-md-9">
+						<div class = "row">
+							<input id = "id_view_input_chatbox" class = "form-control col-md-8" placeholder = "Enter Comment ...">
+						</div>
+					</div>
+					<div class = "col-md-3">
+						<div class = "row">
+							<div id = "id_view_btn_sendcomment" class = "btn btn-primary btn-block">send</div>
+						</div>
+					</div>
+					<div id = "id_view_div_commentContainer" class = "col-md-12">
+						<div class = "row">
+							<div id = "id_view_well_comment" class = "well">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		  </div>
+		  <div class="modal-footer">
+			<div class = "row">
+				<div class = "hidden col-md-2 col-md-offset-5">
+					<div class = "btn btn-block btn-default btn-warning class_view_btn_edit" id = "id_view_btn_swap">
+						<span class = "glyphicon glyphicon-refresh"></span> swap for another one
+					</div>
+				</div>
+				<div class = "col-md-2 col-md-offset-7">
+					<div class = "panel panel-danger">
+						<div class = "panel-header" >
+							<div class = "btn btn-danger btn-block" data-toggle = "collapse" data-target="#id_view_panelbody_remove">
+								<span class = "glyphicon glyphicon-remove"></span> remove this one
+							</div>
+						</div>
+						<div class = "panel-body collapse" id = "id_view_panelbody_remove">
+							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_local">
+								<span class = "glyphicon glyphicon-map-marker"></span> from local
+							</div>
+							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_global">
+								<span class = "glyphicon glyphicon-globe"></span> from global
+							</div>							
+						</div>
+					</div>
+				</div>
+				<div class = "col-md-2">
+					<div class = "panel panel-success">
+						<div class = "panel-header" >
+							<div class = "btn btn-success btn-block" data-toggle = "collapse" data-target="#id_view_panelbody_save">
+								<span class = "glyphicon glyphicon-save"></span> save changes
+							</div>
+						</div>
+						<div class = "panel-body collapse" id = "id_view_panelbody_save">
+							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_local">
+								<span class = "glyphicon glyphicon-map-marker"></span> to local
+							</div>
+							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_global">
+								<span class = "glyphicon glyphicon-globe"></span> to global
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class = "col-md-1">
+					<div class = "btn btn-default btn-block" data-dismiss="modal">
+						close
+					</div>
+				</div>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+
 	<div id="id_core_modal_dp" class="modal fade" role="dialog">
 	  <div class="modal-dialog">
 
@@ -108,7 +308,7 @@
 		</div>
 	  </div>
 	</div>
-	
+
 	<nav class = "navbar navbar-default">
 		<div class = "navbar-header">
 			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#collapse_navbar">
@@ -125,7 +325,8 @@
 				<li><a href = "/categorise" id = "id_navbar_categorise"><span class = "glyphicon glyphicon-tags"></span> categorise</a></li>
 			</ul>
 			<ul class = "nav navbar-nav navbar-right">
-				<!--<li><a href = "#" id = "nav_students">Students Profiles</a></li>-->
+				<li><a href = "/profile" id = "id_navbar_profile">Hello </a></li>
+				<li><a href ="#" id = "id_navbar_chatter"><span class = "glyphicon glyphicon-comment"></span> chatter</a></li>
 				<li><a href = "/about" id = "id_navbar_about"><span class = "glyphicon glyphicon-tint"></span> about</a></li>
 				<li><a href = "/logout" id = "id_navbar_logout"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
 			</ul>

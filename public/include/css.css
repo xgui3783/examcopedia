@@ -36,6 +36,13 @@ right:0;
 top:0;
 }
 
+#id_core_well_chatterbox
+{
+position:absolute;
+right:0;
+z-index:10;
+}
+
 #id_login_nav_randomQuestionNav
 {
 min-height:0;
@@ -50,6 +57,12 @@ padding:0;
 #id_login_panelheading_loginpanelheading:hover
 {
 //cursor:pointer
+}
+
+#id_view_well_generalChatWell
+{
+height:600px;
+overflow:hidden;
 }
 
 .imgcontainer img
@@ -81,6 +94,26 @@ background: url('signinwithgoogle.png') no-repeat;
 {
 background: url('signinwithfacebook.png') no-repeat;
 }
+
+#id_view_div_RH
+{
+height:500px;
+}
+
+#id_view_div_commentContainer
+{
+height:400px;
+}
+
+#id_view_well_comment
+{
+height:400px;
+overflow:hidden;
+}
+
+	#id_view_well_comment div.row
+	{
+	}
 
 #id_login_div_jumbotron2
 {

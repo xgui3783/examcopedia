@@ -2,7 +2,6 @@
 var socket = io();
 
 $(document).ready(function(){
-	
 	/*
 	//pasting image to be implemented in the future... maybe
 	window.addEventListener('paste',function(e){
@@ -10,6 +9,57 @@ $(document).ready(function(){
 		console.log(e.clipboardData.getData('image/bmp'));
 	})
 	*/
+	
+	/* chatter box */
+	$('#id_view_input_generalChatBox').keypress(function(e){
+		if(e.which==13){
+			$('#id_view_btn_sendGeneralChat').click();
+		}
+	})
+	
+	$('#id_core_well_chatterbox').css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top));
+	
+	$('#id_navbar_chatter').click(function(){
+		$('#id_core_well_chatterbox').collapse('toggle');
+		$(this).parent().toggleClass('active');
+		redPill('remove','#id_navbar_chatter');
+		return false;
+	});
+	
+	$('#id_view_btn_sendGeneralChat').off('click').click(function(){
+		
+		if($(this).hasClass('disabled')){
+			return false;
+		}
+		$(this).addClass('disabled');
+		
+		var message = $('#id_view_input_generalChatBox').val();
+		
+		socket.emit('send general chat',message,function(o){
+			if(o=='success'){
+				$('#id_view_input_generalChatBox').val('');
+				$('#id_view_btn_sendGeneralChat').removeClass('disabled');
+			}
+		})
+	})
+	
+	socket.on('receive general chat',function(o){
+		appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell');
+		if(!$('#id_core_well_chatterbox').hasClass('in')){
+			redPill('add','#id_navbar_chatter');
+		}
+	});
+	
+	socket.emit('retrieve general chat',function(o){
+		for (var i = 0; i<o.length; i++){
+			appendComment(o[i].username, o[i].comment, o[i].created, '#id_view_well_generalChatWell');
+		}
+	})
+	
+	$('#id_navbar_profile').click(function(){
+		info_modal('Profile will be implemented in the future');
+		return false;		
+	});
 	
 	/* tooltip for view/generation > option */
 	$('#id_view_glyphicon_select').tooltip({
@@ -43,6 +93,11 @@ $(document).ready(function(){
 				'e.g. [sub SUBSCRIPT]<br>'+
 				'e.g. [sup SUPSCRIPT]</div>',
 	})
+	
+	/* ping socket to find user name */
+	socket.emit('what is my name',function(o){
+		$('#id_navbar_profile').append(o);
+	});
 	
 	/* mobile upload complete*/
 	socket.on('append imgtank',function(i){
@@ -502,7 +557,6 @@ $(document).ready(function(){
 		}
 	});
 	
-	
 });
 
 /* constants */
@@ -542,6 +596,33 @@ var addAFile =
 	'</form>';
 	
 /* functions */
+function redPill(mode,target){
+	var t = $(target);
+	switch(mode){
+		case 'add':
+			if(t.children('span.label').length==0){
+				t.append(' <span class = "label label-danger">1</span>')
+			}else{
+				t.children('span.label').html(Number(t.children('span.label').html())+1);
+			}
+		break;
+		case 'remove':
+			var i = 0;
+			while(
+				i<Number(t.children('span.label').html())){
+				$('#id_view_well_generalChatWell').children('div.row').eq(i).addClass('bg-info');
+				i++;
+				}
+			t.children('span.label').remove();
+			setTimeout(function(){
+				$('#id_view_well_generalChatWell').children('div.row.bg-info').removeClass('bg-info');
+			},5000)
+		break;
+		default:
+		break;
+	}
+}
+
 function viewoption(){
 	var viewOption = $('.btn-option.disabled').parent().prev().children('input').val();
 	var viewOptionSplit = viewOption.split(' : ');
@@ -694,6 +775,7 @@ function viewgo(){
 						if(o.length>0){
 							$('#id_view_div_preview .panel-body').append('<div class = "row" id = "id_view_div_preview_'+index+'"></div>');
 							view_append_preview(mode, length,$('#id_view_div_preview_'+index),o);
+							bind_viewdiv_overlay($('#id_view_div_preview_'+index));
 							
 							/* show preview panel */
 							$('#id_view_div_preview')
@@ -717,7 +799,7 @@ function viewgo(){
 						if(o.length>0){
 							$('#id_view_div_preview .panel-body').append('<div class = "row" id = "id_view_div_preview_'+index+'"></div>');
 							view_append_preview(mode, length,$('#id_view_div_preview_'+index),o);
-							
+							bind_viewdiv_overlay($('#id_view_div_preview_'+index));
 							/* show preview panel */
 							$('#id_view_div_preview')
 								.css('opacity','0.0')
@@ -732,10 +814,166 @@ function viewgo(){
 				break;
 				
 			}
-			
 		})
 	});
 	
+	/* bind sending comment */
+	$('#id_view_input_chatbox').keypress(function(e){
+		if(e.which==13){
+			$('#id_view_btn_sendcomment').click();
+		}
+	})
+	
+	$('#id_view_btn_sendcomment').off('click').click(function(){
+		
+		if($(this).hasClass('disabled')) return false;
+		$(this).addClass('disabled');
+		
+		var comment = escapeHtml($('#id_view_input_chatbox').val());
+		if(comment.replace(/ /g,'')!=''){
+			var json = {
+				'target' : $('#id_view_input_hashedid').val(),
+				'comment' : comment
+				}
+			socket.emit('send comment',json,function(o){
+				if(o.user){
+					appendComment(o.user,comment,'Just nowT.','#id_view_well_comment');
+					$('#id_view_input_chatbox').val('');
+					$('#id_view_btn_sendcomment').removeClass('disabled');
+				}
+			})
+		}else{
+			$(this).removeClass('disabled');
+		}
+	})
+	
+	/* bind class_view_btn_edit */
+	$('.class_view_btn_edit').off('click').click(function(){
+		var idsplit = $(this).attr('id').split('_');
+		switch(idsplit[4]){
+			case 'global':
+				viewglobaledit(idsplit[3]);
+			case 'local':
+				viewlocaledit(idsplit[3]);
+			break;
+			default:
+			break;
+		}
+	})
+	
+	/* on editcomment modal hidden */
+	$('#id_view_modal_editcomment').off('hidden.bs.modal').on('hidden.bs.modal',function(){
+		$('#id_view_modal_editcomment').find('.in').removeClass('in');
+	})
+}
+
+function viewglobaledit(mode){
+	var data = {
+		'hashed_id' : $('#id_view_input_hashedid').val(),
+		'subject'	: $('#id_core_select_subject').val(),
+		'question'	: $('#id_core_textarea_qn').val(),
+		'answer'	: $('#id_core_textarea_ans').val(),
+		'mark'		:$('#id_core_input_marks').val()
+		}
+	var json = {
+		'mode' : mode,
+		'data' : data,
+	};
+	socket.emit('globaledit',json,function(o){
+		info_modal(o);
+	})
+}
+
+function viewlocaledit(mode){
+	var target = $('#'+$('#id_view_input_hashedid').val());
+	switch(mode){
+		case 'save':
+			target.find('#id_view_div_qncontainer').children('h4').html(parsing_preview($('#id_core_textarea_qn').val(),$('#id_view_input_hashedid').val()));
+			target.find('#id_view_div_mark').find('h4').html($('#id_core_input_marks').val());
+		break;
+		case 'remove':
+			target.animate({'opacity':'0.0'},400,function(){
+				var renumber = target.next();
+				do{
+					var oldnum = Number(renumber.children('div').first().children('h4').html().replace('.',''));
+					renumber.children('div').first().children('h4').html(oldnum-1+'.');
+					renumber = renumber.next();
+				}while(renumber.length != 0)
+				target.remove();
+			})
+		break;
+		default:
+		break;
+	}	
+	$('#id_view_modal_editcomment').modal('hide');
+}
+
+function appendComment(name,comment,timestamp,target){
+	var appendCommentString = '<div class ="row">'+
+				'<blockquote>'+
+					escapeHtml(comment)+
+					'<footer>'+
+						escapeHtml(name)+' <span class = "text-muted">('+escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
+					'</footer>'+
+				'</blockquote>'+
+			'</div>';
+	if($(target).children('.row').length==0){
+		$(target).append(appendCommentString);
+	}else{
+		$(appendCommentString).insertBefore($(target).children('.row').first());
+	}
+}
+
+function bind_viewdiv_overlay(target){
+	target.children('.row').hover(function(){
+			$(this).css({
+				'background-color' : 'rgba(220,220,220,0.2)',
+			})
+		},function(){
+			$(this).css({
+				'background' : 'none',
+			})
+		})
+		.click(function(){
+			$('#id_view_modal_editcomment').modal('show');
+			$('#id_view_well_comment').empty();
+			var json = {
+				'mode' : 'random',
+				'hashed_id' : $(this).attr('id')
+				};
+				
+			socket.emit('retrieve comments',json.hashed_id,function(o){
+				for(var i=0;i<o.length;i++){
+					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment')
+				}
+			});
+			
+			$.ajax({
+				type : 'POST',
+				url : 'pingQ',
+				data : json,
+				success : function(o){
+					$('#id_view_input_hashedid').val(o.hashed_id);
+					$('#id_core_select_subject').val(o.subject);
+					$('#id_core_textarea_qn').val(o.question);
+					$('#id_core_textarea_ans').val(o.answer);
+					$('#id_core_input_marks').val(o.mark);
+					
+					$('#id_add_div_qrcode').empty().qrcode({
+						text : window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_view_input_hashedid').val(),
+						fill : '#337ab7',
+						background : '#fff'
+						});
+					
+					console.log(window.location.href.substring(0,window.location.href.indexOf(window.location.pathname)) + '/mobileupload?' + $('#id_view_input_hashedid').val());
+					
+					$('#id_add_file_file').fileinput('refresh',{
+						uploadExtraData	:{'hashedid':$('#id_view_input_hashedid').val()}
+						});
+					
+				}
+			})
+		})
 }
 
 /* shuffle array */
@@ -804,7 +1042,7 @@ function decode_select(i){
 
 function append_one(counter,target,json){
 	var qn_container = 
-		'<div class = "row id_sync_active">'+
+		'<div id="'+json.hashed_id+'" class = "row id_sync_active">'+
 			'<div class = "col-md-1 col-md-offset-1"><h4>'+counter+'.</h4>'+
 			'</div>'+
 			'<div class = "col-md-8" id = "id_view_div_qncontainer"><h4></h4>'+
@@ -1004,6 +1242,7 @@ function reset_dp(){
 /* parsing in [img] tags */
 function parsing_preview(i,h_id){
 	var escaped_i = escapeHtml(i);
+	//h_id = escapeHtml(h_id);
 	var j = escaped_i.replace(/\[img.*?\]/g,function(s){
 		return parsing_img(s,h_id);
 	});
@@ -1224,7 +1463,7 @@ function choosedp(){
 function show_existing_items(){
 	$('.btn-default.active').parent().prev().children('select').children('option').each(function(){
 		if(!$(this).hasClass('hidden')&&$(this).html()!=''){
-			$('.modal-body .panel-body').append('<div class = "row clickable"><div class = "col-md-12">'+$(this).html()+'</div></div>');
+			$('#id_core_modal .modal-body .panel-body').append('<div class = "row clickable"><div class = "col-md-12">'+$(this).html()+'</div></div>');
 		}
 	});
 	$('.modal-body .panel-body .clickable').off('click').click(function(){
@@ -1233,6 +1472,7 @@ function show_existing_items(){
 			.change();
 		$('#id_core_modal').modal('hide');
 	})
+	
 }
 
 /* when add a dp is clicked in choose dp modal */

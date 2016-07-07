@@ -460,6 +460,79 @@ io.on('connection',function(socket){
 	
 	/* user login db. to be implemented */
 	
+	/* retrieve general chat */
+	socket.on('retrieve general chat',function(callback){
+		connection.query('SELECT * FROM comment_db WHERE ref = ?','general chat',function(e,r){
+			if(e){
+				callback(e);
+				catch_error(e);
+			}else{
+				callback(r);
+			}
+		})
+	})	
+	
+	/* receiving and broadcasting general chat */
+	socket.on('send general chat',function(i,callback){
+		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.displayName,i,'general chat'],function(e,r){
+			if(e){
+				callback(e);
+				catch_error(e);
+			}else{
+				connection.query('SELECT * FROM comment_db WHERE id = ?',r.insertId,function(e1,r1){
+					if(e1){
+						catch_error(e1);
+						callback(e1);
+					}else{
+						var json = {
+							'user' : socket.request.user.displayName,
+							'message' : i,
+							'created' : r1[0].created
+							}
+						callback('success');
+						io.emit('receive general chat',json);
+					}
+				})
+			}
+		})
+	})
+	
+	/* retrieve comments */
+	socket.on('retrieve comments',function(i,callback){
+		connection.query('SELECT * FROM comment_db WHERE ref = ? ORDER BY created;',i,function(e,r){
+			if(e){
+				catch_error(e);
+				callback(e);
+			}else{
+				callback(r)
+			}
+		})
+	})
+	
+	/* receive comments */
+	socket.on('send comment',function(i,callback){
+		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.displayName,i.comment,i.target],function(e,r){
+			if(e){
+				catch_error(e)
+				callback(e)
+			}else{
+				var json = {
+					'user' : socket.request.user.displayName
+					}
+				callback(json)
+			}
+		})
+	})
+	
+	/* call user name */
+	socket.on('what is my name',function(callback){
+		if(socket.request.user.displayName!=undefined){
+			callback(socket.request.user.displayName);
+		}else{
+			callback(' the one who shall not be named');
+		}
+	})
+	
 	/* socket id identifies which question the user is editing on */
 	socket.on('ping hashedid',function(i,callback){
 		socket.join(i);
@@ -681,6 +754,47 @@ io.on('connection',function(socket){
 		});
 	});
 	
+	socket.on('globaledit',function(i,callback){
+		restricting_access(socket.request.user,i.mode,i.data,null,function(o){
+			if(o=='true'){
+				/* carry out task */
+				
+				var querystring;
+				var queryterms;
+				var returnstring;
+				
+				switch(i.mode){
+					case 'save':
+						querystring = 'UPDATE table_masterquestions SET ? WHERE hashed_id = ?';
+						queryterms = [i.data,i.data.hashed_id];
+						returnstring = 'Saved to database!';
+					break;
+					case 'remove':
+						querystring = 'UPDATE table_masterquestions SET delete_flag = ? WHERE hashed_id = ?';
+						queryterms = [1,i.data.hashed_id];
+						returnstring = 'Marked for deletion!';
+					break;
+					default:
+					break;
+				}
+				connection.query(querystring,queryterms,function(e,r){
+					if(e){
+						catch_error(e)
+						callback(e);
+					}else{
+						callback(returnstring);
+					}
+				})
+			}else{
+				if(o.error){
+					callback(o)
+				}else{
+					callback('Submission received. Pending approval.')
+				}
+			}
+		})
+	})
+	
 	socket.on('disconnect',function(){
 		/* should delete all file in socket.hashedid */
 		if(socket.hashedid!=undefined){
@@ -723,8 +837,7 @@ passport.use('facebookAuth',new facebookStrategy({
 		thirdpartylogin('facebook',profile,accessToken,function(user){
 			return done(null,user);
 		})
-	}
-))
+	}))
 
 /* login with google */
 passport.use('googleAuth',new googleStrategy({
@@ -734,9 +847,7 @@ passport.use('googleAuth',new googleStrategy({
 		thirdpartylogin('google',profile,token,function(user){
 			return done(null,user);
 		})
-	}
-	
-))
+	}))
 
 passport.serializeUser(function(user,done){
 	done(null,user.email);
@@ -811,6 +922,12 @@ function thirdpartylogin(mode,profile,token,callback){
 }
 
 function restricting_access(user, mode, json, res, callback){
+	/* 
+	
+	logic goes like this: if user.admin is larger than 8, then the changes will always go live () admin status
+	if user.admin is 8 or less, then by default, the user can add and categorise, but not able to edit or remove from db...
+	
+	*/
 	
 	var control = 'true';
 	//var control = 'restricted';
@@ -821,7 +938,28 @@ function restricting_access(user, mode, json, res, callback){
 			callback({'error' : e});
 		}else{
 			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8',function(){
-				callback(control);
+				switch(mode){
+					case 'save':
+					//break;
+					case 'remove':
+						if(user.admin>8){
+							callback('true');
+						}else{
+							callback('pending');
+						}
+					break;
+					case 'add submit':
+					//break;
+					case 'categorise':
+					//break;
+					default:
+						if(user.admin>8){
+							callback('true');
+						}else{
+							callback(control);
+						}
+					break;
+				}
 			});
 		}
 	})
@@ -833,7 +971,6 @@ function restricting_access(user, mode, json, res, callback){
 	var json = require('./path/filename.json')
 	
 	*/
-	
 }
 
 function checkAuth(req,res,next){
@@ -916,6 +1053,22 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 	}
 })
 
+/* create comment table */
+connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "comment_db"',function(e,r){
+	if(e){
+		catch_error(e);
+	}else if(r.length==0){
+		connection.query('CREATE TABLE `comment_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `username` varchar(256) NOT NULL, `comment` varchar(8196) NOT NULL, `ref` varchar(64) NOT NULL, `note1` varchar(256) NOT NULL, `note2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+			if(e1){
+				catch_error(e1);
+			}else{
+				
+			}
+		})
+	}
+})
+
+
 app.get('/',checkAuth,function(req,res){
 	res.sendfile('landing.html');
 });
@@ -953,9 +1106,29 @@ app.get('/img/*',function(req,res){
 
 /* ping question for login random question or later on for speciality use (api etc?) */
 app.post('/pingQ',function(req,res){
-	var subject = req.body.subject == '' ? '%' : req.body.subject;
+	
+	
+	var querystring = 'SELECT subject, hashed_id, question, answer, space, mark FROM table_masterquestions WHERE delete_flag = 0 ';
+	var tally = 0;
+	var escapedvar = [];
+	
+	if (req.body.subject != undefined){
+		//if(tally == 0) querystring += 'WHERE ';
+		//tally ++;
+		querystring += 'AND subject LIKE ? ';
+		escapedvar.push(req.body.subject);
+	}
+	
+	if(req.body.hashed_id != undefined){
+		//if(tally == 0){querystring += 'WHERE ';}else{querystring += 'AND '}
+		//tally ++;
+		querystring += 'AND hashed_id = ? ';
+		escapedvar.push(req.body.hashed_id);
+	}
+	
 	var mode = req.body.mode;
-	connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE subject LIKE "%";',function(e,r){
+	
+	connection.query(querystring,escapedvar,function(e,r){
 		if(e){
 			catch_error(e);
 		}else{
@@ -978,6 +1151,10 @@ app.get('/logout',function(req,res){
 
 app.get('/about',checkAuth,function(req,res){
 	res.sendfile('about.html');
+})
+
+app.get('/profile',checkAuth,function(req,res){
+	res.send('check back later, k?');
 })
 
 app.get('/changelog',function(res,res){
