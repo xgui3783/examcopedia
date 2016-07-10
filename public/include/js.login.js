@@ -36,10 +36,39 @@ $(document).ready(function(){
 				queryRandomQ('recur');
 			})
 		}
+	});
+	
+	$('#id_login_btn_register').off('click').click(function(){
+		info_modal('Registration will become available in the future.')
+		return false;
+	});
+	
+	$('#id_login_btn_login').off('click').click(function(){
+		var username = $('#username').val().replace(/ /g,'');
+		var password = $('#password').val();
+		if(username==''||password==''){
+			info_modal('Username and passwords are required!');
+			return false;
+		}else{
+			$('#id_login_form_local').submit();
+		}
 	})
 	
 	queryRandomQ('start');
+	
+	if(window.location.href.split('?')[1]=='unsuccessful'){
+		info_modal('Incorrect username or password!');
+		$('#id_login_panelbody_loginpanelbody').collapse('show');
+	}
 });
+
+
+
+function info_modal(i){
+	$('#id_core_modal_warning .modal-body').html(i);
+	$('#id_core_modal_warning').modal('show');
+}
+
 
 /* parsing in [img] tags */
 function parsing_preview(i,h_id){

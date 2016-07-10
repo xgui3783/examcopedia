@@ -1,0 +1,52 @@
+<html>
+	<head>
+<%- include('header') %>
+	</head>
+	<body>
+<%- include('modal') %>
+<%- include('navbar') %>
+	<div class = "jumbotron"></div>
+		<div class = "container-fluid">
+			<div class = "row">
+				<div class = "col-md-8 col-md-offset-2">
+					<div class = "panel panel-primary">
+						<div class = "panel-heading btn btn-primary btn-block" data-target="#id_profile_panelBodyContainer_personalProfile" data-toggle="collapse"><h1 class = "text-left">Personal Profile</h1></div>
+						<div class = "collapse" id = "id_profile_panelBodyContainer_personalProfile">
+							<div class = "panel-body">
+							<%- include('profile_userprofile') %>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<% if(user.admin>2){%>
+			<div class = "row">
+				<div class = "col-md-8 col-md-offset-2">
+					<div class = "panel panel-warning">
+						<div class = "panel-heading btn btn-warning btn-block" data-target="#id_profile_panelBodyContainer_siteProfile" data-toggle="collapse"><h1 class = "text-left">Site Profile</h1></div>
+						<div class = "collapse" id = "id_profile_panelBodyContainer_siteProfile">
+							<div class = "panel-body">
+							<%- include('profile_siteprofile') %>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<% } %>
+			<% if(user.admin>7){ %>
+			<div class = "row">
+				<div class = "col-md-8 col-md-offset-2">
+					<div class = "panel panel-info">
+						<div class = "panel-heading btn btn-info btn-block" data-target="#id_profile_panelBodyContainer_otherUsersPriv" data-toggle="collapse"><h1 class = "text-left">Users' Privilege</h1></div>
+						<div class = "collapse" id = "id_profile_panelBodyContainer_otherUsersPriv">
+							<div class = "panel-body">
+							<%- include('profile_otherusers') %>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<% } %>
+		</div>
+	</body>
+</html>

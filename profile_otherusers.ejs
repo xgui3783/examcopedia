@@ -1,0 +1,120 @@
+
+<table class = "table table-striped table-hover">
+	<tr>
+		<% usersConfigSchema.forEach(function(usersConfigSchema){ %>
+		<% switch(usersConfigSchema.COLUMN_NAME){case 'id': case 'authMethod': case 'displayName' : case 'email' : case 'admin': case 'notes1': %>
+		<th class = "text-left col-md-1">
+			<%= usersConfigSchema.COLUMN_NAME %>
+			<% if (usersConfigSchema.COLUMN_NAME=='admin'){ %>
+			<span id = "id_profileOtherUsers_spanTooltip_admin" data-toggle = "tooltip" ><span class = "glyphicon glyphicon-question-sign"></span></span>
+		</th>
+		<% } %>
+		<% break;} %>
+		<% }) %>
+	</tr>
+	<% usersConfig.forEach(function(usersConfig){ %>
+	<tr>
+		<% usersConfigSchema.forEach(function(usersConfigSchema){ %>
+		<% switch(usersConfigSchema.COLUMN_NAME)
+		{ case 'id': case 'authMethod': case 'displayName' : case 'email' : %>
+			<td class = "<%= usersConfigSchema.COLUMN_NAME %> text-left">
+			<%= eval('usersConfig.'+(usersConfigSchema.COLUMN_NAME)) %>
+			</td>
+		<% break; %>
+		<% case 'admin': %>
+			<td class = "col-md-1 text-left">
+				<div class = "dropdown">
+					<div class = "btn btn-default dropdown-toggle" data-toggle="dropdown">
+					<%= usersConfig.admin %>
+					<span class = "caret"></span>
+					</div>
+					<ul class="dropdown-menu">
+						<% for(var i = 0; i<10; i++){ %>
+						<li><div class = "btn btn-default <%= usersConfig.admin == i ? 'active' : ''; %>"><%= i %></div></li>
+						<% } %>
+					</ul>
+				</div>
+			</td>
+		<% break; %>
+		<% case 'notes1':%>
+			<td class = "col-md-1 text-left">
+			<% if(usersConfig.notes1==''){ %>
+				<div class = "class_profileOtherUsers_btn_editNotes btn btn-default">Add Notes</div><span class = "hidden"></span>
+			<% }else{ %>
+				<div class = "class_profileOtherUsers_btn_editNotes btn btn-primary">Edit Notes</div><span class = "hidden"><%= usersConfig.notes1 %></span>
+			<% } %>
+			</td>
+		<% break;%>
+		<% } %>
+		<% }) %>
+	</tr>
+	<% }) %>
+</table>
+<script>
+$('.class_profileOtherUsers_btn_editNotes').off('click').click(function(){
+	
+	if($(this).hasClass('disabled')){
+		return false;
+	};
+	$(this).addClass('disabled');
+	
+	$('#id_core_modal .modal-title').html('Edit note for '+escapeHtml($(this).parent().parent().children('td.displayName').html()).replace(/<br>+/g,''));
+	console.log($(this).next().html());
+	$('#id_core_modal .modal-body').html('<textarea class = "form-control" placeholder = "Enter note here ...">'+escapeHtml($(this).next().html()).replace(/<br>+/g,'\n')+'</textarea>');
+	$('#id_core_modal').modal('show');
+	
+	$('#id_core_modal').off('hidden.bs.modal').on('hidden.bs.modal',function(){
+		$('.class_profileOtherUsers_btn_editNotes.disabled').removeClass('disabled');
+	})
+	
+	$('#id_core_modal .btn-primary').off('click').click(function(){
+		var json = {
+			'id' : $('.class_profileOtherUsers_btn_editNotes.disabled').parents('tr').children('td').first().html().replace(/\s+|<br>+/g,''),
+			'notes1' : $('#id_core_modal textarea').val()
+			}
+		$('.class_profileOtherUsers_btn_editNotes.disabled').next().html(escapeHtml(json.notes1).replace(/<br>+/g,'\n'));
+		if(json.notes1==''){
+			$('.class_profileOtherUsers_btn_editNotes.disabled').removeClass('disabled btn-primary').addClass('btn-default').html('Add Notes');
+		}else{
+			$('.class_profileOtherUsers_btn_editNotes.disabled').removeClass('disabled btn-default').addClass('btn-primary').html('Edit Notes');
+		}
+		socket.emit('modify user config',json,function(o){
+			if(o!='success'){
+				info_modal('Saving notes failed!');
+			}
+		})
+	});
+})
+
+$('#id_profileOtherUsers_spanTooltip_admin').tooltip({
+	placement : 'right',
+	html : 'true',
+	title :  '<div class = "text-left">admin lvl 3 and above can modify site profiles. <br>admin level 8 and above can modify user admin status.</div>'
+});
+
+$('.dropdown-menu').css({
+	'min-width' : 0,
+	'padding' : 0});
+$('.dropdown-menu > li > div.btn').off('click').click(function(){
+	if(!$(this).hasClass('active')){
+		$(this).parents('ul.dropdown-menu').children('li').children('div').removeClass('active');
+		$(this).addClass('active');
+		$(this).parents('div.dropdown').children('div.dropdown-toggle').html(escapeHtml($(this).html())+' <span class = "caret"></span>');
+		
+		var json = {
+			'id' : $(this).parents('tr').children('td').first().html().replace(/\s+/g,''),
+			'admin' : escapeHtml($(this).html()),
+			}
+		var disabledDropdown = $(this).parents('div.dropdown').children('div.dropdown-toggle');
+		disabledDropdown.addClass('disabled');
+		socket.emit('modify user config',json,function(o){
+			if(o=='success'){
+				disabledDropdown.removeClass('disabled');
+			}else{
+				info_modal('Saving admin level failed!');
+				disabledDropdown.removeClass('disabled');
+			}
+		})
+	}
+})
+</script>

@@ -524,15 +524,6 @@ io.on('connection',function(socket){
 		})
 	})
 	
-	/* call user name */
-	socket.on('what is my name',function(callback){
-		if(socket.request.user.displayName!=undefined){
-			callback(socket.request.user.displayName);
-		}else{
-			callback(' the one who shall not be named');
-		}
-	})
-	
 	/* socket id identifies which question the user is editing on */
 	socket.on('ping hashedid',function(i,callback){
 		socket.join(i);
@@ -754,6 +745,29 @@ io.on('connection',function(socket){
 		});
 	});
 	
+	socket.on('modify site config',function(i,callback){
+		eval('var newState = { '+ i.column + ':' + i.newState + '}');
+		connection.query('UPDATE table_config SET ? WHERE adminLvl = ?;',[newState,i.adminLvl],function(e,r){
+			if(e){
+				callback(e);
+				catch_error(e);
+			}else{
+				callback('success');
+			}
+		})
+	})
+	
+	socket.on('modify user config',function(i,callback){
+		connection.query('UPDATE user_db SET ? WHERE id = ?',[i,i.id],function(e,r){
+			if(e){
+				catch_error(e);
+				callback(e);
+			}else{
+				callback('success');
+			}
+		})
+	})
+	
 	socket.on('globaledit',function(i,callback){
 		restricting_access(socket.request.user,i.mode,i.data,null,function(o){
 			if(o=='true'){
@@ -868,6 +882,34 @@ passport.deserializeUser(function(email,done){
 })
 
 app.use(express.static('public'));
+
+function fetch_table_info(name,mode,callback){
+	var order;
+	if(name == 'table_config') {
+		order = 'ORDER BY adminLvl';
+	}else{
+		order = 'ORDER BY id';
+	}
+	if(mode=='contents'){
+		connection.query('SELECT * FROM ?? '+order,name,function(e,r){
+			if(e){
+				catch_error(e);
+				callback(e);
+			}else{
+				callback(r)
+			}
+		})
+	}else if(mode=='columns name'){
+		connection.query('SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = "'+app.get('mysqldb')+'" AND `TABLE_NAME` = ?',name,function(e,r){
+			if(e){
+				catch_error(e);
+				callback(e);
+			}else{
+				callback(r);
+			}
+		})
+	}
+}
 
 function thirdpartylogin(mode,profile,token,callback){
 	
@@ -986,11 +1028,8 @@ app.get('/auth/facebook',passport.authenticate('facebookAuth',{scope : 'email'})
 app.get('/auth/facebook/callback',passport.authenticate('facebookAuth',{successRedirect : '/',failureRedirect : '/login'}));
 
 /* routes auth local */
-app.post('/logging',function(req,res){
-	passport.authenticate('local',
-	{successRedirect : '/', failureRedirect : '/login', failureFlash : true})
-})
-app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
+
+app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login?unsuccessful', failureFlash : true}))
 
 /* toues auth google */
 app.get('/auth/google',passport.authenticate('googleAuth',{scope : ['profile','email']}));
@@ -1000,14 +1039,6 @@ app.get('/auth/google/callback',
 		res.redirect('/')
 	})
 
-/* send login page */
-app.get('/login',function(req,res){
-	if(!req.user){
-		res.sendfile('login.html');
-	}else{
-		res.redirect('/');
-	}
-})
 
 /* making reqlog */
 fs.stat(app.get('persistentDataDir')+'reqlog',function(e,s){
@@ -1068,25 +1099,27 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 	}
 })
 
-
-app.get('/',checkAuth,function(req,res){
-	res.sendfile('landing.html');
-});
-
-app.get('/add',checkAuth,function(req,res){
-	/* 
-	//this stores the logged in user info
-	console.log(req.user); 
-	*/
-	res.sendfile('add.html');
-});
-
-app.get('/view',checkAuth,function(req,res){
-	res.sendfile('view.html');
-});
-
-app.get('/categorise',checkAuth,function(req,res){
-	res.sendfile('categorise.html');
+/* create table_config */
+connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "table_config"',function(e,r){
+	if(e){
+		catch_error(e);
+	}else if(r.length==0){
+		connection.query('CREATE TABLE `table_config` ( `id` int(2) NOT NULL AUTO_INCREMENT, `adminLvl` int(1) NOT NULL, `addNewCurricula` int(1) NOT NULL, `addNewDP` int(1) NOT NULL, `addNewQ` int(1) NOT NULL, `editQ` int(1) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+			if(e1){
+				catch_error(e);
+			}else{
+				for(var i = 0; i<10; i++){
+					connection.query('INSERT INTO table_config (adminLvl, addNewCurricula, addNewDP, addNewQ, editQ) VALUES (0,?,1,1,1)',i,function(e2,r2){
+						if(e2){
+							catch_error(e2);
+						}else{
+							
+						}
+					})
+				}
+			}
+		})
+	}
 });
 
 app.get('/mobileupload',function(req,res){
@@ -1149,18 +1182,84 @@ app.get('/logout',function(req,res){
 	res.redirect('/login');
 })
 
-app.get('/about',checkAuth,function(req,res){
-	res.sendfile('about.html');
-})
+app.set('view engine','ejs');
 
 app.get('/profile',checkAuth,function(req,res){
-	res.send('check back later, k?');
+	if(req.user.admin>2){
+		fetch_table_info('table_config','contents',function(o){
+			fetch_table_info('table_config','columns name',function(o1){
+				if(req.user.admin>7){
+					fetch_table_info('user_db','contents',function(o2){
+						fetch_table_info('user_db','columns name',function(o3){
+							res.render('../profile.ejs',{
+								user : req.user,
+								siteConfig : o,
+								siteConfigSchema : o1,
+								usersConfig : o2,
+								usersConfigSchema : o3
+							})
+						})
+					})
+				}else{
+					res.render('../profile.ejs',{
+						user : req.user,
+						siteConfig : o,
+						siteConfigSchema : o1
+					})
+				}
+			})
+		})
+	}else{
+		res.render('../profile.ejs',{user : req.user});
+	}
+})
+
+/* send login page */
+app.get('/login',function(req,res){
+	if(!req.user){
+		res.sendfile('login.html');
+	}else{
+		res.redirect('/');
+	}
+})
+
+app.get('/',checkAuth,function(req,res){
+	res.render('../landing.ejs',{
+		user : req.user
+	});
+});
+
+app.get('/add',checkAuth,function(req,res){
+	/* 
+	//this stores the logged in user info
+	console.log(req.user); 
+	*/
+	res.render('../add.ejs',{
+		user : req.user
+	});
+});
+
+app.get('/view',checkAuth,function(req,res){
+	res.render('../view.ejs',{
+		user : req.user
+	});
+});
+
+app.get('/categorise',checkAuth,function(req,res){
+	res.render('../categorise.ejs',{
+		user : req.user
+	});
+});
+
+app.get('/about',checkAuth,function(req,res){
+	res.rend('../about.ejs',{
+		user : req.user
+	})
 })
 
 app.get('/changelog',function(res,res){
 	res.sendfile('changelog.txt');
 })
-
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");

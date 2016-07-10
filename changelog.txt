@@ -3,16 +3,25 @@ Known issues:
 - uploading image with same filename will overwrite the original
 - potential vulnerability via uploaded image
 
+Realised goals:
+- implement cold-edit of questions
+- implement login/register/signin via google/FB/etc, moderator status
+- API allowing others to interact with the webapp
+
+Currently worked on goals:
+- implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
+- implement moderator approval process of addition/edition of questions
+- username/password/account locked status message in login screen
+- local registration
+- config for frontal page sampler
+
 Future updates:
 - implement pasting of image from clipboard
 - generate printable PDF
-- implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
-- implement login/register/signin via google/FB/etc, moderator status
-- implement moderator approval process of addition/edition of questions
-- implement cold-edit of questions, prior to PDF generation
-- API allowing others to interact with the webapp
 
 Change log
+v0.1.6.1 - 10/07/2016 - added profile page. different users with different levels of admin levels can user UI to control the functionalities of webapp
+			- slightly redesigned UI. Now pages utilises EJS to render page. 
 v0.1.6 - 07/07/2016 - added comment system for individual questions and general chat
 			- refined user delete/edit questions
 v0.1.5.1 - 03/07/2016 - added passportjs socketio. implemented possibility for moderator control

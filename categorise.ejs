@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang = "en">
+<head>
+<%- include('header') %>
+	
+</head>
+<body>
+<%- include('modal') %>
+<%- include('navbar') %>
+	
+	
+	<div class = "jumbotron"></div>
+
+	<div class = "container-fluid">
+		<div class = "row">
+		<div class = "col-md-8 col-md-offset-2">
+			<div class = "panel panel-success">
+				<div class = "panel-heading">
+					<h1>Categorise Unfiled Questions</h1>not implemented yet. This functionality will be useful to educators wanting to create a new syllabus and categorise existing questions. For example, the existing questions are entered by an educator in Sydney, Australia, but an educator in Wellington, NZ can create a syllabus named "NZ_highschool_chemistry" and attempt to categorise the questions that are already in the database according to the NZ syllabus.
+				</div>
+				<div class = "panel-body">
+					<form role = "form" class = "form-horizontal">
+						<div class = "form-group">
+							<label class = "control-label col-md-3" for = "id_select_subject">Subject</label>
+							<div class = "col-md-5">
+								<select class = "form-control" id = "id_select_subject">
+								
+								</select>
+							</div>
+							<div class = "btn btn-default col-md-2" id = "id_core_btn_addsubject">
+								+ subject
+							</div>
+						</div>
+						<div class = "form-group">
+							<label class = "control-label col-md-3" for = "id_select_syllabus">Syllabus</label>
+							<div class = "col-md-5">
+								<select class = "form-control" id = "id_select_syllabus">
+								
+								</select>
+							</div>
+							<div class = "btn btn-default col-md-2" id = "id_core_btn_addcurriculum">
+								+ curriculum
+							</div>
+						</div>
+						<div class = "form-group">
+						<hr>
+							<div class = "col-md-10 col-md-offset-2">
+								<div class = "form-group">
+									<div class = "radio form-inline">
+										<label><input type = "radio" name = "radio_mode" id = "id_radio_random">Random</label>
+										<input type = "text" class = "form-control" id = "id_input_random"></input>
+									</div>
+									<div class = "radio">
+										<label><input type = "radio" name = "radio_mode" id = "id_radio_all">All</label>
+									</div>
+									<div class = "radio form-inline">
+										<label><input type = "radio" name = "radio_mode" id = "id_radio_select">Select</label>
+										<input type = "text" class = "form-control" id = "id_input_select"></input>
+									</div>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class = "panel-footer text-center">
+					<div class = "btn btn-success btn-lg">Go</div>
+				</div>
+			</div>
+		</div>
+		
+		</div>
+	</div>
+</body>
+</html>

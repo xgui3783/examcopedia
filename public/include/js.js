@@ -35,12 +35,16 @@ $(document).ready(function(){
 		
 		var message = $('#id_view_input_generalChatBox').val();
 		
-		socket.emit('send general chat',message,function(o){
-			if(o=='success'){
-				$('#id_view_input_generalChatBox').val('');
-				$('#id_view_btn_sendGeneralChat').removeClass('disabled');
-			}
-		})
+		if(message.replace(/ /g,'')!=''){
+			socket.emit('send general chat',message,function(o){
+				if(o=='success'){
+					$('#id_view_input_generalChatBox').val('');
+					$('#id_view_btn_sendGeneralChat').removeClass('disabled');
+				}
+			})
+		}else{
+			$('#id_view_btn_sendGeneralChat').removeClass('disabled')
+		}
 	})
 	
 	socket.on('receive general chat',function(o){
@@ -55,11 +59,6 @@ $(document).ready(function(){
 			appendComment(o[i].username, o[i].comment, o[i].created, '#id_view_well_generalChatWell',false);
 		}
 	})
-	
-	$('#id_navbar_profile').click(function(){
-		info_modal('Profile will be implemented in the future');
-		return false;		
-	});
 	
 	/* tooltip for view/generation > option */
 	$('#id_view_glyphicon_select').tooltip({
@@ -93,11 +92,6 @@ $(document).ready(function(){
 				'e.g. [sub SUBSCRIPT]<br>'+
 				'e.g. [sup SUPSCRIPT]</div>',
 	})
-	
-	/* ping socket to find user name */
-	socket.emit('what is my name',function(o){
-		$('#id_navbar_profile').append(o);
-	});
 	
 	/* mobile upload complete*/
 	socket.on('append imgtank',function(i){
@@ -658,6 +652,7 @@ function viewoption(){
 	})
 	
 	$('#id_view_modal_option').modal('show');
+	
 }
 
 function new_hashedid(){

@@ -14,6 +14,23 @@
 </head>
 <body>
 	
+<div id="id_core_modal_warning" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+	<div class="modal-content">
+	  <div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		<h4 class="modal-title">Info</h4>
+	  </div>
+	  <div class="modal-body">
+	  </div>
+	  <div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	  </div>
+	</div>
+  </div>
+</div>
+	
 <div class = "jumbotron"></div>
 
 <div class = "container-fluid">
@@ -28,7 +45,7 @@
 				</div>
 				<div class = "panel-body collapse" id = "id_login_panelbody_loginpanelbody">
 					<div class = "col-md-6 class_login_div_halflogin">
-						<form class = "form-horizontal" role = "form" action = "/loggingLocal" method = "post">
+						<form id = "id_login_form_local" class = "form-horizontal" role = "form" action = "/loggingLocal" method = "post">
 							<div class = "form-group">
 								<label class = "col-md-4 control-label" for = "username">Username : </label>
 								<div class = "col-md-8">
@@ -41,8 +58,12 @@
 									<input type ="password" name = "password" id = "password" class = "form-control">
 								</div>
 							</div>
-							<div class = "col-md-8 col-md-offset-4">
-								<button type = "submit" class = "btn btn-primary">Login</button>
+							<div class = "col-md-2 col-md-offset-4">
+								<div class = "btn btn-primary" id = "id_login_btn_login">Login</div>
+							</div>
+							<div class = "col-md-2">
+								<div class = "btn btn-link disabled" id = "id_login_btn_register">Register
+								</div>
 							</div>
 						</form>
 					</div>

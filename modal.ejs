@@ -1,0 +1,113 @@
+
+	<div class = "col-md-4 collapse" id = "id_core_well_chatterbox">
+		<div class = "col-md-9">
+			<div class = "row">
+				<input id = "id_view_input_generalChatBox" class = "form-control col-md-8" placeholder = "General Chat ...">
+			</div>
+		</div>
+		<div class = "col-md-3">
+			<div class = "row">
+				<div id = "id_view_btn_sendGeneralChat" class = "btn btn-default btn-block">send</div>
+			</div>
+		</div>
+		<div id = "id_view_div_generalChatContainer" class = "col-md-12">
+			<div class = "row">
+				<div id = "id_view_well_generalChatWell" class = "well">
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	<div id="id_core_modal_dp" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title">Choose dot point</h4>
+		  </div>
+		  <div class="modal-body">
+			<form role = "form">
+				<div class = "panel-group" id = "id_core_div_dpmap">
+					
+				</div>
+				<hr>
+			</form>
+			<hr>
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	
+	<div id = "id_view_modal_option" class = "modal fade" role = "dialog">
+		<div class = "modal-dialog">
+			<div class = "modal-content">
+				<div class = "modal-header">
+					<h4>Options</h4>
+				</div>
+				<div class = "modal-body">
+					<div class = "row">
+						<div class = "col-md-10 col-md-offset-2">
+							<div class = "form-group">
+								<div class = "radio form-inline">
+									<label><input type = "radio" name = "radio_mode_1" id = "id_radio_random" checked value = "random">Random</label>
+									<input type = "text" class = "form-control" id = "id_input_random" value = 10 data-toggle="tooltip" data-placement="right" title="Only numbers in this field.">
+								</div>
+								<div class = "radio">
+									<label><input type = "radio" name = "radio_mode_1" id = "id_radio_all" value = "all">All</label>
+								</div>
+								<div class = "radio form-inline">
+									<label><input type = "radio" name = "radio_mode_1" id = "id_radio_select" value = "select">Select</label>
+									<input type = "text" class = "form-control" disabled id = "id_input_select" data-toggle="tooltip" data-placement="right" title="Only numbers and a single dash (-) in this field.">
+									<span class = "hovershow glyphicon glyphicon-question-sign" id = "id_view_glyphicon_select"></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class = "modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="id_core_modal" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title"></h4>
+		  </div>
+		  <div class="modal-body">
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+
+	  </div>
+	</div>
+
+	<div id="id_core_modal_warning" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		<div class="modal-content">
+		  <div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">&times;</button>
+			<h4 class="modal-title">Info</h4>
+		  </div>
+		  <div class="modal-body">
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
