@@ -1109,7 +1109,7 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 				catch_error(e);
 			}else{
 				for(var i = 0; i<10; i++){
-					connection.query('INSERT INTO table_config (adminLvl, addNewCurricula, addNewDP, addNewQ, editQ) VALUES (0,?,1,1,1)',i,function(e2,r2){
+					connection.query('INSERT INTO table_config (adminLvl, addNewCurricula, addNewDP, addNewQ, editQ) VALUES (?,1,1,1,1)',i,function(e2,r2){
 						if(e2){
 							catch_error(e2);
 						}else{
@@ -1252,7 +1252,7 @@ app.get('/categorise',checkAuth,function(req,res){
 });
 
 app.get('/about',checkAuth,function(req,res){
-	res.rend('../about.ejs',{
+	res.render('../about.ejs',{
 		user : req.user
 	})
 })
