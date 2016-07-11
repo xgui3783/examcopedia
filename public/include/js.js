@@ -26,6 +26,10 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	$('#id_core_btn_closeChatter').off('click').click(function(){
+		$('#id_core_well_chatterbox').collapse('hide');
+	})
+	
 	$('#id_view_btn_sendGeneralChat').off('click').click(function(){
 		
 		if($(this).hasClass('disabled')){
@@ -348,7 +352,7 @@ $(document).ready(function(){
 	/* when .btn is clicked */
 	$('.btn').click(function(){
 		if($(this).attr('id')==undefined||$(this).prop('disabled')==true||$(this).hasClass('disabled')){
-			return;
+			return true;
 		}
 		btn_id_split = $(this).attr('id').split('_');
 		switch(btn_id_split[1]){
@@ -550,7 +554,12 @@ $(document).ready(function(){
 			$('#id_core_div_previewbody2 h4').html(parsing_preview($('#id_core_textarea_ans').val(),null));
 		}
 	});
-	
+	$('#id_view_well_generalChatWell').slimScroll({
+		height : '400px'
+	});
+	$('.container-fluid').slimScroll({
+		height : $(window).height()
+	})
 });
 
 /* constants */

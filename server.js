@@ -1029,7 +1029,7 @@ app.get('/auth/facebook/callback',passport.authenticate('facebookAuth',{successR
 
 /* routes auth local */
 
-app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login?unsuccessful', failureFlash : true}))
+app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
 
 /* toues auth google */
 app.get('/auth/google',passport.authenticate('googleAuth',{scope : ['profile','email']}));
@@ -1217,7 +1217,10 @@ app.get('/profile',checkAuth,function(req,res){
 /* send login page */
 app.get('/login',function(req,res){
 	if(!req.user){
-		res.sendfile('login.html');
+		res.render('../login.ejs',{
+			user : false,
+			errors : req.flash('error')
+		});
 	}else{
 		res.redirect('/');
 	}

@@ -58,9 +58,11 @@
 							<div class = "panel-heading btn btn-default btn-block" data-toggle = "collapse" data-target="#id_add_div_answer">
 								<span class = "glyphicon glyphicon-exclamation-sign"></span> Answer
 							</div>
-							<div class = "panel-body collapse" id = "id_add_div_answer">
-								<div class = "col-md-12">
-									<textarea class = "form-control" id = "id_core_textarea_ans"></textarea>
+							<div class = "collapse" id = "id_add_div_answer">
+								<div class = "panel-body">
+									<div class = "col-md-12">
+										<textarea class = "form-control" id = "id_core_textarea_ans"></textarea>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -74,15 +76,17 @@
 							<div class = "panel-heading btn btn-block btn-default" data-toggle="collapse" data-target="#id_add_div_uploadimages">
 								<span class = "glyphicon glyphicon-picture"></span> Attach Images
 							</div>
-							<div class = "panel-body collapse" id = "id_add_div_uploadimages">
-								<div class = "col-md-7 col-md-offset-1">
-									<input data-allowed-file-extensions='["jpg", "gif", "png", "svg" , "pdf", "tiff"]' id = "id_add_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
-								</div>
-								<div class = "col-md-4 ">
-									<div class = "col-md-12">
-										<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+							<div class = "collapse" id = "id_add_div_uploadimages">
+								<div class = "panel-body">
+									<div class = "col-md-7 col-md-offset-1">
+										<input data-allowed-file-extensions='["jpg", "gif", "png", "svg" , "pdf", "tiff"]' id = "id_add_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
 									</div>
-									<div class = "col-md-12" id = "id_add_div_qrcode">
+									<div class = "col-md-4 ">
+										<div class = "col-md-12">
+											<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+										</div>
+										<div class = "col-md-12" id = "id_add_div_qrcode">
+										</div>
 									</div>
 								</div>
 							</div>
@@ -93,12 +97,13 @@
 							<div class = "panel-heading btn btn-default btn-block" data-toggle="collapse" data-target="#id_add_div_moreoptions">
 								<span class = "glyphicon glyphicon-cog"></span> Options
 							</div>
-							<div class = "panel-body collapse" id = "id_add_div_moreoptions">
-								
-								<div class = "form-group">
-									<label class = "control-label col-md-3" for ="id_core_input_marks">Suggested Marks</label>
-									<div class = "col-md-5">
-										<input class = "form-control" id = "id_core_input_marks"></input>
+							<div class = "collapse" id = "id_add_div_moreoptions">
+								<div class = "panel-body">
+									<div class = "form-group">
+										<label class = "control-label col-md-3" for ="id_core_input_marks">Suggested Marks</label>
+										<div class = "col-md-5">
+											<input class = "form-control" id = "id_core_input_marks"></input>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -139,13 +144,15 @@
 								<span class = "glyphicon glyphicon-remove"></span> remove this one
 							</div>
 						</div>
-						<div class = "panel-body collapse" id = "id_view_panelbody_remove">
-							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_local">
-								<span class = "glyphicon glyphicon-map-marker"></span> from local
+						<div class = "collapse" id = "id_view_panelbody_remove">
+							<div class = "panel-body">
+								<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_local">
+									<span class = "glyphicon glyphicon-map-marker"></span> from local
+								</div>
+								<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_global">
+									<span class = "glyphicon glyphicon-globe"></span> from global
+								</div>							
 							</div>
-							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_remove_global">
-								<span class = "glyphicon glyphicon-globe"></span> from global
-							</div>							
 						</div>
 					</div>
 				</div>
@@ -156,12 +163,14 @@
 								<span class = "glyphicon glyphicon-save"></span> save changes
 							</div>
 						</div>
-						<div class = "panel-body collapse" id = "id_view_panelbody_save">
-							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_local">
-								<span class = "glyphicon glyphicon-map-marker"></span> to local
-							</div>
-							<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_global">
-								<span class = "glyphicon glyphicon-globe"></span> to global
+						<div class = "collapse" id = "id_view_panelbody_save">
+							<div class = "panel-body">
+								<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_local">
+									<span class = "glyphicon glyphicon-map-marker"></span> to local
+								</div>
+								<div class = "btn btn-default btn-block class_view_btn_edit" id = "id_view_btn_save_global">
+									<span class = "glyphicon glyphicon-globe"></span> to global
+								</div>
 							</div>
 						</div>
 					</div>
@@ -177,11 +186,13 @@
 	  </div>
 	</div>
 <%- include('modal') %>
-<%- include('navbar') %>	
 
 	<div class = "jumbotron"></div>
 
 	<div class = "container-fluid">
+		<div class = "row">
+<%- include('navbar') %>	
+		</div>
 		<div class = "row">
 			<div id = "id_view_div_form" class = "col-md-8 col-md-offset-2">
 				<div class = "panel panel-warning">

@@ -43,6 +43,12 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	$('#username,#password').off('keydown').keydown(function(e){
+		if(e.which==13){
+			$('#id_login_form_local').submit();
+		}
+	})
+	
 	$('#id_login_btn_login').off('click').click(function(){
 		var username = $('#username').val().replace(/ /g,'');
 		var password = $('#password').val();

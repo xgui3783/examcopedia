@@ -6,11 +6,13 @@
 </head>
 <body>
 <%- include('modal') %>
-<%- include('navbar') %>
 	
 	<div class = "jumbotron"></div>
 	
 	<div class = "container-fluid">
+		<div class = "row">
+<%- include('navbar') %>
+		</div>
 		<div class = "row">
 			<div class = "col-md-6">
 				<div class = "panel panel-primary">
@@ -61,31 +63,29 @@
 								<div class = "panel-heading btn btn-default btn-block" data-toggle = "collapse" data-target="#id_add_div_answer">
 									<span class = "glyphicon glyphicon-exclamation-sign"></span> Answer
 								</div>
-								<div class = "panel-body collapse" id = "id_add_div_answer">
-									<div class = "col-md-12">
-										<textarea class = "form-control" id = "id_core_textarea_ans"></textarea>
+								<div class = "collapse" id = "id_add_div_answer">
+									<div class = "panel-body">
+										<div class = "col-md-12">
+											<textarea class = "form-control" id = "id_core_textarea_ans"></textarea>
+										</div>
 									</div>
-								</div>
-							</div>
-							<div class = "row hidden">
-								<div class = "col-md-10 col-md-offset-1">
-								<i>[img? r=rotation w=width] ? = 1,2,3 ... or filename_extension e.g., [img1 r=90 w=50] or [imgchemistry_JPG r=180]</i><br>
-								<i>[sup text] [sub text]</i>
 								</div>
 							</div>
 							<div class = "panel panel-default">
 								<div class = "panel-heading btn btn-block btn-default" data-toggle="collapse" data-target="#id_add_div_uploadimages">
 									<span class = "glyphicon glyphicon-picture"></span> Attach Images
 								</div>
-								<div class = "panel-body collapse" id = "id_add_div_uploadimages">
-									<div class = "col-md-7 col-md-offset-1">
-										<input data-allowed-file-extensions='["jpg", "gif", "png", "svg" , "pdf", "tiff"]' id = "id_add_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
-									</div>
-									<div class = "col-md-4 ">
-										<div class = "col-md-12">
-											<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+								<div class = "collapse" id = "id_add_div_uploadimages">
+									<div class = "panel-body">
+										<div class = "col-md-7 col-md-offset-1">
+											<input data-allowed-file-extensions='["jpg", "gif", "png", "svg" , "pdf", "tiff"]' id = "id_add_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
 										</div>
-										<div class = "col-md-12" id = "id_add_div_qrcode">
+										<div class = "col-md-4 ">
+											<div class = "col-md-12">
+												<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+											</div>
+											<div class = "col-md-12" id = "id_add_div_qrcode">
+											</div>
 										</div>
 									</div>
 								</div>
@@ -96,35 +96,37 @@
 								<div class = "panel-heading btn btn-default btn-block" data-toggle="collapse" data-target="#id_add_div_moreoptions">
 									<span class = "glyphicon glyphicon-cog"></span> Options
 								</div>
-								<div class = "panel-body collapse" id = "id_add_div_moreoptions">
-									<div class = "form-group hidden" id = "id_add_formgroup_spaces">
-										<div class = "row">
-											<label class = "control-label col-md-3" for = "id_core_mixed_space">Suggested Space</label>
-											<div class = "col-md-9 form-inline">
-												<input  class = "form-control" type = "text" id = "id_core_mixed_space_num"></input>
-												<select class = "form-control" id = "id_core_mixed_space_type">
-													<option selected>lines</option>
-													<option>box</option>
-													<option>blank</option>
-												</select>
+								<div class = "collapse" id = "id_add_div_moreoptions">
+									<div class = "panel-body">
+										<div class = "form-group hidden" id = "id_add_formgroup_spaces">
+											<div class = "row">
+												<label class = "control-label col-md-3" for = "id_core_mixed_space">Suggested Space</label>
+												<div class = "col-md-9 form-inline">
+													<input  class = "form-control" type = "text" id = "id_core_mixed_space_num"></input>
+													<select class = "form-control" id = "id_core_mixed_space_type">
+														<option selected>lines</option>
+														<option>box</option>
+														<option>blank</option>
+													</select>
+												</div>
 											</div>
 										</div>
-									</div>
-									
-									<div class = "row hidden">
-										<div class = "col-md-6 col-md-offset-3">
-											<div class = "btn btn-danger disabled" id = "id_add_btn_lessspace">
-												<span class = "glyphicon glyphicon-minus-sign"></span>
-											</div>
-											<div class = "btn btn-success" id = "id_add_btn_morespace">
-												<span class = "glyphicon glyphicon-plus-sign"></span>
+										
+										<div class = "row hidden">
+											<div class = "col-md-6 col-md-offset-3">
+												<div class = "btn btn-danger disabled" id = "id_add_btn_lessspace">
+													<span class = "glyphicon glyphicon-minus-sign"></span>
+												</div>
+												<div class = "btn btn-success" id = "id_add_btn_morespace">
+													<span class = "glyphicon glyphicon-plus-sign"></span>
+												</div>
 											</div>
 										</div>
-									</div>
-									<div class = "form-group">
-										<label class = "control-label col-md-3" for ="id_core_input_marks">Suggested Marks</label>
-										<div class = "col-md-5">
-											<input class = "form-control" id = "id_core_input_marks"></input>
+										<div class = "form-group">
+											<label class = "control-label col-md-3" for ="id_core_input_marks">Suggested Marks</label>
+											<div class = "col-md-5">
+												<input class = "form-control" id = "id_core_input_marks"></input>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -133,30 +135,32 @@
 								<div class = "panel-heading btn btn-default btn-block" data-toggle="collapse" data-target="#id_add_div_fileunder">
 									<span class = "glyphicon glyphicon-tags"></span> Categorise
 								</div>
-								<div class = "panel-body collapse" id = "id_add_div_fileunder">
-									<div class = "form-group">
-										<label class = "control-label col-md-2" for = "id_core_select_syllabus">Syllabus</label>
-										<div class = "col-md-5">
-											<select class = "form-control" id = "id_core_select_syllabus">
-												<option></option>
-											</select>
-										</div>
-										<div class = "col-md-3">
-											<div class = "btn btn-default btn-block" id = "id_core_btn_addcurriculum">
-												+ curriculum
-											</div>
-										</div>
-									</div>
-									<div class = "form-group">
-										<label class = "control-label col-md-2" for = "id_core_btn_select_dp">Dot Point</label>
+								<div class = "collapse" id = "id_add_div_fileunder">
+									<div class = "panel-body">
+										<div class = "form-group">
+											<label class = "control-label col-md-2" for = "id_core_select_syllabus">Syllabus</label>
 											<div class = "col-md-5">
-												<input type = "text" class = "form-control" id = "id_core_input_dp" disabled></input>
+												<select class = "form-control" id = "id_core_select_syllabus">
+													<option></option>
+												</select>
 											</div>
-											<div class = " col-md-2">
-												<div class = "btn btn-default disabled" id = "id_core_btn_choosedp" >
-													choose dp
+											<div class = "col-md-3">
+												<div class = "btn btn-default btn-block" id = "id_core_btn_addcurriculum">
+													+ curriculum
 												</div>
 											</div>
+										</div>
+										<div class = "form-group">
+											<label class = "control-label col-md-2" for = "id_core_btn_select_dp">Dot Point</label>
+												<div class = "col-md-5">
+													<input type = "text" class = "form-control" id = "id_core_input_dp" disabled></input>
+												</div>
+												<div class = " col-md-2">
+													<div class = "btn btn-default disabled" id = "id_core_btn_choosedp" >
+														choose dp
+													</div>
+												</div>
+										</div>
 									</div>
 								</div>
 							</div>
