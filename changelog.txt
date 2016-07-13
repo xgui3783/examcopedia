@@ -20,6 +20,7 @@ Future updates:
 - generate printable PDF
 
 Change log
+v0.1.7 - 13/07/2016 - added pdf export
 v0.1.6.1 - 10/07/2016 - added profile page. different users with different levels of admin levels can user UI to control the functionalities of webapp
 			- slightly redesigned UI. Now pages utilises EJS to render page. 
 v0.1.6 - 07/07/2016 - added comment system for individual questions and general chat

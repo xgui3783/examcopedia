@@ -898,11 +898,11 @@ function viewlocaledit(mode){
 		case 'remove':
 			target.animate({'opacity':'0.0'},400,function(){
 				var renumber = target.next();
-				do{
+				while(renumber.length != 0){
 					var oldnum = Number(renumber.children('div').first().children('h4').html().replace('.',''));
 					renumber.children('div').first().children('h4').html(oldnum-1+'.');
 					renumber = renumber.next();
-				}while(renumber.length != 0)
+				}
 				target.remove();
 			})
 		break;
@@ -963,7 +963,7 @@ function bind_viewdiv_overlay(target){
 					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment',false)
 				}
 			});
-			
+			console.log(json);
 			$.ajax({
 				type : 'POST',
 				url : 'pingQ',

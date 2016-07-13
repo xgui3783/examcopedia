@@ -62,10 +62,9 @@ $(document).ready(function(){
 	
 	queryRandomQ('start');
 	
-	if(window.location.href.split('?')[1]=='unsuccessful'){
-		info_modal('Incorrect username or password!');
-		$('#id_login_panelbody_loginpanelbody').collapse('show');
-	}
+	$('.container-fluid').first().slimScroll({
+		height : $(window).height()
+	})
 });
 
 

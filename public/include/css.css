@@ -13,6 +13,12 @@ overflow-x:hidden;
 position:relative;
 }
 
+.page:not(:nth-child(2))
+{
+background-color:#fff;	
+z-index:0;
+}
+
 .class_login_div_halflogin
 {
 padding-top:50px;

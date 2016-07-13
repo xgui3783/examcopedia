@@ -278,15 +278,46 @@
 			<div id = "id_view_div_preview" class = "hidden col-md-8 col-md-offset-2">
 				<div class = "panel panel-warning">
 					<div class = "panel-heading">
-						<h1>Preview</h1>
+						<h1>Preview</h1> 
+					</div>
+					<div class = "panel-footer">
+					<div class = "class_view_btn_startOver btn btn-default">Start Over</div> <div class = "class_view_btn_makePDF btn btn-warning">Make me a PDF</div>
 					</div>
 					<div class = "panel-body">
 					</div>
 					<div class = "panel-footer">
+					<div class = "class_view_btn_startOver btn btn-default">Start Over</div> <div class = "class_view_btn_makePDF btn btn-warning">Make me a PDF</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+	<script>
+		$('.class_view_btn_makePDF').off('click').click(function(){
+			var json = {};
+			var panelBody = $('#id_view_div_preview').find('div.panel-body');
+			for (var i = 0; i<panelBody.children('div.row').length;i++){
+				var blockNumber = 'block' + i;
+				json[blockNumber]={};
+				var rows = panelBody.children('div.row').eq(i).children('div.row');
+				for (var j = 0; j<rows.length; j++){
+					var questionNumber = 'question' + j;
+					json[blockNumber][questionNumber]={};
+					json[blockNumber][questionNumber]['questionNumber'] = rows.eq(j).children('div').eq(0).text();
+					json[blockNumber][questionNumber]['questionMark'] = rows.eq(j).children('div').eq(2).text();
+					json[blockNumber][questionNumber]['questionBody'] = rows.eq(j).children('div').eq(1).html();
+				}
+			}
+			socket.emit('make pdf',json,function(o){
+				if(o.result=='success'){
+					window.open(o.url,'_blank');	
+				}
+				
+			})
+		})
+		$('.class_view_btn_startOver').off('click').click(function(){
+			window.history.back();
+		})
+	</script>
 </body>
 </html>
