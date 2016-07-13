@@ -294,6 +294,10 @@
 	</div>
 	<script>
 		$('.class_view_btn_makePDF').off('click').click(function(){
+			if($(this).hasClass('disabled')){
+				return false;
+			}
+			$('.class_view_btn_makePDF').addClass('disabled');
 			var json = {};
 			var panelBody = $('#id_view_div_preview').find('div.panel-body');
 			for (var i = 0; i<panelBody.children('div.row').length;i++){
@@ -310,9 +314,10 @@
 			}
 			socket.emit('make pdf',json,function(o){
 				if(o.result=='success'){
+					$('.class_view_btn_makePDF').removeClass('disabled');
+					info_modal('PDF generated and opened in a new window.');
 					window.open(o.url,'_blank');	
 				}
-				
 			})
 		})
 		$('.class_view_btn_startOver').off('click').click(function(){

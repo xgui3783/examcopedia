@@ -8,6 +8,12 @@ background-color:#fcfcfc;
 overflow-x:hidden;
 }
 
+span img
+{
+display:inline;
+height:100%;
+}
+
 .page
 {
 position:relative;
