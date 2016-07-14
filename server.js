@@ -450,9 +450,7 @@ app.post('/mobileuploadphoto',function(req,res){
 });
 
 app.post('/ocr',function(req,res){
-
 	uploadOCR(req,res,function(e){
-		
 		if(req.body.base64jpeg!=undefined){
 			var str = req.body.base64jpeg.replace(/^data:image\/jpeg;base64,/, "");
 			var buf = new Buffer(str, 'base64'); 
@@ -473,22 +471,17 @@ app.post('/ocr',function(req,res){
 						}else{
 							res.send(b);
 							/* need to clean up the now obsolete files */
+							fs.unlink('ocrStorage/'+tempFilename,function(e){
+								if(e){
+									catch_error(e);
+								}
+							})
 						}
 					})
 				}
 			})
 		}
-		
-		//res.send('ok')
 	})
-		
-	/* 
-	
-	http.request({},function(r){
-		
-	})
-
-	*/
 })
 
 var connection = mysql.createConnection({
@@ -608,11 +601,6 @@ io.on('connection',function(socket){
 					}
 					docy = writeToPDF(i[block][question],doc,docy,arrAsyncCallBack);
 				}
-
-				//spaceCount
-				//Math.ceil(wordCountTrim.length/60)
-				//brCount
-				
 			}
 		}
 		stream.on('finish',function(){
@@ -621,6 +609,13 @@ io.on('connection',function(socket){
 				url : 'pdfout/'+pdfFilename,
 			}
 			callback(json);
+			setTimeout(function(){
+				fs.unlink('pdfout/'+pdfFilename,function(e){
+					if(e){
+						catch_error(e);
+					}
+				})
+			},1000*60*30)
 		})
 		docEnd(arrAsyncCallBack,doc);
 	})
