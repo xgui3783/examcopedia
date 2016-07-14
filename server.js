@@ -476,14 +476,12 @@ io.on('connection',function(socket){
 		
 		doc.image(app.get('persistentDataDir')+'img/logoLg.png',50,50,{fit : [100,100]});
 		doc.font('Times-Roman').fontSize(24).text('examcopedia',50,170);
-		doc.fontSize(50).text('Compiled Exam',50,300,{
+		doc.font('Helvetica').fontSize(50).text('Compiled Exam',50,300,{
 			width : 500,
 		})
-		doc.fontSize(16).text('Comments & Suggestions?',50,600);
-		doc.text('Just want to say hello?');
+		doc.font('Times-Roman').fontSize(16).text('Comments & Suggestions?',50,600);
 		doc.font('Times-Italic').fontSize(14);
 		doc.text('join.examcopedia.club/',70,doc.y);
-		doc.text('deal.studywild.cards/');
 		doc.text('panda@pandamakes.com.au');
 		doc.addPage();
 		
@@ -497,7 +495,7 @@ io.on('connection',function(socket){
 				var wordCountTrim = qBodyTrim.replace(/<div class="col-md-12 spaces_.{3,5}">|<br>|<img.*?>|<su.>.*?<\/su.>/g,'');
 				var brCount = ( qBodyTrim.match(/<br>|<div class="col-md-2">|<div class="col-md-8">/g) || [] ).length;
 				var spaceCount = (qBodyTrim.match(/<div class="col-md-12 spaces_.{3,5}">/g)||[]).length;
-				
+
 				i[block][question]['questionBody']=qBodyTrim;
 				
 				var lineHeight = 12;
@@ -527,7 +525,8 @@ io.on('connection',function(socket){
 						})
 						*/
 					});
-					
+					console.log(docy);
+					console.log(height);
 					if(height > 690){
 						doc.addPage();
 						docy = doc.y + 20;
