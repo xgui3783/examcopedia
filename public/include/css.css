@@ -8,6 +8,11 @@ background-color:#fcfcfc;
 overflow-x:hidden;
 }
 
+img#id_add_img_OCR
+{
+width:100%;
+}
+
 span img
 {
 display:inline;

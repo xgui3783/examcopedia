@@ -17,6 +17,7 @@ var flash = require('connect-flash');
 var bodyParser = require('body-parser');
 var session = require('express-session');
 var PDFDoc = require('pdfkit');
+var request = require('request');
 var logos = [
 	'join.examcopedia.club',
 	'deal.studywild.cards'
@@ -106,8 +107,32 @@ var mobileStorage = multer.diskStorage({
 	}
 })
 
+var ocrStorage = multer.diskStorage({
+	destination : function (req,file,callback){
+		fs.stat('ocrStorage',function(e,s){
+			if(e){
+				catch_error(e);
+				fs.mkdir('ocrStorage',function(e1){
+					if(e1){
+						catch_error(e1);
+					}
+					else{
+						callback(null, 'ocrStroage');
+					}
+				});
+			}else{
+				callback(null, 'ocrStorage') 
+			}			
+		})
+	},
+	filename : function(req,file,callback){
+		callback(null,file.originalname);
+	}
+})
+
 var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
 var uploadMobile = multer({storage : mobileStorage}).single('photo');
+var uploadOCR = multer({storage : ocrStorage}).single('photo');
 
 app.post('/upload',function(req,res){
 	upload(req,res,function(e){
@@ -116,6 +141,7 @@ app.post('/upload',function(req,res){
 				for (i = 0; i<req.files.length; i++){
 					var originalname = req.files[i].originalname;
 					resizeImage('uploads/',app.get('persistentDataDir')+'img/'+req.body.hashedid + '/',req.files[i].originalname,function(o){
+						
 						if(o=='done'){
 							io.sockets.to(req.body.hashedid).emit('append imgtank',originalname);
 							var json = {};
@@ -137,6 +163,7 @@ app.post('/upload',function(req,res){
 				}
 			}else{
 				catch_error(e1);
+				res.send(e1);
 			}
 		});
 	})
@@ -422,6 +449,48 @@ app.post('/mobileuploadphoto',function(req,res){
 	});
 });
 
+app.post('/ocr',function(req,res){
+
+	uploadOCR(req,res,function(e){
+		
+		if(req.body.base64jpeg!=undefined){
+			var str = req.body.base64jpeg.replace(/^data:image\/jpeg;base64,/, "");
+			var buf = new Buffer(str, 'base64'); 
+			var tempFilename = String(Date.now())+'.jpg';
+			fs.writeFile('ocrStorage/'+tempFilename,buf,function(e){
+				if(e){
+					catch_error(e);
+					res.send(e);
+				}else{
+					var form2 = {
+						apikey : '0f9c664db188957',
+						file : fs.createReadStream('ocrStorage/'+tempFilename)
+					}
+					
+					request.post({url: 'https://api.ocr.space/parse/image', formData : form2},function(e,h,b){
+						if(e){
+							catch_error(e);
+						}else{
+							res.send(b);
+							/* need to clean up the now obsolete files */
+						}
+					})
+				}
+			})
+		}
+		
+		//res.send('ok')
+	})
+		
+	/* 
+	
+	http.request({},function(r){
+		
+	})
+
+	*/
+})
+
 var connection = mysql.createConnection({
 	host	:app.get('mysqlhost'),
 	user	:app.get('mysqluser'),
@@ -525,8 +594,6 @@ io.on('connection',function(socket){
 						})
 						*/
 					});
-					console.log(docy);
-					console.log(height);
 					if(height > 690){
 						doc.addPage();
 						docy = doc.y + 20;
@@ -1296,7 +1363,23 @@ app.get('/auth/google/callback',
 		res.redirect('/')
 	})
 
-
+/* making ocr folder */
+fs.stat('ocrStorage',function(e,s){
+	if(e){
+		catch_error(e);
+		fs.mkdir('ocrStorage',function(e1){
+			if(e1){
+				catch_error(e1);
+			}
+			else{
+				
+			}
+		});
+	}else{
+		
+	}			
+});
+	
 /* making reqlog */
 fs.stat(app.get('persistentDataDir')+'reqlog',function(e,s){
 	if(e){

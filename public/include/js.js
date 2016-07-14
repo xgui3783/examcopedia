@@ -310,42 +310,76 @@ $(document).ready(function(){
 			.on('filebatchselected',function(event,files){
 				$('#id_add_file_file').fileinput('upload');
 			})
-			/*
-			.on('filesuccessremove',function(event,id){
-				var json = {'hashedid':$('#id_core_input_hashedid').val(),'filename':$('#'+id+' .file-footer-caption').html()}
-				//console.log($('#'+id+' .file-footer-caption').html());
-				socket.emit('delete thumbnail',json,function(o){
-					if(o=='done'){
-						$('.img'+$('#'+id+' .file-footer-caption').html().replace('.','_')).remove();
-						return true;
-					}else if (o=='error'){
-						return false;
-					}
-				});
-			})
-			*/
 			.on('filebatchuploadsuccess',function(event, data, previewId, index){
 				//works. append <img> this somewhere 
 				//data.files[i].name
 				
 				$('#id_add_file_file').fileinput('clear');
+			});
+		
+		$('#id_add_file_OCR')
+			.fileinput({
+				uploadUrl		: '/upload',
+				uploadAsync		: false,
+				showUpload		: false,
+				showRemove		: false,
+				dropZoneEnabled	: true,
+				uploadExtraData	: {
+					'OCR'		: true,
+					'hashedid'	: $('#id_core_input_hashedid').val(),
+					},
+			})
+			.on('filebatchselected',function(event,files){
+				//$('#id_add_file_OCR').fileinput('upload');
+				$('#id_add_img_OCR').attr('src',URL.createObjectURL(files[0]));
+				$('#id_add_divContainer_OCRContainer').addClass('hidden');
+				$('#id_add_divContainer_OCREditor').removeClass('hidden');
 				
-				/*
-				for(i=0;i<data.files.length;i++){
+				$('#id_add_img_OCR').cropper({
+					autoCrop : false,
+					viewMode : 1,
+					crop : function(e){
+						$('#id_add_divContainer_OCREditor .btn').removeClass('disabled')
+					}
+				});
+				
+				/* bind button clicks */
+				$('#id_add_divContainer_OCREditor').children('.well').children('.btn').off('click').click(function(){
+					if($(this).hasClass('disabled')){
+						return false;
+					}
 					
-					var imgno = i;
-					do{
-						imgno += 1;
-					}while($('.img'+imgno).length>0)
+					var formData = new FormData();
+					
+					if($(this).hasClass('btn-primary')){
+						var _this = $(this);
+						$(this).addClass('disabled');
+						//ocr
+						formData.append('base64jpeg',$('#id_add_img_OCR').cropper('getCroppedCanvas').toDataURL('image/jpeg'));
 						
-					
-					//$('.imgtank').append('<img src = "'+imgurl+'" id = "img'+data.files[i].name.replace('.','_')+'" class = "col-md-12 img'+data.files[i].name.replace('.','_')+' img'+imgno+'">');
-					
-					
-					appendImgTank($('#id_core_input_hashedid').val(),data.files[i].name,imgno);
-					
-				}
-				*/
+						$.ajax({
+							processData : false,
+							contentType : false,
+							type : 'POST',
+							url : '/ocr',
+							data : formData,
+							success : function(o){
+								_this.removeClass('disabled');
+								var parsedResult = JSON.parse(o).ParsedResults[0].ParsedText;
+								$('#id_add_textarea_OCRResult').val(parsedResult);
+							},
+							error : function (e){
+								_this.removeClass('disabled');
+								info_modal('OCR unsuccessful.')
+								console.log('error'),
+								console.log(e);
+							}
+						})
+						
+					}else if($(this).hasClass('btn-warning')){
+						info_modal('to be implemented in the future');
+					}
+				})
 			})
 	}
 	
@@ -554,12 +588,19 @@ $(document).ready(function(){
 			$('#id_core_div_previewbody2 h4').html(parsing_preview($('#id_core_textarea_ans').val(),null));
 		}
 	});
-	$('#id_view_well_generalChatWell').slimScroll({
-		height : '400px'
-	});
-	$('.container-fluid').slimScroll({
-		height : $(window).height()
-	})
+	
+	var isMobile = window.matchMedia("only screen and (max-width: 760px)");
+	
+	/* http://stackoverflow.com/a/24600597/6059235 */
+	if (!/Mobi/i.test(navigator.userAgent)) {
+		console.log('slimscroll');
+		$('#id_view_well_generalChatWell').slimScroll({
+			height : '400px'
+		});
+		$('.container-fluid').slimScroll({
+			height : $(window).height()
+		})
+	}
 });
 
 /* constants */
