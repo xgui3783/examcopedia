@@ -13,6 +13,22 @@ img#id_add_img_OCR
 width:100%;
 }
 
+div#id_add_div_OCRContainer
+{
+border:1px solid black;
+padding:0;
+}
+
+canvas
+{
+width:100%;
+}
+
+.class_add_btn_pdfNav
+{
+height:100%;
+}
+
 span img
 {
 display:inline;

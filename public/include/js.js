@@ -314,7 +314,7 @@ $(document).ready(function(){
 				//works. append <img> this somewhere 
 				//data.files[i].name
 				
-				$('#id_add_file_file').fileinput('clear');
+				$('#id_add_file_file').fileinput('reset');
 			});
 		
 		$('#id_add_file_OCR')
@@ -329,20 +329,58 @@ $(document).ready(function(){
 					'hashedid'	: $('#id_core_input_hashedid').val(),
 					},
 			})
-			.on('filebatchselected',function(event,files){
-				//$('#id_add_file_OCR').fileinput('upload');
-				$('#id_add_img_OCR').attr('src',URL.createObjectURL(files[0]));
-				$('#id_add_divContainer_OCRContainer').addClass('hidden');
-				$('#id_add_divContainer_OCREditor').removeClass('hidden');
-				
-				$('#id_add_img_OCR').cropper({
-					autoCrop : false,
-					viewMode : 1,
-					crop : function(e){
-						$('#id_add_divContainer_OCREditor .btn').removeClass('disabled')
+			.on('filebatchselected',function(event,file){
+				if(/pdf/i.test(file[0].type)){
+					$('#id_add_row_pdfControl').removeClass('hidden');
+					pdfurl = URL.createObjectURL(file[0]);
+					$('#id_add_file_OCR').fileinput('clear');
+					pageNum=1;
+					PDFJS.getDocument(pdfurl).then(function(pdfDoc_){
+						pdfDoc = pdfDoc_;
+						renderPage(pageNum);
+						$('#id_add_span_pdfTotalPages').html(pdfDoc.numPages);
+					});
+					$('.class_add_btn_pdfNav').off('click').click(function(){
+						if($(this).attr('id')=='leftArrow'){
+							pdfPrevPage();
+						}else if($(this).attr('id')=='rightArrow'){
+							pdfNextPage();
+						}
+					});
+				}else{
+					$('#id_add_row_pdfControl').addClass('hidden');
+					$('#id_add_img_OCR').cropper('destroy');
+					var _this = $(this);
+					var canvas = document.getElementById('id_add_img_OCR');
+					var ctx = canvas.getContext('2d');
+					var img = new Image();
+					img.onload = function(){
+						canvas.width = img.width;
+						canvas.height = img.height;
+						/*
+						if(canvas.width<img.width){
+							canvas.height = img.height*canvas.width/img.width;
+						}else{
+							canvas.height = img.height;
+						}
+						*/
+						ctx.drawImage(img,0,0 ,img.width, img.height, 0,0,canvas.width,canvas.height);
+						
+						$('#id_add_img_OCR').cropper({
+							autoCrop : false,
+							viewMode : 0,
+							crop : function(e){
+								$('#id_add_divContainer_OCREditor .btn-warning,#id_add_divContainer_OCREditor .btn-primary').removeClass('disabled')
+							}
+						});
+						
+						_this.fileinput('clear');
 					}
-				});
-				
+					img.src = URL.createObjectURL(file[0]);
+				}
+				$('#id_add_divContainer_OCREditor').removeClass('hidden');
+				$('#id_add_divContainer_OCRContainer').addClass('hidden');
+
 				/* bind button clicks */
 				$('#id_add_divContainer_OCREditor').children('.well').children('.btn').off('click').click(function(){
 					if($(this).hasClass('disabled')){
@@ -377,7 +415,37 @@ $(document).ready(function(){
 						})
 						
 					}else if($(this).hasClass('btn-warning')){
-						info_modal('to be implemented in the future');
+						//crop images
+						var formData = new FormData();
+						formData.append('hashedid',$('#id_core_input_hashedid').val());
+						formData.append('photo',$('#id_add_img_OCR').cropper('getCroppedCanvas').toDataURL('image/jpeg'));
+						formData.append('name',String(Date.now())+'.jpg')
+						$(this).addClass('disabled');
+						var _this = $(this);
+						$.ajax({
+							processData : false,
+							contentType : false,
+							type : 'POST',
+							url : '/mobileuploadphoto',
+							data : formData,
+							success : function(o){
+								if (o == 'success'){
+									_this.removeClass('disabled');
+									$('#id_add_img_OCR').cropper('clear');
+									$('#id_add_divContainer_OCREditor .btn-warning,#id_add_divContainer_OCREditor .btn-primary').addClass('disabled');
+									
+								}else if  (o=='noroom'){
+									info_modal('Login token expired. Please refresh the page.')
+								}
+								},
+							error : function(e){
+								info_modal(e);
+								}
+							
+						})
+					}else if($(this).hasClass('btn-info')){
+						$('#id_add_divContainer_OCREditor').addClass('hidden');
+						$('#id_add_divContainer_OCRContainer').removeClass('hidden')
 					}
 				})
 			})
@@ -593,7 +661,6 @@ $(document).ready(function(){
 	
 	/* http://stackoverflow.com/a/24600597/6059235 */
 	if (!/Mobi/i.test(navigator.userAgent)) {
-		console.log('slimscroll');
 		$('#id_view_well_generalChatWell').slimScroll({
 			height : '400px'
 		});
@@ -602,6 +669,7 @@ $(document).ready(function(){
 		})
 	}
 });
+
 
 /* constants */
 var appendAPanel = 
@@ -638,7 +706,76 @@ var addAFile =
 			'<input data-allowed-file-extensions=\'["jpg", "gif", "png", "svg" , "pdf", "tiff"]\' id = "id_modal_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">'+
 		'</div>'+
 	'</form>';
+
+/* constants related to pdf -> canvas */
 	
+var pageNum = 1,
+	pageRendering = false,
+	pageNumPending = null,	
+	pdfDoc = null,
+	scale = 2.0
+/* OCR PDF functions */	
+function renderPage(num){
+	var canvas = document.getElementById('id_add_img_OCR'),
+		ctx = canvas.getContext('2d');
+	$('#id_add_img_OCR').cropper('destroy');
+	pageRendering = true;
+	// Using promise to fetch the page
+	pdfDoc.getPage(num).then(function(page) {
+		var viewport = page.getViewport(scale);
+		canvas.height = viewport.height;
+		canvas.width = viewport.width;
+
+		// Render PDF page into canvas context
+		var renderContext = {
+			canvasContext: ctx,
+			viewport: viewport
+		};
+		var renderTask = page.render(renderContext);
+
+		// Wait for rendering to finish
+		renderTask.promise.then(function () {
+			pageRendering = false;
+			if (pageNumPending !== null) {
+				// New page rendering is pending
+				renderPage(pageNumPending);
+				pageNumPending = null;
+			}else{
+				$('#id_add_img_OCR').cropper({
+					autoCrop : false,
+					viewMode : 0,
+					crop : function(e){
+						$('#id_add_divContainer_OCREditor .btn').removeClass('disabled')
+					}
+				});
+			}
+		});
+	});
+	
+	$('#id_add_input_pdfNavPageNum').html(pageNum);
+}
+function queueRenderPage(num){
+	if(pageRendering){
+		pageNumPending = num;
+	}else{
+		renderPage(num);
+	}
+}
+function pdfPrevPage(){
+	if(pageNum <= 1){
+		return;
+	}
+	pageNum--;
+	queueRenderPage(pageNum);
+}
+function pdfNextPage(){
+	if(pageNum >= pdfDoc.numPages){
+		return;
+	}
+	pageNum++;
+	queueRenderPage(pageNum);
+}
+
 /* functions */
 function redPill(mode,target){
 	var t = $(target);
@@ -1100,12 +1237,12 @@ function decode_select(i){
 function append_one(counter,target,json){
 	var qn_container = 
 		'<div id="'+json.hashed_id+'" class = "row id_sync_active">'+
-			'<div class = "col-md-1 col-md-offset-1"><h4>'+counter+'.</h4>'+
+			'<div class = "col-xs-1 col-xs-offset-1"><h4>'+counter+'.</h4>'+
 			'</div>'+
-			'<div class = "col-md-8" id = "id_view_div_qncontainer"><h4></h4>'+
+			'<div class = "col-xs-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
 			'</div>'+
-			'<div class = "col-md-offset-1 col-md-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
+			'<div class = "col-sm-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
 	target.append(qn_container);
 	$('.id_sync_active').find('#id_view_div_qncontainer').children('h4').html(parsing_preview(json.question,json.hashed_id));

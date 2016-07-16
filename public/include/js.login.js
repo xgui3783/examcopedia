@@ -62,9 +62,12 @@ $(document).ready(function(){
 	
 	queryRandomQ('start');
 	
-	$('.container-fluid').first().slimScroll({
-		height : $(window).height()
-	})
+	/* http://stackoverflow.com/a/24600597/6059235 */
+	if (!/Mobi/i.test(navigator.userAgent)) {
+		$('.container-fluid').first().slimScroll({
+			height : $(window).height()
+		})
+	}
 });
 
 

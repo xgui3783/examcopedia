@@ -74,7 +74,7 @@
 										</div>
 									</div>
 								</div>
-								<div class = "panel panel-default">
+								<div class = "hidden panel panel-default">
 									<div class = "panel-heading btn btn-block btn-default" data-toggle="collapse" data-target="#id_add_div_uploadimages">
 										<span class = "glyphicon glyphicon-picture"></span> Attach Images
 									</div>
@@ -87,7 +87,7 @@
 												<div class = "col-md-12">
 													<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
 												</div>
-												<div class = "col-md-12" id = "id_add_div_qrcode">
+												<div class = "col-md-12" id = "id_add_div_qrcode_">
 												</div>
 											</div>
 										</div>
@@ -178,19 +178,46 @@
 			<div class = "col-md-6">
 				<div class = "panel panel-primary">
 					<div class = "panel-heading btn btn-primary btn-block" data-toggle = "collapse" data-target="#id_add_collapseDiv_uploadImageOCR">
-						<h1>OCR Extract Text (beta)</h1>
+						<h1>OCR Extract Text (beta) / Extract Images</h1>
 					</div>
 					<div class = "collapse" id = "id_add_collapseDiv_uploadImageOCR">
 						<div class = "panel-body">
 							<div class = "col-md-12" id = "id_add_divContainer_OCRContainer">
-								<input data-allowed-file-extensions='["jpg", "gif", "png", <%#"svg" , "pdf",%> "tiff"]' id = "id_add_file_OCR" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">
+								<div class = "row">
+									<div class = "col-md-8">
+										<input data-allowed-file-extensions='["jpg", "gif", "png", <%#"svg", %> "pdf", "tiff"]' id = "id_add_file_OCR" name = "id_modal_file_ocr" data-show-upload="false" data-show-caption="true" type = "file">
+									</div>
+									<div class = "col-md-4 ">
+										<div class = "col-md-12">
+											<h4><span class = "glyphicon glyphicon-phone"></span>Upload</h4>
+										</div>
+										<div class = "col-md-12" id = "id_add_div_qrcode">
+										</div>
+									</div>
+								</div>
 							</div>
 							<div class = "col-md-12 hidden" id = "id_add_divContainer_OCREditor">
-								<img id = "id_add_img_OCR">
-								
-								</img>
-								<div class = "col-md-12 well">
+								<div class = "row" id = "id_add_row_pdfControl">
+									<div id = "leftArrow" class = "class_add_btn_pdfNav btn btn-default col-md-2">
+										<span class = "glyphicon glyphicon-chevron-left"></span>
+									</div>
+									<div class = "col-md-8 text-center">
+										Page <span id = "id_add_input_pdfNavPageNum"></span> of <span id = "id_add_span_pdfTotalPages"></span>
+									</div>
+									<div id = "rightArrow" class = "class_add_btn_pdfNav btn btn-default col-md-2">
+										<span class = "glyphicon glyphicon-chevron-right"></span>
+									</div>
+								</div>
+								<div class = "col-md-12" id = "id_add_div_OCRContainer">
+									<canvas id = "id_add_img_OCR">
+									
+									</canvas>
+								</div>
+								<div class = "col-md-6 well">
 									crop and: <div class = "disabled btn btn-primary">to text via OCR</div> <div class = "disabled btn btn-warning">to image</div>
+								</div>
+								<div class = "col-md-6 well">
+									<div class = "btn btn-info">scan a new file</div>
 								</div>
 								<div class = "col-md-12">
 									<textarea class = "form-control" id = "id_add_textarea_OCRResult" placeholder = "Standby ..."></textarea>

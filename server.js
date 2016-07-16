@@ -403,6 +403,7 @@ app.post('/deletepreview', function(req,res){
 
 app.post('/mobileuploadphoto',function(req,res){
 	uploadMobile(req,res,function(e){
+		console.log(req.body.hashedid)
 		if(e){
 			catch_error(e);
 			//res.send('Error!'+e);
@@ -965,7 +966,7 @@ io.on('connection',function(socket){
 				if(o.error){
 					callback(o)
 				}else{
-					callback('Submission received. Pending approval.')
+					callback('Submission received. Pending approval.');
 				}
 			}
 		})
@@ -1616,7 +1617,11 @@ app.get('/about',checkAuth,function(req,res){
 	})
 })
 
-app.get('/changelog',function(res,res){
+app.get('/test',function(req,res){
+	res.sendfile('test.html');
+})
+
+app.get('/changelog',function(req,res){
 	res.sendfile('changelog.txt');
 })
 

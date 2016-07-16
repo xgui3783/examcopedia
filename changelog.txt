@@ -6,6 +6,7 @@ Known issues:
 Realised goals:
 - implement cold-edit of questions
 - implement login/register/signin via google/FB/etc, moderator status
+- generate printable PDF
 - API allowing others to interact with the webapp
 
 Currently worked on goals:
@@ -17,9 +18,9 @@ Currently worked on goals:
 
 Future updates:
 - implement pasting of image from clipboard
-- generate printable PDF
 
 Change log
+v0.1.8 - 16/07/2016 - added OCR support for pdf/images upload
 v0.1.7 - 13/07/2016 - added pdf export, added favicon
 v0.1.6.1 - 10/07/2016 - added profile page. different users with different levels of admin levels can user UI to control the functionalities of webapp
 			- slightly redesigned UI. Now pages utilises EJS to render page. 
