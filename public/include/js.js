@@ -203,9 +203,12 @@ $(document).ready(function(){
 	/* when the syllabus select field changes, enable the choose dp button */
 	$('#id_core_select_syllabus').change(function(){
 		if($(this).val()!=''){
-			$('#id_core_btn_choosedp').removeClass('disabled');
+			console.log('not empty')
+			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').removeClass('disabled');
+			console.log($(this).parents('div.row#id_view_div_tabcontainer'))
 		}else{
-			$('#id_core_btn_choosedp').addClass('disabled');
+			console.log('empty');
+			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').addClass('disabled');
 		}
 		$('#id_core_input_dp').val('');
 		$('#id_core_modal_dp select').children('option')
@@ -1809,6 +1812,7 @@ function changeblock(i){
 			newblock.find('.class_unitblock_panel_optionpanel').children('div.panel-body').attr('id','id_view_panelbody_'+newnum);
 			newblock.find('input[type="radio"]').attr('name','radio_mode_'+num);
 			newblock.find('#id_core_input_dp').val('');
+			newblock.find('#id_core_btn_choosedp').addClass('disabled');
 			
 			newblock
 				.css('opacity','0.0')
