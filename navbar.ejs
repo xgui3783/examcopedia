@@ -29,7 +29,7 @@
 				<li><a href = "/logout" id = "id_navbar_logout"><span class="glyphicon glyphicon-log-out"></span> logout</a></li>
 			</ul>
 			<% }else{ %>
-				<li><a href = "/login" id = "id_navbar_login"><span class = "glyphicon glyphicon-log-in"></span> login</a></li>
+				<li <% if(errors!=''){ %>class = "active"<% } %>><a href = "/login" id = "id_navbar_login"><span class = "glyphicon glyphicon-log-in"></span> login</a></li>
 			<% } %>
 		</div>
 	</nav>

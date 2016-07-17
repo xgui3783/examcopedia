@@ -2,6 +2,13 @@
 var socket = io();
 
 $(document).ready(function(){
+	$('#id_login_img_googlesignin').click(function(){
+		window.location.href = '/auth/google';
+	});
+	$('#id_login_img_facebooksignin').click(function(){
+		window.location.href = '/auth/facebook';
+	});
+	
 	/*
 	//pasting image to be implemented in the future... maybe
 	window.addEventListener('paste',function(e){
@@ -26,6 +33,12 @@ $(document).ready(function(){
 		'z-index' : '100'
 		});
 	}
+	
+	$('#id_login_panelbody_loginpanelbody input').off('keydown').keydown(function(e){
+		if(e.which==13){
+			$('#id_login_form_local').submit();
+		}
+	})
 	
 	$('#id_login_panelbody_loginpanelbody')
 		.on('hidden.bs.collapse',function(){
@@ -226,11 +239,9 @@ $(document).ready(function(){
 	/* when the syllabus select field changes, enable the choose dp button */
 	$('#id_core_select_syllabus').change(function(){
 		if($(this).val()!=''){
-			console.log('not empty')
 			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').removeClass('disabled');
 			console.log($(this).parents('div.row#id_view_div_tabcontainer'))
 		}else{
-			console.log('empty');
 			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').addClass('disabled');
 		}
 		$('#id_core_input_dp').val('');
@@ -559,6 +570,16 @@ $(document).ready(function(){
 				}else{
 					$(this).addClass('active');
 					adddp();
+				}
+			break;
+			case 'login':
+				var username = $('#username').val().replace(/ /g,'');
+				var password = $('#password').val();
+				if(username==''||password==''){
+					info_modal('Username and passwords are required!');
+					return false;
+				}else{
+					$('#id_login_form_local').submit();
 				}
 			break;
 			default:
