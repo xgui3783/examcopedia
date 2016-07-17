@@ -86,21 +86,7 @@ var storage = multer.diskStorage({
 
 var mobileStorage = multer.diskStorage({
 	destination : function (req,file,callback){
-		fs.stat('mobileuploads',function(e,s){
-			if(e){
-				catch_error(e);
-				fs.mkdir('mobileuploads',function(e1){
-					if(e1){
-						catch_error(e1);
-					}
-					else{
-						callback(null, 'mobileuploads');
-					}
-				});
-			}else{
-				callback(null, 'mobileuploads') 
-			}
-		})
+		callback(null, 'mobileuploads');
 	},
 	filename : function(req,file,callback){
 		callback(null, file.originalname);
@@ -1371,6 +1357,24 @@ app.get('/auth/google/callback',
 		res.redirect('/')
 	})
 
+/* make mobileupload folder upon initialisation */
+fs.stat('mobileuploads',function(e,s){
+	if(e){
+		catch_error(e);
+		fs.mkdir('mobileuploads',function(e1){
+			if(e1){
+				catch_error(e1);
+			}
+			else{
+				
+			}
+		});
+	}else{
+		
+	}
+});
+	
+	
 /* making ocr folder */
 fs.stat('ocrStorage',function(e,s){
 	if(e){
