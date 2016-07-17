@@ -608,7 +608,7 @@ io.on('connection',function(socket){
 			}
 			callback(json);
 			setTimeout(function(){
-				fs.unlink('pdfout/'+pdfFilename,function(e){
+				fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
 					if(e){
 						catch_error(e);
 					}
