@@ -553,52 +553,51 @@ io.on('connection',function(socket){
 			
 			for(var question in i[block]){
 				var qBodyTrim = i[block][question]['questionBody'].replace(/<h4>|<\/h4>|&nbsp;|<\/div>|<div class = "row">|<div class="row".*?>/g,'');
-				var wordCountTrim = qBodyTrim.replace(/<div class="col-md-12 spaces_.{3,5}">|<br>|<img.*?>|<su.>.*?<\/su.>/g,'');
-				var brCount = ( qBodyTrim.match(/<br>|<div class="col-md-2">|<div class="col-md-8">/g) || [] ).length;
-				var spaceCount = (qBodyTrim.match(/<div class="col-md-12 spaces_.{3,5}">/g)||[]).length;
 
 				i[block][question]['questionBody']=qBodyTrim;
 				
 				var lineHeight = 12;
-				var lines = spaceCount*2 + Math.ceil(wordCountTrim.length/60) + brCount;
 				
-				if((qBodyTrim.match(/src=".*?"/g)||[]).length>0){
-					var height = docy+(lines*lineHeight);
-					qBodyTrim.match(/src=".*?"/g).forEach(function(v,idx,array){
-						height += 300;	
-						arrAsyncCallBack.push(false);
-						/*
-						var filename = app.get('persistentDataDir')+v.replace(/"/g,'').substring(4);
-						gm(filename).size(function(e,r){
-							if(e){
-								catch_error(e);
-								height += 40;
-							}else{
-								height += r.height;
-							}
-							if(idx===array.length-1){
-								if(height > 800){
-									doc.addPage();
-									docy = doc.y;
-								}
-								docy = writeToPDF(i[block][question],doc,docy);
-							}
-						})
-						*/
-					});
-					if(height > 690){
-						doc.addPage();
-						docy = doc.y + 20;
+				var qBodyTrimSplitFlag = true;
+				qBodyTrim = qBodyTrim.replace(/\<br\>\(.?.?.\)/g,function(s){
+					return '[questionPartsBreak]'+s;
+				})
+				var qBodyTrimSplit = qBodyTrim.split('[questionPartsBreak]');
+				
+				for(var k = 0; k<qBodyTrimSplit.length;k++){
+					var wordCountTrim = qBodyTrimSplit[k].replace(/<div class="col-md-12 spaces_.{3,5}">|<br>|<img.*?>|<su.>.*?<\/su.>/g,'');
+					var brCount = ( qBodyTrimSplit[k].match(/<br>|<div class="col-md-2">|<div class="col-md-8">/g) || [] ).length;
+					var spaceCount = (qBodyTrimSplit[k].match(/<div class="col-md-12 spaces_.{3,5}">/g)||[]).length;
+					var lines = spaceCount*2 + Math.ceil(wordCountTrim.length/60) + brCount;
+					
+					if((qBodyTrimSplit[k].match(/src=".*?"/g)||[]).length>0){
+					/* if there are images in this block */
+						var height = docy+(lines*lineHeight);
+						qBodyTrimSplit[k].match(/src=".*?"/g).forEach(function(v,idx,array){
+							height += 300;	
+							arrAsyncCallBack.push(false);
+						});
+						if(height > 690){
+							doc.addPage();
+							docy = doc.y + 20;
+						}
+					}else{
+					/* if there are no images in this block */
+						if((docy+lines*lineHeight)>690){
+							doc.addPage();
+							docy = doc.y+20;
+						}
 					}
-					docy = writeToPDF(i[block][question],doc,docy,arrAsyncCallBack);
-
-				}else{
-					/* first check if there is enough space */
-					if((docy+lines*lineHeight)>690){
-						doc.addPage();
-						docy = doc.y+20;
+					
+					var jsonWriteToPDF = i[block][question];
+					jsonWriteToPDF.questionBody = qBodyTrimSplit[k];
+					if(qBodyTrimSplitFlag){
+						qBodyTrimSplitFlag=false;
+					}else{
+						jsonWriteToPDF.questionNumber = '';
+						jsonWriteToPDF.questionMark = '';
 					}
-					docy = writeToPDF(i[block][question],doc,docy,arrAsyncCallBack);
+					docy = writeToPDF(jsonWriteToPDF,doc,docy,arrAsyncCallBack);
 				}
 			}
 		}
