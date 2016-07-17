@@ -25,6 +25,30 @@ $(document).ready(function(){
 		}
 	});
 	
+	/* login button and panel binding */
+	if($('#id_login_panelbody_loginpanelbody').length>0){
+		$('#id_login_panelbody_loginpanelbody').parent().css({
+		'top' : parseInt($('#id_navbar_login').css('height'))+parseInt($('#id_navbar_login').offset().top)-1,
+		'right' : 0,
+		'position' : 'absolute',
+		'z-index' : '100'
+		});
+	}
+	
+	$('#id_navbar_login').off('click').click(function(){
+		$(this).parent().toggleClass('active');
+		$('#id_login_panelbody_loginpanelbody').collapse('toggle');
+		return false;
+	})
+	
+	$('#id_login_panelbody_loginpanelbody')
+		.on('hidden.bs.collapse',function(){
+			$(this).parent().addClass('hidden');
+		})
+		.on('show.bs.collapse',function(){
+			$(this).parent().removeClass('hidden');
+		})
+		
 	$('#id_login_btn_next').click(function(){
 		if($('#id_login_btn_playpause span').last().hasClass('hidden')||$('#id_login_nav_randomQuestionNavBg').is(':animated')){	
 			$('#id_login_btn_playpause span').first().addClass('hidden');

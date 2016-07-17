@@ -55,64 +55,11 @@
 		<div class = "row">
 <%- include('navbar') %>	
 		</div>
-	<div class = "row page">
+	<div class = "row">
 		<div class = "col-md-12">
 			&nbsp;
 		</div>
-		<div class = "col-md-8 col-md-offset-2">
-			<div class = "panel panel-primary">
-				<div class = "btn btn-block btn-primary panel-heading" id = "id_login_panelheading_loginpanelheading" data-toggle="collapse" data-target="#id_login_panelbody_loginpanelbody">
-					<h3>Login</h3>
-				</div>
-				<div class = "collapse <% if(errors != '' ){ %>in<% } %>" id = "id_login_panelbody_loginpanelbody">
-					<div class = "panel-body">
-						<div class = "col-md-6 class_login_div_halflogin">
-							<form id = "id_login_form_local" class = "form-horizontal" role = "form" action = "/loggingLocal" method = "post">
-								<% if(errors!=''){ %>
-								<div class = "alert alert-danger">
-									<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-									<%= errors %>
-								</div>
-								<% } %>
-								<div class = "form-group">
-									<label class = "col-md-4 control-label" for = "username">Username : </label>
-									<div class = "col-md-8">
-										<input type ="username" name = "username" id = "username" class = "form-control">
-									</div>
-								</div>
-								<div class = "form-group">
-									<label class = "col-md-4 control-label" for = "username">Password : </label>
-									<div class = "col-md-8">
-										<input type ="password" name = "password" id = "password" class = "form-control">
-									</div>
-								</div>
-								<div class = "col-md-2 col-md-offset-4">
-									<div class = "btn btn-primary" id = "id_login_btn_login">Login</div>
-								</div>
-								<div class = "col-md-2">
-									<div class = "btn btn-link disabled" id = "id_login_btn_register">Register
-									</div>
-								</div>
-							</form>
-						</div>
-						<div class = "col-md-6 class_login_div_halflogin">
-							<div class = "text-center">
-								<div class = "imgcontainer" id = "id_login_img_googlesignin">
-									<img src = "include/signinwithgoogle.png">
-								</div>
-								<br>
-								<div class = "imgcontainer" id = "id_login_img_facebooksignin">
-									<img src = "include/signinwithfacebook.png">
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class = "hidden panel-footer text-right">
-					<a href = "/changelog">changelog.txt</a>
-				</div>
-			</div>
-		</div>
+<%- include('login-panel') %>
 		<div class = "col-md-8 col-md-offset-2">
 			<div class = "panel panel-warning">
 				<div class = "panel-heading text-center">
@@ -138,7 +85,8 @@
 			</div>
 		</div>
 	</div>
-	
+<%# include('about-content') %>
+	<% if(false){ %>
 	<div class = "row page">
 		<div id = "id_login_div_jumbotron2">
 		</div>
@@ -172,6 +120,7 @@
 			</div>
 		</div>
 	</div>
+	<% } %>
 </div>
 </body>
 </html>

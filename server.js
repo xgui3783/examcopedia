@@ -403,7 +403,6 @@ app.post('/deletepreview', function(req,res){
 
 app.post('/mobileuploadphoto',function(req,res){
 	uploadMobile(req,res,function(e){
-		console.log(req.body.hashedid)
 		if(e){
 			catch_error(e);
 			//res.send('Error!'+e);
@@ -546,13 +545,26 @@ io.on('connection',function(socket){
 		doc.font('Times-Italic').fontSize(14);
 		doc.text('join.examcopedia.club/',70,doc.y);
 		doc.text('panda@pandamakes.com.au');
-		doc.addPage();
 		
 		doc.fontSize(12).font('Times-Roman');
 		doc.lineWidth(0.3);
 		
+		var j = 1;
 		for(var block in i){
-			//console.log(i[key])
+			
+			doc.addPage();
+			
+			if(Object.keys(i).length>1){
+				doc.font('Times-Roman').fontSize(50).text('Section '+j,50,300,{ width : 500})
+				
+				j++;
+				
+				doc.addPage();
+				doc.fontSize(12).font('Times-Roman');
+				doc.lineWidth(0.3);
+				docy = doc.y + 20;
+			}
+			
 			for(var question in i[block]){
 				var qBodyTrim = i[block][question]['questionBody'].replace(/<h4>|<\/h4>|&nbsp;|<\/div>|<div class = "row">|<div class="row".*?>/g,'');
 				var wordCountTrim = qBodyTrim.replace(/<div class="col-md-12 spaces_.{3,5}">|<br>|<img.*?>|<su.>.*?<\/su.>/g,'');
@@ -1611,9 +1623,10 @@ app.get('/categorise',checkAuth,function(req,res){
 	});
 });
 
-app.get('/about',checkAuth,function(req,res){
+app.get('/about',function(req,res){
 	res.render('../about.ejs',{
-		user : req.user
+		user : req.user,
+		errors : req.flash('error')
 	})
 })
 

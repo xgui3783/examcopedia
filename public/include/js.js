@@ -17,7 +17,28 @@ $(document).ready(function(){
 		}
 	})
 	
-	$('#id_core_well_chatterbox').css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top));
+	/* binding login panels */
+	if($('#id_navbar_login').length>0){
+		$('#id_login_panelbody_loginpanelbody').parent().css({
+		'top' : parseInt($('#id_navbar_login').css('height'))+parseInt($('#id_navbar_login').offset().top)-1,
+		'right' : 0,
+		'position' : 'absolute',
+		'z-index' : '100'
+		});
+	}
+	
+	$('#id_login_panelbody_loginpanelbody')
+		.on('hidden.bs.collapse',function(){
+			$(this).parent().addClass('hidden');
+		})
+		.on('show.bs.collapse',function(){
+			$(this).parent().removeClass('hidden');
+		})
+		
+	/* binding chatter box */
+	if($('#id_navbar_chatter').length>0){
+		$('#id_core_well_chatterbox').css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top));
+	}
 	
 	$('#id_navbar_chatter').click(function(){
 		$('#id_core_well_chatterbox').collapse('toggle');
@@ -99,6 +120,8 @@ $(document).ready(function(){
 	
 	/* mobile upload complete*/
 	socket.on('append imgtank',function(i){
+		
+		$('.imgtank').removeClass('hidden');
 		
 		var imgno = 1;
 		while($('.img'+imgno).length!=0){
@@ -553,9 +576,10 @@ $(document).ready(function(){
 				return true;
 			break;
 			case 'navbar':
-				if($(this).attr('id')=='id_navbar_logout'){
-					return true;
-					info_modal('In the live version of the webapp, you will be able to login/logout.');
+				if($(this).attr('id')=='id_navbar_login'){
+					$(this).parent().toggleClass('active');
+					$('#id_login_panelbody_loginpanelbody').collapse('toggle');
+					return false;
 				}else{
 					return true;
 				}
