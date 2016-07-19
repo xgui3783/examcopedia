@@ -718,13 +718,18 @@ io.on('connection',function(socket){
 		var optionalString = '';
 		if(/exhaustive/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
-			socket.request.user.notes1.replace(/exhaustive.*?[\r|\n|\r\n]/,function(s){
+			socket.request.user.notes1.replace(/exhaustive.*/,function(s){
 				var ssplit = s.split(/exhaustive|\r|\n|\r\n| /);
-				optionalString += ' id NOT IN ('
+				var optionFlag = true;
+				optionalString += ' id NOT IN ( '
 				for(var i = 0; i<ssplit.length; i++){
 					if(ssplit[i]){
 						optionalString += connection.escape(ssplit[i]) + ',';
+						optionFlag = false;
 					}
+				}
+				if(optionFlag){
+					optionalString += 0 + ',';
 				}
 				optionalString = optionalString.substring(0,optionalString.length-1)+')';
 			})
@@ -742,6 +747,8 @@ io.on('connection',function(socket){
 				}else{
 					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND subject = ? '+optionalString+';',i.subject,function(e,r){
 						if(e){
+							console.log(socket.request.user.notes1)
+							console.log(optionalString);
 							catch_error(e);
 						}else{
 							callback(r);
@@ -790,7 +797,6 @@ io.on('connection',function(socket){
 			queryString += connection.escape(input[j]);
 		}
 		
-		
 		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id IN ('+ queryString +')',function(e,r){
 			if(e){
 				catch_error(e);
@@ -803,8 +809,8 @@ io.on('connection',function(socket){
 					appendExhaustString += r[l].id;
 				}
 				
-				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?[\n|\r|\r\n]/,function(s){
-					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString + '\r';
+				var notes1 = socket.request.user.notes1.replace(/exhaustive.*/,function(s){
+					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString;
 				});
 				
 				connection.query('UPDATE user_db SET notes1=? WHERE email = ?',[notes1,socket.request.user.email],function(e1,r1){
