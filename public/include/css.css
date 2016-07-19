@@ -1,6 +1,7 @@
 body
 {
 background-color:#fcfcfc;
+overflow-y:scroll;
 }
 
 #id_view_div_preview div.panel-body > div.row

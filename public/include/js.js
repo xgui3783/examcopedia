@@ -369,7 +369,7 @@ $(document).ready(function(){
 			.on('filebatchselected',function(event,file){
 				if(/pdf/i.test(file[0].type)){
 					$('#id_add_row_pdfControl').removeClass('hidden');
-					pdfurl = URL.createObjectURL(file[0]);
+					var pdfurl = URL.createObjectURL(file[0]);
 					$('#id_add_file_OCR').fileinput('clear');
 					pageNum=1;
 					PDFJS.getDocument(pdfurl).then(function(pdfDoc_){
@@ -705,9 +705,10 @@ $(document).ready(function(){
 		}
 	});
 	
+	/* http://stackoverflow.com/a/24600597/6059235 */
+	/*
 	var isMobile = window.matchMedia("only screen and (max-width: 760px)");
 	
-	/* http://stackoverflow.com/a/24600597/6059235 */
 	if (!/Mobi/i.test(navigator.userAgent)) {
 		$('#id_view_well_generalChatWell').slimScroll({
 			height : '400px'
@@ -716,6 +717,7 @@ $(document).ready(function(){
 			height : $(window).height()
 		})
 	}
+	*/
 });
 
 
@@ -1232,18 +1234,21 @@ function shuffleArray(array) {
 
 /* according to mode and length, append row units to appropriate targets */
 function view_append_preview(mode, length, target, row){
+	var bookkeeper = [];
 	switch (mode){
 		case 'random':
 			var counter = 1;
 			var randomArray = shuffleArray(row);
 			do{
 				append_one(counter,target,row[counter-1]);
+				bookkeeper.push(row[counter-1].hashed_id);
 				counter ++;
 			}while(counter - 1 < length && counter < row.length)
 		break;
 		case 'all':
 			for (var i=0;i<row.length;i++){
 				append_one(i+1,target,row[i]);
+				bookkeeper.push(row[counter-1].hashed_id);
 			}
 		break;
 		case 'select':
@@ -1251,6 +1256,7 @@ function view_append_preview(mode, length, target, row){
 			if(decode_l==null){
 				for (var i=0;i<row.length;i++){
 					append_one(i+1,target,row[i]);
+					bookkeeper.push(row[i].hashed_id);
 				}
 			}else{
 				/* introduction of upper and lower bound, in case user inputted a number outside the bound */
@@ -1258,12 +1264,16 @@ function view_append_preview(mode, length, target, row){
 				var lower_bound = Math.min(Number(decode_l[0])-1,Number(row.length)-1);
 				for (var i=lower_bound;i<upper_bound;i++){
 					append_one(i+1,target,row[i]);
+					bookkeeper.push(row[i].hashed_id);
 				}
 			}
 		break;
 		default:
 		break;
 	}
+	socket.emit('picked questions',bookkeeper,function(o){
+		
+	});
 }
 
 function decode_select(i){

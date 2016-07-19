@@ -715,10 +715,24 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('view submit',function(i,callback){
+		var optionalString = '';
+		if(/exhaustive/.test(socket.request.user.notes1)){
+			optionalString += ' AND ';
+			socket.request.user.notes1.replace(/exhaustive.*?[\r|\n|\r\n]/,function(s){
+				var ssplit = s.split(/exhaustive|\r|\n|\r\n| /);
+				optionalString += ' id NOT IN ('
+				for(var i = 0; i<ssplit.length; i++){
+					if(ssplit[i]){
+						optionalString += connection.escape(ssplit[i]) + ',';
+					}
+				}
+				optionalString = optionalString.substring(0,optionalString.length-1)+')';
+			})
+		}
 		switch(i.mode){
 			case 'subject':
 				if(i.subject.replace(' ','')==''||i.subject==undefined){
-					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0;',function(e,r){
+					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 '+optionalString+';',function(e,r){
 						if(e){
 							catch_error(e);
 						}else{
@@ -726,7 +740,7 @@ io.on('connection',function(socket){
 						}
 					})
 				}else{
-					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND subject = ?;',i.subject,function(e,r){
+					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND subject = ? '+optionalString+';',i.subject,function(e,r){
 						if(e){
 							catch_error(e);
 						}else{
@@ -747,7 +761,7 @@ io.on('connection',function(socket){
 							}
 							querystring+=r[i].f_id;
 						}
-						connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+querystring+');',function(e1,r1){
+						connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+querystring+') '+optionalString+';',function(e1,r1){
 							if(e1){
 								catch_error(e1);
 							}else{
@@ -760,6 +774,48 @@ io.on('connection',function(socket){
 			default:
 			break;
 		}
+	})
+	
+	socket.on('picked questions',function(input,callback){
+		if(!/exhaustive/.test(socket.request.user.notes1)){
+			callback('done');
+			return false;
+		};
+		
+		var queryString='';
+		for (var j = 0; j<input.length; j++){
+			if(queryString!=''){
+				queryString += ',';
+			}
+			queryString += connection.escape(input[j]);
+		}
+		
+		
+		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id IN ('+ queryString +')',function(e,r){
+			if(e){
+				catch_error(e);
+			}else{
+				var appendExhaustString = '';
+				for (var l = 0; l<r.length; l++){
+					if(appendExhaustString != ''){
+						appendExhaustString  +=' ';
+					}
+					appendExhaustString += r[l].id;
+				}
+				
+				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?[\n|\r|\r\n]/,function(s){
+					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString + '\r';
+				});
+				
+				connection.query('UPDATE user_db SET notes1=? WHERE email = ?',[notes1,socket.request.user.email],function(e1,r1){
+					if(e1){
+						catch_error(e1);
+					}else{
+						socket.request.user.notes1 = notes1;
+					}
+				})
+			}
+		});
 	})
 	
 	socket.on('save dp',function(i,callback){
@@ -1028,7 +1084,7 @@ passport.serializeUser(function(user,done){
 })
 
 passport.deserializeUser(function(email,done){
-	connection.query('SELECT displayName, admin,email, sessionID FROM user_db WHERE email = ?;',email,function(e,r){
+	connection.query('SELECT displayName, admin,email, sessionID, notes1 FROM user_db WHERE email = ?;',email,function(e,r){
 		if(e){
 			return done(e);
 		}else{
@@ -1436,7 +1492,7 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 	if(e){
 		catch_error(e);
 	}else if(r.length==0){
-		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL,`sessionID` varchar(64),`admin` int(1) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
+		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL,`sessionID` varchar(64),`admin` int(1) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(8196) NOT NULL, `notes2` varchar(8196) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1)
 			}else{
@@ -1489,7 +1545,6 @@ app.get('/mobileupload',function(req,res){
 });
 
 app.get('/pdfout/*',checkAuth,function(req,res){
-	
 	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
 			res.send('no file found')
@@ -1500,7 +1555,6 @@ app.get('/pdfout/*',checkAuth,function(req,res){
 })
 
 app.get('/img/*',function(req,res){
-	
 	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
 			res.sendfile(app.get('persistentDataDir')+'img/imageunlinked.png');
