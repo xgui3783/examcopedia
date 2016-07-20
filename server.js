@@ -404,7 +404,12 @@ app.post('/mobileuploadphoto',function(req,res){
 								resizeImage('mobileuploads/',app.get('persistentDataDir')+'img/'+req.body.hashedid + '/', req.body.name,function(o){
 									if(o=='done'){
 										io.sockets.to(req.body.hashedid).emit('append imgtank',req.body.name);
-										res.send('success');
+										var json = {
+											message : 'success',
+											filename : req.body.name
+										}
+										
+										res.send(json);
 									}
 								});
 							})
@@ -422,7 +427,12 @@ app.post('/mobileuploadphoto',function(req,res){
 							resizeImage('mobileuploads/', app.get('persistentDataDir')+'img/'+req.body.hashedid + '/',req.file.originalname,function(o){
 								if(o=='done'){
 									io.sockets.to(req.body.hashedid).emit('append imgtank',req.file.originalname);
-									res.send('success');
+										var json = {
+											message : 'success',
+											filename : req.file.originalname
+										}
+										
+										res.send(json);
 								}
 							})
 						}

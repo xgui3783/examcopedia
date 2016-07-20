@@ -20,6 +20,11 @@ border:1px solid black;
 padding:0;
 }
 
+div#id_add_divContainer_OCREditor > .well > .btn + .tooltip > .tooltip-inner
+{
+width : 200px;
+}
+
 canvas
 {
 width:100%;
