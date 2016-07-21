@@ -7,6 +7,7 @@ Realised goals:
 - implement cold-edit of questions
 - implement login/register/signin via google/FB/etc, moderator status
 - generate printable PDF
+- implement pasting of image from clipboard
 - API allowing others to interact with the webapp
 
 Currently worked on goals:
@@ -17,9 +18,9 @@ Currently worked on goals:
 - config for frontal page sampler
 
 Future updates:
-- implement pasting of image from clipboard
 
 Change log
+v0.1.8.3 - 21/07/2016 - redesigned login page
 v0.1.8.2 - 20/07/2016 - added exhaustive method of generating questions (implement by adding "exhaustive" in notes1 of the profile page), implemented clipboard pasting of images.
 v0.1.8.1 - 17/07/2016 - redesigned login panel + pdf generation. Now, questions with multiparts (a), (b), (ii) etc can be broken up. 
 v0.1.8 - 16/07/2016 - added OCR support for pdf/images upload

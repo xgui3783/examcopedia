@@ -2,6 +2,7 @@ body
 {
 background-color:#fcfcfc;
 overflow-y:scroll;
+overflow-x:hidden;
 }
 
 #id_view_div_preview div.panel-body > div.row
@@ -30,6 +31,10 @@ canvas
 width:100%;
 }
 
+nav#id_navbar
+{
+}
+
 .class_add_btn_pdfNav
 {
 height:100%;
@@ -48,14 +53,69 @@ height:100%;
 
 .page
 {
-position:relative;
+background:none;
+margin-top:-20px;
 }
 
-.page:not(:nth-child(2))
+#id_banner
+{
+min-height:100%;
+}
+
+#id_banner ol li
+{
+border-color:#777;
+margin-left:5px;
+margin-right:5px;
+}
+
+#id_banner ol li.active
+{
+background-color:#555;
+}
+
+.spacer
+{
+width:100%;
+height:200px;
+}
+
+#id_login_well_sampler
+{
+margin-top:20px;
+margin-bottom:40px;
+}
+
+.page:nth-child(2)
 {
 background-color:#fff;	
 z-index:0;
 }
+
+#page3
+{
+z-index:1;
+position:relative;
+background-color:#fff;
+}
+
+	#page3 .coverpage
+	{
+	width:100%;
+	height:100%;
+	opacity:0.3;
+	position:absolute;
+	z-index:-3;
+	top:0;
+	left:0;
+	bottom:0;
+	right:0;
+	box-sizing:border-box;
+	content:"";
+	background: url('background2.jpg') no-repeat;
+	background-size:cover;
+	background-position:center;
+	}
 
 .class_login_div_halflogin
 {
@@ -185,7 +245,7 @@ background-position:center;
 	
 .jumbotron
 {
-position:absolute;
+position:fixed;
 top:0;
 left:0;
 display:block;
@@ -233,6 +293,12 @@ border:none;
 	text-decoration:none;
 	}
 
+#id_banner_div_tagline
+{
+height: 50px;
+
+}
+	
 .hovershow + .tooltip > .tooltip-inner
 {
 width:200px;

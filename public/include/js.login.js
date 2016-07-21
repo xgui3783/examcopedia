@@ -6,10 +6,10 @@ $(document).ready(function(){
 		window.location.href = '/auth/facebook';
 	});
 	
-	$('.page').css('min-height',$(window).height());
+	$('#page3').css('min-height',$(window).height());
 	
 	$(window).resize(function(){
-		$('.page').css('min-height',$(window).height());
+		$('.page').eq(1).css('min-height',$(window).height()+20);
 	});
 	
 	$('#id_login_btn_playpause').click(function(){
@@ -85,6 +85,14 @@ $(document).ready(function(){
 	})
 	
 	queryRandomQ('start');
+	
+	if($('#id_slidshow_imgContainer_logo').css('display')!='none'){
+		var residueHeight = $(window).height()-parseInt($('#id_navbar').css('height'))-parseInt($('#id_banner .carousel-inner').css('height'))-parseInt($('#id_slidshow_imgContainer_logo').css('height'))+20;
+		$('#id_slidshow_imgContainer_logo').css({
+			'margin-top':residueHeight/2,
+			'margin-bottom':residueHeight/2,
+		})
+	}
 	
 	/* http://stackoverflow.com/a/24600597/6059235 */
 	/*
