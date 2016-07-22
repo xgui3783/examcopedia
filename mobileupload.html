@@ -12,23 +12,25 @@
 	<!--
 	<script src="/socket.io/socket.io.js"></script>
 	<script src = "include/jquery.sha256.min.js"></script>
-	-->
 	
 	<script src = "include/cropper.min.js"></script>
 	<link rel = "stylesheet" href = "include/cropper.min.css">
-	
+	-->
 	<script>
 function info_modal(i){
 	$('#id_mobileupload_modal_warning .modal-body').html(i);
 	$('#id_mobileupload_modal_warning').modal('show');
 }
 
-function sendImg(i){
+function sendImg(){
 
 	//var sendImg = $('#id_mobileupload_canvas_cropbody').cropper('getData');
 	var formData = new FormData();
 	formData.append('hashedid',$('#id_mobileupload_input_hashedid').val());
 	
+	formData.append('photo',$('#id_mobileupload_input_file')[0].files[0]);
+	
+	/*
 	if(i=='uncropped'){
 		formData.append('photo',$('#id_mobileupload_input_file')[0].files[0]);
 	}else if(i=='cropped'){
@@ -38,7 +40,7 @@ function sendImg(i){
 		formData.append('photo',imgsrc);
 		formData.append('name',imgname);
 	}
-	
+	*/
 	$('.btn-success').off('click').on('click',function(){
 		location.reload();
 		$(this).addClass('disabled');
@@ -52,7 +54,7 @@ function sendImg(i){
 				processData : false,
 				contentType : false,
 				type : 'POST',
-				url : '/mobileuploadphoto',
+				url : '/uploadmobile2',
 				data : formData,
 				success : function(o){
 					if (o.message == 'success'){
@@ -107,8 +109,9 @@ $(document).ready(function(){
 		$('#id_mobileupload_btn_cropupload').addClass('hidden');
 		$('#id_mobileupload_label_file').removeClass('disabled');
 		
-		$('#id_mobileupload_canvas_cropbody').cropper('destroy');
+		//$('#id_mobileupload_canvas_cropbody').cropper('destroy');
 		$('#id_mobileupload_canvas_cropbody').attr({'src': URL.createObjectURL(e.target.files[0]),'width':'100%'});
+		/*
 		$('#id_mobileupload_canvas_cropbody').cropper({
 			autoCrop : false,
 			viewMode : 1,
@@ -118,6 +121,7 @@ $(document).ready(function(){
 				$('#id_mobileupload_btn_cropupload').removeClass('hidden');
 				}
 			});
+		*/
 	})
 })
 	</script>
@@ -209,7 +213,7 @@ color:#fff;
 					<div class = "panel-footer">
 						<label id = "id_mobileupload_label_file" class = "btn btn-primary btn-block btn-lg" for = "id_mobileupload_input_file"><span class = "glyphicon glyphicon-picture"></span> Select</label><input name = "mobileuploadedphoto" id = "id_mobileupload_input_file" type = "file" accept = "image/*;capture=camera">
 						<div id = "id_mobileupload_btn_upload" class = "hidden btn btn-primary btn-block btn-lg"><span class = "glyphicon glyphicon-upload"></span> Upload</div>
-						<div id = "id_mobileupload_btn_cropupload" class = "hidden btn btn-primary btn-block btn-lg"><span class = "glyphicon glyphicon-scissors"></span> Crop & <span class = "glyphicon glyphicon-upload"></span> Upload</div>
+						<!--<div id = "id_mobileupload_btn_cropupload" class = "hidden btn btn-primary btn-block btn-lg"><span class = "glyphicon glyphicon-scissors"></span> Crop & <span class = "glyphicon glyphicon-upload"></span> Upload</div>-->
 					</div>
 				</div>
 			</div>

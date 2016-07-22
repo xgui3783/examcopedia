@@ -147,6 +147,8 @@ top:0;
 
 #id_core_well_chatterbox
 {
+padding:0;
+background-color:#fff;
 position:absolute;
 right:0;
 z-index:10;
@@ -171,7 +173,8 @@ padding:0;
 #id_view_well_generalChatWell
 {
 height:600px;
-overflow:hidden;
+overflow-x:hidden;
+overflow-y:scroll;
 }
 
 .imgcontainer img

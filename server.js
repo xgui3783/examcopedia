@@ -18,11 +18,19 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var PDFDoc = require('pdfkit');
 var request = require('request');
+var passportSocketIO = require('passport.socketio');
+
 var logos = [
 	'join.examcopedia.club',
 	'deal.studywild.cards'
 	];
-	
+
+
+app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'./public/');
+
+var authConfig = require(app.get('persistentDataDir')+'include/config.js');
+
+
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
 app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
@@ -36,7 +44,6 @@ var options = {
 		database : app.get('mysqldb'),
 	};
 	
-var passportSocketIO = require('passport.socketio');
 
 var sessionStore = new MySQLStore(options);
 
@@ -59,7 +66,6 @@ io.use(passportSocketIO.authorize({
 		},
 }))
 
-app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'public/');
 
 var storage = multer.diskStorage({
 	/* should check here if destination exist. if does not exist, create it. */
@@ -116,27 +122,35 @@ var ocrStorage = multer.diskStorage({
 	}
 })
 
-var upload = multer({storage : storage}).array('id_modal_file_file[]',5);
+var upload = multer({storage : storage}).single('id_modal_file_file[]',5);
 var uploadMobile = multer({storage : mobileStorage}).single('photo');
 var uploadOCR = multer({storage : ocrStorage}).single('photo');
 
+/* maybe obsolete */
+/*
 app.post('/upload',function(req,res){
 	upload(req,res,function(e){
 		fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid + '/', function(e1){
 			if(!e1 || (e1 && e1.code == 'EEXIST')){
 				for (i = 0; i<req.files.length; i++){
+					
+					
+					/*
 					var originalname = req.files[i].originalname;
 					resizeImage('uploads/',app.get('persistentDataDir')+'img/'+req.body.hashedid + '/',req.files[i].originalname,function(o){
 						
 						if(o=='done'){
 							io.sockets.to(req.body.hashedid).emit('append imgtank',originalname);
-							var json = {};
+							var json = {
+								message :'success'
+							};
 							res.send(json);
 						}else{
 							catch_error(o);
 							res.send(o);
 						}
 					})
+					*/
 					
 					/*
 					fs.rename('uploads/' + req.files[i].originalname,app.get('persistentDataDir')+'img/'+req.body.hashedid + '/' + req.files[i].originalname,function(e2){
@@ -145,7 +159,7 @@ app.post('/upload',function(req,res){
 						}else{
 						}
 					});
-					*/
+					/*
 				}
 			}else{
 				catch_error(e1);
@@ -154,7 +168,7 @@ app.post('/upload',function(req,res){
 		});
 	})
 });
-
+*/
 function altCostume(dir,filename,callback){
 	var alt1name = filename.substring(0,filename.lastIndexOf('.'))+'_alt1'+filename.substring(filename.lastIndexOf('.'));
 	var alt2name = filename.substring(0,filename.lastIndexOf('.'))+'_alt2'+filename.substring(filename.lastIndexOf('.'));
@@ -380,12 +394,35 @@ function rotateImageBackend(path,hashed_id,filename,extension,r){
 		}
 	});
 }
-/*
-app.post('/deletepreview', function(req,res){
-	var json = {};
-	res.send(json); 
-});
-*/
+
+app.post('/uploadmobile2',function(req,res){
+	uploadMobile(req,res,function(e){
+		if(e){
+			catch_error(e);
+			//res.send('Error!'+e);
+		}else{
+			if(io.sockets.adapter.rooms[req.body.hashedid]!=undefined){
+				fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid+'/',function(e1){
+					if(!e1 || e1 && e1.code =='EEXIST'){
+						fs.readFile('mobileuploads/'+req.file.originalname,function(e,data){
+							if(e){
+								catch_error(e)
+							}else{
+								var json = {
+									b64 : data.toString('base64')
+									};
+								io.sockets.to(req.body.hashedid).emit('mobile upload complete',json);
+								res.send({message : 'success'});
+							}
+						})
+					}
+				})
+			}else{
+				res.send('noroom');
+			}
+		}
+	});
+})
 
 app.post('/mobileuploadphoto',function(req,res){
 	uploadMobile(req,res,function(e){
@@ -396,6 +433,7 @@ app.post('/mobileuploadphoto',function(req,res){
 			if(io.sockets.adapter.rooms[req.body.hashedid]!=undefined){
 				fs.mkdir(app.get('persistentDataDir')+'img/'+req.body.hashedid+'/',function(e1){
 					if(!e1 || e1 && e1.code =='EEXIST'){
+						
 						if(req.file==undefined){
 							/* saving cropped */
 							var str = req.body.photo.replace(/^data:image\/jpeg;base64,/, "");
@@ -744,6 +782,10 @@ io.on('connection',function(socket){
 				optionalString = optionalString.substring(0,optionalString.length-1)+')';
 			})
 		}
+		
+		console.log(optionalString);
+		console.log(i.mode);
+		
 		switch(i.mode){
 			case 'subject':
 				if(i.subject.replace(' ','')==''||i.subject==undefined){
@@ -757,8 +799,6 @@ io.on('connection',function(socket){
 				}else{
 					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND subject = ? '+optionalString+';',i.subject,function(e,r){
 						if(e){
-							console.log(socket.request.user.notes1)
-							console.log(optionalString);
 							catch_error(e);
 						}else{
 							callback(r);
@@ -1074,22 +1114,14 @@ passport.use('local',new localStrategy(
 
 /* login with facebook */
 
-passport.use('facebookAuth',new facebookStrategy({
-	'clientID' : process.env.FACEBOOK_ID || '148560108885548',
-	'clientSecret' : process.env.FACEBOOK_SECRET || '046bec94bef4180776b5b630663f9020',
-	'callbackURL' : '/auth/facebook/callback',
-	'profileFields' : ['id', 'emails', 'name']},
-	function(accessToken, refreshToken, profile, done){
+passport.use('facebookAuth',new facebookStrategy(authConfig.facebook,function(accessToken, refreshToken, profile, done){
 		thirdpartylogin('facebook',profile,accessToken,function(user){
 			return done(null,user);
 		})
 	}))
 
 /* login with google */
-passport.use('googleAuth',new googleStrategy({
-	'clientID' : '151214178438-15sjnpj6qb0p49cn59j2aaqamjqoh3s0.apps.googleusercontent.com',
-	'clientSecret' : 'nY5MQYeyZVC24eRmMPYfcrZv',
-	'callbackURL' : '/auth/google/callback'},function (token,tokenSecret, profile, done){
+passport.use('googleAuth',new googleStrategy(authConfig.google,function (token,tokenSecret, profile, done){
 		thirdpartylogin('google',profile,token,function(user){
 			return done(null,user);
 		})

@@ -9,14 +9,6 @@ $(document).ready(function(){
 		window.location.href = '/auth/facebook';
 	});
 	
-	/*
-	//pasting image to be implemented in the future... maybe
-	window.addEventListener('paste',function(e){
-		console.log(e.clipboardData);
-		console.log(e.clipboardData.getData('image/bmp'));
-	})
-	*/
-	
 	/* chatter box */
 	$('#id_view_input_generalChatBox').keypress(function(e){
 		if(e.which==13){
@@ -59,10 +51,6 @@ $(document).ready(function(){
 		redPill('remove','#id_navbar_chatter');
 		return false;
 	});
-	
-	$('#id_core_btn_closeChatter').off('click').click(function(){
-		$('#id_core_well_chatterbox').collapse('hide');
-	})
 	
 	$('#id_view_btn_sendGeneralChat').off('click').click(function(){
 		
@@ -131,7 +119,7 @@ $(document).ready(function(){
 				'e.g. [sup SUPSCRIPT]</div>',
 	})
 	
-	/* mobile upload complete*/
+	/* img crop complete*/
 	socket.on('append imgtank',function(i){
 		
 		$('.imgtank').removeClass('hidden');
@@ -144,6 +132,42 @@ $(document).ready(function(){
 		appendImgTank($('#id_core_input_hashedid').val(),i,imgno);
 		
 	})
+	
+	/* mobile upload complete */
+	socket.on('mobile upload complete',function(i){
+		try{
+			var pastedImage = new Image();
+			var canvas = document.getElementById('id_add_img_OCR');
+			var ctx = canvas.getContext('2d');
+			var pastedImage = new Image();
+			pastedImage.onload = function(){
+				canvas.width = pastedImage.width;
+				canvas.height = pastedImage.height;
+				ctx.drawImage(pastedImage,0,0 ,pastedImage.width, pastedImage.height, 0,0,canvas.width,canvas.height);
+				
+				$('#id_add_row_pdfControl').addClass('hidden');
+				$('#id_add_img_OCR').cropper('destroy');
+				
+				$('#id_add_img_OCR').cropper({
+					autoCrop : false,
+					viewMode : 0,
+					crop : function(e){
+						$('#id_add_divContainer_OCREditor .btn-warning,#id_add_divContainer_OCREditor .btn-primary').removeClass('disabled')
+					}
+				});
+			}
+			pastedImage.src = 'data:image/jpeg;base64,'+String(i.b64);
+			$('#id_add_collapseDiv_uploadImageOCR').collapse('show');
+			$('#id_add_divContainer_OCREditor').removeClass('hidden');
+			$('#id_add_divContainer_OCRContainer').addClass('hidden');
+			
+			bindImageManipulationBtnClicks();
+			
+		}catch(e){
+			info_modal('Error'+e)
+		}
+	})
+	
 	
 	/* socket io core functions */
 	socket.on('throw error',function(i){
@@ -253,6 +277,9 @@ $(document).ready(function(){
 	
 	/* since js is sync, the fileinput needs to be attached AFTER the hashed id is populated */
 	if($('#id_add_file_file').length>0){
+		
+		/*
+		// obsolete since 0.1.8 
 		$('#id_add_file_file')
 			.fileinput('refresh',{
 				uploadUrl		:'/upload',
@@ -272,6 +299,7 @@ $(document).ready(function(){
 				
 				$('#id_add_file_file').fileinput('reset');
 			});
+		*/
 		
 		$('#id_add_file_OCR')
 			.fileinput({
@@ -561,45 +589,46 @@ $(document).ready(function(){
 		}
 	});
 	
-	$('#id_core_textarea_ans,#id_core_textarea_qn').on('paste',function(e){
-		if(e.originalEvent.clipboardData.getData('text')==''){
-			e.preventDefault();
-			var items = e.originalEvent.clipboardData.items;
-			var blob = items[0].getAsFile();
-			try{
-				var pastedImage = new Image();
-				var canvas = document.getElementById('id_add_img_OCR');
-				var ctx = canvas.getContext('2d');
-				var pastedImage = new Image();
-				pastedImage.onload = function(){
-					canvas.width = pastedImage.width;
-					canvas.height = pastedImage.height;
-					ctx.drawImage(pastedImage,0,0 ,pastedImage.width, pastedImage.height, 0,0,canvas.width,canvas.height);
+	if($('#id_add_img_OCR').length>0){
+		$(window).on('paste',function(e){
+			if(e.originalEvent.clipboardData.getData('text')==''){
+				e.preventDefault();
+				var items = e.originalEvent.clipboardData.items;
+				var blob = items[0].getAsFile();
+				try{
+					var pastedImage = new Image();
+					var canvas = document.getElementById('id_add_img_OCR');
+					var ctx = canvas.getContext('2d');
+					var pastedImage = new Image();
+					pastedImage.onload = function(){
+						canvas.width = pastedImage.width;
+						canvas.height = pastedImage.height;
+						ctx.drawImage(pastedImage,0,0 ,pastedImage.width, pastedImage.height, 0,0,canvas.width,canvas.height);
+						
+						$('#id_add_row_pdfControl').addClass('hidden');
+						$('#id_add_img_OCR').cropper('destroy');
+						
+						$('#id_add_img_OCR').cropper({
+							autoCrop : false,
+							viewMode : 0,
+							crop : function(e){
+								$('#id_add_divContainer_OCREditor .btn-warning,#id_add_divContainer_OCREditor .btn-primary').removeClass('disabled')
+							}
+						});
+					}
+					pastedImage.src = URL.createObjectURL(blob);
+					$('#id_add_collapseDiv_uploadImageOCR').collapse('show');
+					$('#id_add_divContainer_OCREditor').removeClass('hidden');
+					$('#id_add_divContainer_OCRContainer').addClass('hidden');
 					
-					$('#id_add_row_pdfControl').addClass('hidden');
-					$('#id_add_img_OCR').cropper('destroy');
+					bindImageManipulationBtnClicks();
 					
-					$('#id_add_img_OCR').cropper({
-						autoCrop : false,
-						viewMode : 0,
-						crop : function(e){
-							$('#id_add_divContainer_OCREditor .btn-warning,#id_add_divContainer_OCREditor .btn-primary').removeClass('disabled')
-						}
-					});
+				}catch(e){
+					console.log('nothing in the clipboard');
 				}
-				pastedImage.src = URL.createObjectURL(blob);
-				$('#id_add_collapseDiv_uploadImageOCR').collapse('show');
-				$('#id_add_divContainer_OCREditor').removeClass('hidden');
-				$('#id_add_divContainer_OCRContainer').addClass('hidden');
-				
-				bindImageManipulationBtnClicks();
-				
-			}catch(e){
-				console.log('nothing in the clipboard');
 			}
-		}
-	})
-	
+		})
+	}
 	/* bind tooltips for ocr image upload buttons */
 	$('#id_add_divContainer_OCREditor').children('.well').children('.btn').tooltip({
 		placement : 'bottom',
@@ -1248,7 +1277,7 @@ function view_append_preview(mode, length, target, row){
 		case 'all':
 			for (var i=0;i<row.length;i++){
 				append_one(i+1,target,row[i]);
-				bookkeeper.push(row[counter-1].hashed_id);
+				bookkeeper.push(row[i].hashed_id);
 			}
 		break;
 		case 'select':
@@ -1271,6 +1300,8 @@ function view_append_preview(mode, length, target, row){
 		default:
 		break;
 	}
+	
+	/* important to keep track of the questions picked, for exhaustive method */
 	socket.emit('picked questions',bookkeeper,function(o){
 		
 	});
@@ -1991,7 +2022,7 @@ function addsubmit(){
 		$('#id_core_input_addsubmit').removeClass('disabled');
 		
 		/* empty img tank after submission is complete */
-		$('.imgtank').empty();
+		$('.imgtank').empty().addClass('hidden');
 		
 		/* clear preview */
 		$('#id_core_well_qn,#id_core_well_ans').empty().addClass('hidden');

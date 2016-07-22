@@ -1,5 +1,8 @@
 
-	<div class = "col-md-4 collapse" id = "id_core_well_chatterbox">
+	<div class = "bg-default col-xs-12 col-sm-12 col-md-4 collapse" id = "id_core_well_chatterbox">
+		<div class = "text-center hidden-md hidden-lg">
+			<a href="#" class="btn btn-block" onclick="$('#id_navbar_chatter').click();return false;" aria-label="close" id = "nowhere">&times;</a>
+		</div>
 		<div class = "col-md-9">
 			<div class = "row">
 				<input id = "id_view_input_generalChatBox" class = "form-control col-md-8" placeholder = "General Chat ...">
@@ -10,11 +13,6 @@
 				<div id = "id_view_btn_sendGeneralChat" class = "btn btn-default btn-block">send</div>
 			</div>
 		</div>
-		<div class = "hidden-md hidden-lg col-md-9">
-			<div class = "row">
-				<div id = "id_core_btn_closeChatter" class = "btn btn-default btn-block">close</div>
-			</div>
-		</div>
 		<div id = "id_view_div_generalChatContainer" class = "col-md-12">
 			<div class = "row">
 				<div id = "id_view_well_generalChatWell" class = "well">
@@ -22,7 +20,6 @@
 			</div>
 		</div>
 	</div>
-	
 	
 	<div id="id_core_modal_dp" class="modal fade" role="dialog">
 	  <div class="modal-dialog">
