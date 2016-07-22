@@ -637,6 +637,54 @@ $(document).ready(function(){
 		trigger : 'manual'
 	})
 	
+	if($('#id_login_well_sampler').length>0){
+		$('#id_login_btn_cog').off('click').click(function(){
+			$('#id_core_modal_autoplaySetting').modal('show');
+		});
+		
+		$('#id_login_btn_next').off('click').click(function(){
+			if($('#id_login_btn_playpause span').last().hasClass('hidden')||$('#id_login_nav_randomQuestionNavBg').is(':animated')){	
+				$('#id_login_btn_playpause span').first().addClass('hidden');
+				$('#id_login_btn_playpause span').last().removeClass('hidden');
+				$('#id_login_nav_randomQuestionNavBg').stop().clearQueue();
+				queryflag = false;
+				$('#id_login_div_randomQuestionRenderer,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
+					$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
+					queryRandomQ('recur');
+				})
+			}
+		});
+		
+		$('#id_login_btn_playpause').off('click').click(function(){
+			if($('#id_login_btn_playpause span').first().hasClass('hidden')){
+				if($('#id_login_nav_randomQuestionNavBg').is(':animated')){
+					$('#id_login_nav_randomQuestionNavBg').stop();
+					$('#id_login_btn_playpause span').toggleClass('hidden');
+				}
+			}else{
+				tickflag=false;
+				tick();
+				$('#id_login_btn_playpause span').toggleClass('hidden');
+			}
+		});
+		
+		queryRandomQ('start');
+		
+		$('#id_core_modal_autoplaySetting').off('change').change(function(){
+			update_setting();
+		})
+		
+		$('#id_core_modal_autoplaySetting').keypress(function(e){
+			if(e.which==13){
+				$('#id_core_modal_autoplaySetting .btn-primary').click();
+			}
+		})
+	}
+	
+	$('.page').css({
+		'min-height' : $(window).height()-$('#id_navbar').height(),
+	});
+	
 	/* http://stackoverflow.com/a/24600597/6059235 */
 	/*
 	var isMobile = window.matchMedia("only screen and (max-width: 760px)");
@@ -688,6 +736,90 @@ var addAFile =
 			'<input data-allowed-file-extensions=\'["jpg", "gif", "png", "svg" , "pdf", "tiff"]\' id = "id_modal_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">'+
 		'</div>'+
 	'</form>';
+
+/* sampler */
+
+var tickflag = false;
+var time = 10000;
+
+function update_setting(){
+	
+	var string = '';
+	var activeTab = $('#id_view_div_tabcontainer').children('div:not(.hidden)');
+	switch($('#id_view_div_tabcontainer').children('div:not(.hidden)').attr('id')){
+		case 'id_view_div_tab1':
+			if($('#id_core_select_subject').val().replace(/ /g,'')==''){
+				string = 'Random'
+			}else{
+				string = $('#id_core_select_subject').val();
+			}
+		break;
+		case 'id_view_div_tab2':
+			if($('#id_core_select_syllabus').val().replace(/ /g,'')==''){
+				string = 'Random'
+			}else{
+				string = $('#id_core_select_subject').val();
+				if($('#id_core_input_dp').val().replace(/ /g,'')!=''){
+					string += ': '+$('#id_core_input_dp').val();
+				}
+			}
+		break;
+		default:
+		break;
+	}
+	if($.isNumeric($('#id_modal_input_time').val())){
+		if($('#id_modal_input_time').val()<3){
+			string += ', 3s';
+			time = 3000;
+		}else{
+			string += ', ' + $('#id_modal_input_time').val() + 's';
+			time = $('#id_modal_input_time').val() * 1000;
+		}
+	}else{
+		string += ', 10s';
+	}
+	$('#id_login_span_subjectIndicator').html(escapeHtml(string));
+}
+
+function tick(){
+	if(tickflag){
+		return;
+	}
+	tickflag = true;
+	var timeRemaining = parseInt($('#id_login_nav_randomQuestionNavBg').css('width'))/parseInt($('#id_login_nav_randomQuestionNav').css('width'))*time;
+	$('#id_login_nav_randomQuestionNavBg').animate({'width':0},timeRemaining,'linear',function(){
+		$('#id_login_div_randomQuestionRenderer,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
+			$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
+			queryRandomQ('recur');
+		})
+	})
+}
+
+var queryflag = false;
+
+function queryRandomQ(i){
+	if(queryflag){
+		return;
+	}
+	queryflag = true;
+	var json = {
+		'mode':'random',
+		'quantity':1,
+		'searchstring':''}
+	$.ajax({
+		type : 'POST',
+		url : 'pingQ',
+		data : json,
+		success : function(o){
+			$('#id_login_div_randomQuestionRenderer').html(parsing_preview(o.question,o.hashed_id));
+			tickflag=false;
+			$('#id_login_div_randomQuestionRenderer,#id_login_nav_randomQuestionNavBg').animate({'opacity':'1.0'},400,function(){
+				queryflag = false;
+				tick();
+			})
+		}
+	})
+}	
 
 function bindImageManipulationBtnClicks(){
 	
@@ -746,7 +878,7 @@ function bindImageManipulationBtnClicks(){
 						$('#id_add_textarea_OCRResult').val(outputString);
 						
 						cropEnd(_this);
-					}else if  (o.message=='noroom'){
+					}else if (o.message=='noroom'){
 						info_modal('Login token expired. Please refresh the page.')
 					}
 					},
@@ -789,6 +921,7 @@ var pageNum = 1,
 	pageNumPending = null,	
 	pdfDoc = null,
 	scale = 2.0
+
 /* OCR PDF functions */	
 function renderPage(num){
 	var canvas = document.getElementById('id_add_img_OCR'),

@@ -21,28 +21,108 @@
 		</div>
 	</div>
 	
-	<div id="id_core_modal_dp" class="modal fade" role="dialog">
-	  <div class="modal-dialog">
-
-		<div class="modal-content">
-		  <div class="modal-header">
-			<button type="button" class="close" data-dismiss="modal">&times;</button>
-			<h4 class="modal-title">Choose dot point</h4>
-		  </div>
-		  <div class="modal-body">
-			<form role = "form">
-				<div class = "panel-group" id = "id_core_div_dpmap">
-					
+	<div id = "id_core_modal_autoplaySetting" class = "modal fade" role = "dialog">
+		<div class = "modal-dialog">
+			<div class = "modal-content">
+				<div class = "modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Autoplay Setting</h4>
 				</div>
-				<hr>
-			</form>
-			<hr>
-		  </div>
-		  <div class="modal-footer">
-			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		  </div>
+				<div class = "modal-body">
+					
+					<form role = "form" class = "form-horizontal">
+						<div class = "class_view_div_unitblock">
+							<ul class = "nav nav-tabs">
+								<li class = "active"><a href = "#" id = "id_view_tab1">By subject</a></li>
+								<li><a href = "#" id = "id_view_tab2">By curriculum</a></li>
+							</ul>
+							<hr>
+							<div class = "row" id = "id_view_div_tabcontainer">
+								<div class = "col-md-12" id = "id_view_div_tab1">
+									<div class = "form-group">
+										<label class = "control-label col-md-2" for = "id_core_select_subject">Subject</label>
+										<div class = "col-md-5">
+											<select class = "form-control" id = "id_core_select_subject">
+												<option></option>
+											</select>
+										</div>
+										<div class = "col-md-5">
+											<div class = "btn btn-default btn-block" id = "id_core_btn_addsubject">
+												+ subject
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class = "col-md-12 hidden" id = "id_view_div_tab2">
+									<div class = "form-group">
+										<label class = "control-label col-md-2 required"for = "id_core_select_syllabus">Syllabus</label>
+										<div class = "col-md-5">
+											<select class = "form-control" id = "id_core_select_syllabus">
+												<option></option>
+											</select>
+										</div>
+										<div class = "col-md-5">
+											<div class = "btn btn-default btn-block" id = "id_core_btn_addcurriculum">
+												+ curriculum
+											</div>
+										</div>
+									</div>
+									<div class = "form-group">
+										<label class = "control-label col-md-2" for = "id_core_btn_select_dp">Dot Point</label>
+										<div class = "col-md-5">
+											<input type = "text" class = "form-control" id = "id_core_input_dp" disabled></input>
+										</div>
+										<div class = " col-md-5">
+											<div class = "btn btn-default disabled" id = "id_core_btn_choosedp" >
+												choose dp
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<hr>
+							<div class = "col-md-10">
+								<div class = "form-group">
+									<label class = "control-label col-md-5" for = "id_modal_input_time">Refresher timer : </label>
+									<div class = "col-md-5">
+										<input id = "id_modal_input_time" value = "10" type = "text" class = "form-control">
+									</div>
+									<label class = "control-label col-md-2">seconds</label>
+								</div>
+							</div>
+							<hr>
+						</div>
+					</form>
+				</div>
+				<div class = "modal-footer">
+					<div class = "btn btn-default" data-dismiss="modal" data-target="#id_core_modal_autoplaySetting">
+					Close
+					</div>
+				</div>
+			</div>
 		</div>
-	  </div>
+	</div>
+	
+	<div id="id_core_modal_dp" class ="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Choose dot point</h4>
+				</div>
+				<div class="modal-body">
+					<form role = "form">
+						<div class = "panel-group" id = "id_core_div_dpmap">
+						</div>
+						<hr>
+					</form>
+					<hr>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
 	</div>
 	
 	<div id = "id_view_modal_option" class = "modal fade" role = "dialog">
