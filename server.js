@@ -1619,36 +1619,77 @@ app.post('/pingQ',function(req,res){
 	var tally = 0;
 	var escapedvar = [];
 	
-	if (req.body.subject != undefined){
+	if (req.body.subject != undefined && req.body.subject != '' ){
 		//if(tally == 0) querystring += 'WHERE ';
 		//tally ++;
 		querystring += 'AND subject LIKE ? ';
 		escapedvar.push(req.body.subject);
 	}
 	
-	if(req.body.hashed_id != undefined){
+	if(req.body.hashed_id != undefined && req.body.hashed_id != '' ){
 		//if(tally == 0){querystring += 'WHERE ';}else{querystring += 'AND '}
 		//tally ++;
 		querystring += 'AND hashed_id = ? ';
 		escapedvar.push(req.body.hashed_id);
 	}
 	
+	if(req.body.syllabus != undefined && req.body.syllabus != '' ){
+		var querystring0 = 'SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" ';
+		var escapedvar0 = ['curriculum_'+req.body.syllabus];
+		
+		if(req.body.dp != undefined && req.body.dp != ''){
+			querystring0 += 'AND lvl LIKE ?'
+			escapedvar0.push(req.body.dp+'%');
+		}
+		
+		connection.query(querystring0,escapedvar0,function(e0,r0){
+			if(e0){
+				catch_error(e0)
+			}else{
+				
+				var qs = '';
+				for (i=0;i<r.length;i++){
+					if(qs!=''){
+						qs +=',';
+					}
+					qs+=r[i].f_id;
+				}
+				connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+querystring+');',function(e,r){
+					if(e1){
+						catch_error(e);
+					}else{
+						switch (mode){
+							case 'random':
+								var choose = Math.floor(Math.random()*r.length);
+								res.send(r[choose]);
+							break;
+							default:
+							break;
+						}
+					}
+				});
+			}
+		})
+	}else{
+		/* when syllabus is NOT defined. so use subject and/or hash_id to find questions */
+		connection.query(querystring,escapedvar,function(e,r){
+			if(e){
+				catch_error(e);
+			}else{
+				switch (mode){
+					case 'random':
+						var choose = Math.floor(Math.random()*r.length);
+						res.send(r[choose]);
+					break;
+					default:
+					break;
+				}
+			}
+		})
+	}
+	
 	var mode = req.body.mode;
 	
-	connection.query(querystring,escapedvar,function(e,r){
-		if(e){
-			catch_error(e);
-		}else{
-			switch (mode){
-				case 'random':
-					var choose = Math.floor(Math.random()*r.length);
-					res.send(r[choose]);
-				break;
-				default:
-				break;
-			}
-		}
-	})
 })
 
 app.get('/logout',function(req,res){

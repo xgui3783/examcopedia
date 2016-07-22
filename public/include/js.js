@@ -740,7 +740,10 @@ var addAFile =
 /* sampler */
 
 var tickflag = false;
-var time = 10000;
+var ticktime = 10000;
+var ticksubject = '';
+var tickcurr = '';
+var tickdp = ''
 
 function update_setting(){
 	
@@ -752,28 +755,46 @@ function update_setting(){
 				string = 'Random'
 			}else{
 				string = $('#id_core_select_subject').val();
+				
+				tickcurr = '';
+				tickdp = ''
+				ticksubject = $('#id_core_select_subject').val();
 			}
 		break;
 		case 'id_view_div_tab2':
 			if($('#id_core_select_syllabus').val().replace(/ /g,'')==''){
 				string = 'Random'
 			}else{
-				string = $('#id_core_select_subject').val();
+				
+				string = $('#id_core_select_syllabus').val();
+				
+				tickcurr = $('#id_core_select_syllabus').val();
+				tickdp = ''
+				ticksubject = '';
+				
 				if($('#id_core_input_dp').val().replace(/ /g,'')!=''){
 					string += ': '+$('#id_core_input_dp').val();
+					tickdp = $('#id_core_input_dp').val();
 				}
 			}
 		break;
 		default:
 		break;
 	}
+	
+	if(string=='Random'){
+		ticksubject = '';
+		tickcurr = '';
+		tickdp = ''
+	}
+	
 	if($.isNumeric($('#id_modal_input_time').val())){
 		if($('#id_modal_input_time').val()<3){
 			string += ', 3s';
-			time = 3000;
+			ticktime = 3000;
 		}else{
 			string += ', ' + $('#id_modal_input_time').val() + 's';
-			time = $('#id_modal_input_time').val() * 1000;
+			ticktime = $('#id_modal_input_time').val() * 1000;
 		}
 	}else{
 		string += ', 10s';
@@ -786,7 +807,7 @@ function tick(){
 		return;
 	}
 	tickflag = true;
-	var timeRemaining = parseInt($('#id_login_nav_randomQuestionNavBg').css('width'))/parseInt($('#id_login_nav_randomQuestionNav').css('width'))*time;
+	var timeRemaining = parseInt($('#id_login_nav_randomQuestionNavBg').css('width'))/parseInt($('#id_login_nav_randomQuestionNav').css('width'))*ticktime;
 	$('#id_login_nav_randomQuestionNavBg').animate({'width':0},timeRemaining,'linear',function(){
 		$('#id_login_div_randomQuestionRenderer,#id_login_nav_randomQuestionNavBg').animate({'opacity':'0.0'},400,function(){
 			$('#id_login_nav_randomQuestionNavBg').css('width',$('#id_login_nav_randomQuestionNav').css('width'));
@@ -804,6 +825,7 @@ function queryRandomQ(i){
 	queryflag = true;
 	var json = {
 		'mode':'random',
+		'subject': ticksubject,
 		'quantity':1,
 		'searchstring':''}
 	$.ajax({
