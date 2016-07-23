@@ -1619,21 +1619,21 @@ app.post('/pingQ',function(req,res){
 	var tally = 0;
 	var escapedvar = [];
 	
-	if (req.body.subject != undefined && req.body.subject != '' ){
+	if (req.body.subject != undefined && req.body.subject != ''){
 		//if(tally == 0) querystring += 'WHERE ';
 		//tally ++;
 		querystring += 'AND subject LIKE ? ';
 		escapedvar.push(req.body.subject);
 	}
 	
-	if(req.body.hashed_id != undefined && req.body.hashed_id != '' ){
+	if (req.body.hashed_id != undefined && req.body.hashed_id != ''){
 		//if(tally == 0){querystring += 'WHERE ';}else{querystring += 'AND '}
 		//tally ++;
 		querystring += 'AND hashed_id = ? ';
 		escapedvar.push(req.body.hashed_id);
 	}
 	
-	if(req.body.syllabus != undefined && req.body.syllabus != '' ){
+	if (req.body.syllabus != undefined && req.body.syllabus != ''){
 		var querystring0 = 'SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" ';
 		var escapedvar0 = ['curriculum_'+req.body.syllabus];
 		
@@ -1648,23 +1648,34 @@ app.post('/pingQ',function(req,res){
 			}else{
 				
 				var qs = '';
-				for (i=0;i<r.length;i++){
+				
+				if(r0.length==0){
+					res.send({message:'failed',reason:'no result'})
+					return;
+				}
+				
+				for (i=0;i<r0.length;i++){
 					if(qs!=''){
 						qs +=',';
 					}
-					qs+=r[i].f_id;
+					qs+=r0[i].f_id;
 				}
-				connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+querystring+');',function(e,r){
-					if(e1){
+				
+				connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+qs+');',function(e,r){
+					if(e){
 						catch_error(e);
 					}else{
-						switch (mode){
-							case 'random':
-								var choose = Math.floor(Math.random()*r.length);
-								res.send(r[choose]);
-							break;
-							default:
-							break;
+						if(r.length==0){
+							res.send({message:'failed',reason:'no result'})
+						}else{
+							switch (mode){
+								case 'random':
+									var choose = Math.floor(Math.random()*r.length);
+									res.send(r[choose]);
+								break;
+								default:
+								break;
+							}
 						}
 					}
 				});

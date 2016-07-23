@@ -10,6 +10,11 @@ div.carousel-inner div.item
 text-align:center;
 }
 
+div.carousel-inner div.item:nth-child(1)
+{
+background-color:#e1e1e1;
+}
+
 div.carousel-inner div.item img
 {
 display:inline-block;
