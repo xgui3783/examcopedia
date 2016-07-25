@@ -823,7 +823,7 @@ io.on('connection',function(socket){
 							if(e1){
 								catch_error(e1);
 							}else{
-								view_submit_filter_cb(i,r,callback);
+								view_submit_filter_cb(i,r1,callback);
 							}
 						});
 					}
@@ -835,7 +835,7 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('local remove',function(hashed_id,o){
-		question_weight_modify(hashed_id,2);
+		question_weight_modify(hashed_id,20);
 	})
 	
 	socket.on('picked questions',function(input,callback){
@@ -846,7 +846,7 @@ io.on('connection',function(socket){
 				queryString += ',';
 			}
 			queryString += connection.escape(input[j]);
-			question_weight_modify(input[j],0.1)
+			question_weight_modify(input[j],1)
 		}
 		
 		
@@ -1107,14 +1107,16 @@ function weighting_function(i){
 	/* try to return a monotoneous decreasing function, which is defined by all i>=0 */
 	/* this is because the weighing value is designed to be inversely proportional to the pick frequency */
 	
-	
 	return Math.exp(-i);
 }
 
 function view_submit_filter_cb(i,r,cb){
-	console.log('i:'+i);
-	console.log('r.length:'+r.length);
-	console.log('r[0]hashedid'+r[0].hashed_id);
+	
+	if(r.length==0){
+		cb({message : 'failed',reason : 'no results obtained'});
+		return;
+	}
+	
 	var callbackR=[];
 	switch(i.method){
 		case 'random':
@@ -1187,7 +1189,6 @@ function view_submit_filter_cb(i,r,cb){
 			callbackR = r;
 		break;
 	}
-	console.log(callbackR);
 	cb(callbackR);
 }
 
@@ -1210,7 +1211,7 @@ function question_weight_modify(hashed_id,value){
 		}else{
 			if(r.length>0){
 				if(!/weigh=/.test(r[0].note)){
-					var newNote = r[0].note + 'weigh=0.1;'
+					var newNote = r[0].note + 'weigh=1;'
 				}else{
 					var newNote = r[0].note.replace(/weigh=.*?\;/,function(s){
 						if(isNaN(s.split(';')[0].split('=')[1])){
@@ -1755,7 +1756,8 @@ app.get('/img/*',function(req,res){
 /* ping question for login random question or later on for speciality use (api etc?) */
 app.post('/pingQ',function(req,res){
 	
-	var querystring = 'SELECT subject, hashed_id, question, answer, space, mark FROM table_masterquestions WHERE delete_flag = 0 ';
+	var mode = req.body.mode;
+	var querystring = 'SELECT note,subject, hashed_id, question, answer, space, mark FROM table_masterquestions WHERE delete_flag = 0 ';
 	var tally = 0;
 	var escapedvar = [];
 	
@@ -1801,7 +1803,7 @@ app.post('/pingQ',function(req,res){
 					qs+=r0[i].f_id;
 				}
 				
-				connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+qs+');',function(e,r){
+				connection.query('SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+qs+');',function(e,r){
 					if(e){
 						catch_error(e);
 					}else{
@@ -1810,8 +1812,13 @@ app.post('/pingQ',function(req,res){
 						}else{
 							switch (mode){
 								case 'random':
-									var choose = Math.floor(Math.random()*r.length);
-									res.send(r[choose]);
+									var json = {
+										method : 'random',
+										length : 1
+									}
+									view_submit_filter_cb(json,r,function(o){
+										res.send(o[0])
+									})
 								break;
 								default:
 								break;
@@ -1829,8 +1836,13 @@ app.post('/pingQ',function(req,res){
 			}else{
 				switch (mode){
 					case 'random':
-						var choose = Math.floor(Math.random()*r.length);
-						res.send(r[choose]);
+						var json = {
+							method : 'random',
+							length : 1
+						}
+						view_submit_filter_cb(json,r,function(o){
+							res.send(o[0])
+						})
 					break;
 					default:
 					break;
@@ -1838,9 +1850,6 @@ app.post('/pingQ',function(req,res){
 			}
 		})
 	}
-	
-	var mode = req.body.mode;
-	
 })
 
 app.get('/logout',function(req,res){
@@ -1928,7 +1937,36 @@ app.get('/about',function(req,res){
 })
 
 app.get('/test',function(req,res){
-	res.sendfile('test.html');
+	/*
+	var json = {
+		method : 'random',
+		length : 1
+	}
+	var mr = [];
+	mr.push({
+		id : '1',
+		note : 'weigh=200000;',
+	})
+	mr.push({
+		id : '2',
+		note : 'weigh=200;',
+	})
+	mr.push({
+		id : '3',
+		note : 'weigh=20;',
+	})
+	mr.push({
+		id : '4',
+		note : 'weigh=1;',
+	})
+	mr.push({
+		id : '5',
+		note : 'weigh=0;',
+	})
+	view_submit_filter_cb(json,mr,function(o){
+		res.send(o);
+	})
+	*/
 })
 
 app.get('/changelog',function(req,res){
