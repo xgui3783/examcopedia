@@ -548,6 +548,9 @@ io.on('connection',function(socket){
 				
 				'space varchar(64) NOT NULL,'+
 				'mark varchar(4) NOT NULL,'+
+				'note varchar(512) NOT NULL,'+
+				
+				'delete_flag int(1) NOT NULL,'+
 				
 				'PRIMARY KEY(id));',function(e1){
 					if(e1){
@@ -763,6 +766,7 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('view submit',function(i,callback){
+		
 		var optionalString = '';
 		if(/exhaustive/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
@@ -783,9 +787,6 @@ io.on('connection',function(socket){
 			})
 		}
 		
-		console.log(optionalString);
-		console.log(i.mode);
-		
 		switch(i.mode){
 			case 'subject':
 				if(i.subject.replace(' ','')==''||i.subject==undefined){
@@ -793,7 +794,7 @@ io.on('connection',function(socket){
 						if(e){
 							catch_error(e);
 						}else{
-							callback(r);
+							view_submit_filter_cb(i,r,callback);
 						}
 					})
 				}else{
@@ -801,7 +802,7 @@ io.on('connection',function(socket){
 						if(e){
 							catch_error(e);
 						}else{
-							callback(r);
+							view_submit_filter_cb(i,r,callback);
 						}
 					})
 				}
@@ -822,7 +823,7 @@ io.on('connection',function(socket){
 							if(e1){
 								catch_error(e1);
 							}else{
-								callback(r1);
+								view_submit_filter_cb(i,r,callback);
 							}
 						});
 					}
@@ -833,11 +834,11 @@ io.on('connection',function(socket){
 		}
 	})
 	
+	socket.on('local remove',function(hashed_id,o){
+		question_weight_modify(hashed_id,2);
+	})
+	
 	socket.on('picked questions',function(input,callback){
-		if(!/exhaustive/.test(socket.request.user.notes1)){
-			callback('done');
-			return false;
-		};
 		
 		var queryString='';
 		for (var j = 0; j<input.length; j++){
@@ -845,7 +846,14 @@ io.on('connection',function(socket){
 				queryString += ',';
 			}
 			queryString += connection.escape(input[j]);
+			question_weight_modify(input[j],0.1)
 		}
+		
+		
+		if(!/exhaustive/.test(socket.request.user.notes1)){
+			callback('done');
+			return false;
+		};
 		
 		connection.query('SELECT id FROM table_masterquestions WHERE hashed_id IN ('+ queryString +')',function(e,r){
 			if(e){
@@ -1093,6 +1101,134 @@ io.on('connection',function(socket){
 		}
 	});
 });
+
+function weighting_function(i){
+	
+	/* try to return a monotoneous decreasing function, which is defined by all i>=0 */
+	/* this is because the weighing value is designed to be inversely proportional to the pick frequency */
+	
+	
+	return Math.exp(-i);
+}
+
+function view_submit_filter_cb(i,r,cb){
+	var callbackR=[];
+	switch(i.method){
+		case 'random':
+		
+			var arrWeighting = [];
+			var rawWeight;
+			var totalWeight = 0;
+			
+			for (var j = 0; j<r.length; j++){
+				if(!/weigh=/.test(r[j].note)){
+					rawWeight = 0;
+				}else{
+					r[j].note.replace(/weigh=.*?\;/,function(s){
+						if(isNaN(s.split(';')[0].split('=')[1])){
+							rawWeight = 0;
+						}else{
+							rawWeight = Number(s.split(';')[0].split('=')[1]);
+						}
+					})
+				}
+				arrWeighting.push(weighting_function(rawWeight));
+				totalWeight += weighting_function(rawWeight);
+			}
+			
+			var num = 0;
+			while(num<i.length){
+				var counting=0;
+				var dice = Math.random()*totalWeight;
+				var j = -1;
+				
+				do{
+					j++;
+					counting += arrWeighting[j];
+				}while(counting<dice)
+				
+				totalWeight -= arrWeighting[j]
+				callbackR.push(r[j]);
+				arrWeighting.splice(j,1);
+				r.splice(j,1);
+				num++;
+			}
+			/*
+			var newR = shuffleArray(r);
+			for(var j = 0; j<i.length; j++){
+				callbackR.push(newR[j]);
+			}
+			*/
+		break;
+		case 'select':
+			var selectS = i.length.replace(/ /g,'').split(',');
+			selectS.forEach(function(s){
+				if(/[0-9]*?-[0-9]*/.test(s)){
+					s.replace(/[0-9]*?-[0-9]*/,function(s2){
+						var upper = Math.max(Number(s2.split('-')[0]),Number(s2.split('-')[1]));
+						var lower = Math.min(Number(s2.split('-')[0]),Number(s2.split('-')[1]));
+						for (var j=lower-1;j<upper&&j<r.length;j++){
+							callbackR.push(r[j])
+						}
+					})
+				}else if(/[0-9]*/.test(s)){
+					if(s<r.length){
+						callbackR.push(r[s])
+					}
+				}
+			})
+		break;
+		/* by default, all of the result will be sent back */
+		case 'all':
+		default:
+			callbackR = r;
+		break;
+	}
+	cb(callbackR);
+}
+
+/* shuffle array */
+/* http://stackoverflow.com/a/12646864/6059235 */
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+
+function question_weight_modify(hashed_id,value){
+	connection.query('SELECT id, note FROM table_masterquestions WHERE hashed_id = ?',hashed_id,function(e,r){
+		if(e){
+			catch_error(e);
+		}else{
+			if(r.length>0){
+				if(!/weigh=/.test(r[0].note)){
+					var newNote = r[0].note + 'weigh=0.1;'
+				}else{
+					var newNote = r[0].note.replace(/weigh=.*?\;/,function(s){
+						if(isNaN(s.split(';')[0].split('=')[1])){
+							newNumber = value;
+						}else{
+							newNumber = Number(value) + Number(s.split(';')[0].split('=')[1]);
+						}
+						return 'weigh='+newNumber+';';
+					})
+				}
+				connection.query('UPDATE table_masterquestions SET note = ? WHERE id = ?',[newNote,r[0].id],function(e1,r1){
+					if(e1){
+						catch_error(e1)
+					}
+				})
+			}else{
+				catch_error('question weight modify no target')
+			}
+		}
+	});
+	
+}
 
 function catch_error(e){
 	console.log(e);

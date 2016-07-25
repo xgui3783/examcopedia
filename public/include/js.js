@@ -527,7 +527,7 @@ $(document).ready(function(){
 	
 	if($('#id_input_select').length>0){
 		$('#id_input_select').off('keydown').on('keydown',function(k){
-			if(k.which==9||k.which==13||k.which==116||(k.which>47&&k.which<58)||k.which==32||k.which==109||k.which==189||(k.which>95&&k.which<106)){
+			if(k.which==46||k.which==188||k.which==8||k.which==9||k.which==13||k.which==116||(k.which>47&&k.which<58)||k.which==32||k.which==109||k.which==189||(k.which>95&&k.which<106)){
 				$(this).tooltip('hide');
 			}else{
 				/* error message here */
@@ -1173,18 +1173,15 @@ function viewgo(){
 		/* clean out any previous preview data */
 		$('#id_view_div_preview .panel-body').html('');
 		
-		$('.class_view_div_unitblock').each(function(){
+		$('#id_view_div_form .class_view_div_unitblock').each(function(){
 			var mode = $(this).find('#id_view_input_option').val().split(' : ')[0];
+			
+			var length = null;
+			
 			if(mode!='all'){
-				var length = $(this).find('#id_view_input_option').val().split(' : ')[1];
-				
-				/* if input is not a number, set it to 10 instead */
-				if(!$.isNumeric(length)||length<1){
-					length = 10;
-				}
-			}else{
-				var length = null;
+				length = $(this).find('#id_view_input_option').val().split(' : ')[1];
 			}
+				
 			var index = $(this).index();
 			
 			switch($(this).children('ul.nav-tabs.nav').children('li.active').children('a').attr('id')){
@@ -1192,7 +1189,9 @@ function viewgo(){
 				case 'id_view_tab1':
 					var json = {
 						'mode' : 'subject',
-						'subject' : $(this).find('#id_core_select_subject').val()
+						'subject' : $(this).find('#id_core_select_subject').val(),
+						'method' : mode,
+						'length' : length
 						}
 					socket.emit('view submit',json,function(o){
 						if(o.length>0){
@@ -1217,6 +1216,8 @@ function viewgo(){
 						'mode' : 'curriculum',
 						'syllabus' : $(this).find('#id_core_select_syllabus').val(),
 						'dp' : $(this).find('#id_core_input_dp').val(),
+						'method' : mode,
+						'length' : length
 						}
 					socket.emit('view submit',json,function(o){
 						if(o.length>0){
@@ -1323,11 +1324,15 @@ function viewlocaledit(mode){
 					renumber = renumber.next();
 				}
 				target.remove();
-			})
+			});
+			socket.emit('local remove',$('#id_view_input_hashedid').val(),function(o){
+				
+			});
 		break;
 		default:
 		break;
 	}	
+	
 	$('#id_view_modal_editcomment').modal('hide');
 }
 
@@ -1382,7 +1387,7 @@ function bind_viewdiv_overlay(target){
 					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment',false)
 				}
 			});
-			console.log(json);
+
 			$.ajax({
 				type : 'POST',
 				url : 'pingQ',
@@ -1423,15 +1428,14 @@ function shuffleArray(array) {
     return array;
 }
 
-function inputOnPaste(){
-	
-}
 
 /* according to mode and length, append row units to appropriate targets */
 function view_append_preview(mode, length, target, row){
 	var bookkeeper = [];
 	switch (mode){
 		case 'random':
+			/*
+			//this is no longer needed, as server now handles the randomisation of questions and weighing of questions
 			var counter = 1;
 			var randomArray = shuffleArray(row);
 			do{
@@ -1440,6 +1444,7 @@ function view_append_preview(mode, length, target, row){
 				counter ++;
 			}while(counter - 1 < length && counter < row.length)
 		break;
+			*/
 		case 'all':
 			for (var i=0;i<row.length;i++){
 				append_one(i+1,target,row[i]);
