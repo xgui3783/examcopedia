@@ -1112,6 +1112,9 @@ function weighting_function(i){
 }
 
 function view_submit_filter_cb(i,r,cb){
+	console.log('i:'+i);
+	console.log('r.length:'+r.length);
+	console.log('r[0]hashedid'+r[0].hashed_id);
 	var callbackR=[];
 	switch(i.method){
 		case 'random':
@@ -1184,6 +1187,7 @@ function view_submit_filter_cb(i,r,cb){
 			callbackR = r;
 		break;
 	}
+	console.log(callbackR);
 	cb(callbackR);
 }
 

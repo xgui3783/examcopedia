@@ -1,4 +1,5 @@
 /* id/class _ scope(name or core) _ type (btn/a etc) _ name */
+//var socket = io.connect('http://join.examcopedia.club:8000/');
 var socket = io();
 
 $(document).ready(function(){
@@ -1194,6 +1195,7 @@ function viewgo(){
 						'length' : length
 						}
 					socket.emit('view submit',json,function(o){
+						console.log(o)
 						if(o.length>0){
 							$('#id_view_div_preview .panel-body').append('<div class = "row" id = "id_view_div_preview_'+index+'"></div>');
 							view_append_preview(mode, length,$('#id_view_div_preview_'+index),o);
