@@ -15,11 +15,12 @@ Currently worked on goals:
 - implement moderator approval process of addition/edition of questions
 - username/password/account locked status message in login screen
 - local registration
-- config for frontal page sampler
 
 Future updates:
 
 Change log
+v0.1.9 - 29/07/2016 - fixed issue with choosing dp
+			- added categorising feature
 v0.1.8.4 - 25/07/2016 - added algorithm to prioritise questions that have not appeared (including new questions) + have not been removed often
 			- fixed minor bug where view go does not generate questions
 v0.1.8.3 - 21/07/2016 - redesigned login page

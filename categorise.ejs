@@ -15,61 +15,97 @@
 <%- include('navbar') %>	
 		</div>
 		<div class = "row">
-		<div class = "col-md-8 col-md-offset-2">
-			<div class = "panel panel-success">
-				<div class = "panel-heading">
-					<h1>Categorise Unfiled Questions</h1>not implemented yet. This functionality will be useful to educators wanting to create a new syllabus and categorise existing questions. For example, the existing questions are entered by an educator in Sydney, Australia, but an educator in Wellington, NZ can create a syllabus named "NZ_highschool_chemistry" and attempt to categorise the questions that are already in the database according to the NZ syllabus.
-				</div>
-				<div class = "panel-body">
-					<form role = "form" class = "form-horizontal">
-						<div class = "form-group">
-							<label class = "control-label col-md-3" for = "id_select_subject">Subject</label>
-							<div class = "col-md-5">
-								<select class = "form-control" id = "id_select_subject">
-								
-								</select>
+			<div id = "id_cate_container_form" class = "col-md-8 col-md-offset-2">
+				<div class = "panel panel-success">
+					<div class = "panel-heading">
+						<h1>Categorise Unfiled Questions</h1>
+					</div>
+					<div class = "panel-body">
+						<form role = "form" class = "form-horizontal">
+							<div class = "form-group">
+								<label class = "control-label col-md-3" for = "id_core_select_subject">Subject</label>
+								<div class = "col-md-8">
+									<select class = "form-control" id = "id_core_select_subject">
+										<option></option>
+									</select>
+								</div>
 							</div>
-							<div class = "btn btn-default col-md-2" id = "id_core_btn_addsubject">
-								+ subject
-							</div>
-						</div>
-						<div class = "form-group">
-							<label class = "control-label col-md-3" for = "id_select_syllabus">Syllabus</label>
-							<div class = "col-md-5">
-								<select class = "form-control" id = "id_select_syllabus">
-								
-								</select>
-							</div>
-							<div class = "btn btn-default col-md-2" id = "id_core_btn_addcurriculum">
-								+ curriculum
-							</div>
-						</div>
-						<div class = "form-group">
-						<hr>
-							<div class = "col-md-10 col-md-offset-2">
-								<div class = "form-group">
-									<div class = "radio form-inline">
-										<label><input type = "radio" name = "radio_mode" id = "id_radio_random">Random</label>
-										<input type = "text" class = "form-control" id = "id_input_random"></input>
-									</div>
-									<div class = "radio">
-										<label><input type = "radio" name = "radio_mode" id = "id_radio_all">All</label>
-									</div>
-									<div class = "radio form-inline">
-										<label><input type = "radio" name = "radio_mode" id = "id_radio_select">Select</label>
-										<input type = "text" class = "form-control" id = "id_input_select"></input>
+							
+							<div class = "panel panel-default">
+								<div class = "panel-heading btn btn-default btn-block" data-toggle = "collapse" data-target="#id_cate_div_option">
+									<span class = "glyphicon glyphicon-cog"></span> Options
+								</div>
+								<div class = "collapse" id = "id_cate_div_option">
+									<div class = "panel-body">
+										<div class = "row">
+											<div class = "form-group">
+												<label class = "control-label col-md-3" for = "id_core_select_syllabus">Syllabus <span id = "id_cate_tooltip_syllabusTooltip" class = "hovershow glyphicon glyphicon-question-sign" title = "Find all questions NOT already categorised under the selected syllabus."></span> </label>
+												<div class = "col-md-5">
+													<select class = "form-control" id = "id_core_select_syllabus">
+														<option></option>
+													</select>
+												</div>
+												<div class = "col-md-3">
+													<div class = "btn btn-default btn-block" id = "id_core_btn_addcurriculum">
+														+ curriculum
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class = "row">
+											<div class = "form-group">
+												<label class = "control-label col-md-3" for = "id_cate_input_number">Number of Questions</label>
+												<div class = "col-md-3">
+													<input type = "text" class = "form-control" id = "id_cate_input_number" value = 5></input>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
+						</form>
+					</div>
+					<div class = "panel-footer text-center">
+						<div id = "id_cate_btn_catego" class = "btn btn-success btn-lg">Go
 						</div>
-					</form>
-				</div>
-				<div class = "panel-footer text-center">
-					<div class = "btn btn-success btn-lg">Go</div>
+					</div>
 				</div>
 			</div>
-		</div>
-		
+			<div id = "id_cate_container_answer" class = "hidden col-md-10 col-md-offset-1">
+				<div class = "panel panel-success">
+					<div class = "panel-heading">
+					<h1>Categorise away!</h1>
+					</div>
+					<div class = "panel-body">
+						<div id = "id_cate_div_leftAns" class = "col-md-7">
+						</div>
+						<div id = "id_cate_div_rightAns" class = "col-md-5">
+							<div id = "id_cate_div_affix">
+								<div class = "row">
+									<form class = "form-horizontal">
+										<div class = "form-group">
+											<label class = "control-label col-md-2" for = "id_core_select_syllabus">Syllabus</label>
+											<div class = "col-md-5">
+												<select class = "class_core_select_syllabus form-control" id = "id_core_select_syllabus">
+													<option></option>
+												</select>
+											</div>
+											<div class = "col-md-5">
+												<div class = "btn btn-default btn-block" id = "id_core_btn_addcurriculum">
+													+ curriculum
+												</div>
+											</div>
+										</div>
+									</form>
+								</div>
+								<input class = "hidden" id = "id_core_input_dp">
+								<div class = "row well" id = "id_core_div_dpmap">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </body>

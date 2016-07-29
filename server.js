@@ -755,6 +755,46 @@ io.on('connection',function(socket){
 		})
 	})
 	*/
+	
+	socket.on('hashed id query syllabus',function(i,cb){
+		var curr = 'curriculum_'+i.syllabus;
+		var hashedIdArr = i.qHashedIdArr;
+		if(hashedIdArr.length==0){
+			cb({message : 'failed',reason : 'input array length zero'});
+		}else{
+			var arrJson = [];
+			for (var i = 0; i<hashedIdArr.length; i++){
+				connection.query('SELECT id,hashed_id FROM table_masterquestions WHERE hashed_id = ?',hashedIdArr[i],function(e,r){
+					if (e){
+						catch_error(e);
+					}else{
+						if(r==0){
+							catch_error('hashed id with no id');
+						}else{
+							connection.query('SELECT lvl FROM ?? WHERE f_id = ?', [curr,r[0].id],function(e0,r0){
+								if(e0){
+									catch_error(e0);
+								}else{
+									var json = {
+										hashed_id : r[0].hashed_id,
+										lvl : []
+									}
+									for (var j = 0; j<r0.length; j++){
+										json.lvl.push(r0[j].lvl)
+									}
+									arrJson.push(json);
+									if(arrJson.length == hashedIdArr.length){
+										cb({message:'success',result:arrJson})
+									}
+								}
+							})
+						}
+					}
+				})
+			}
+		}
+	})
+	
 	socket.on('populate dot points',function(i,callback){
 		connection.query('SELECT DISTINCT lvl, description FROM ?? WHERE lvl LIKE "%info" ORDER BY lvl','curriculum_'+i,function(e,r){
 			if(e){
@@ -1002,13 +1042,28 @@ io.on('connection',function(socket){
 						catch_error(e);
 					}else{
 						if(r.length>0){
-							connection.query('INSERT INTO ?? (f_id,lvl) VALUES (?,?);',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e1,r1){
-								if(e1){
-									catch_error(e1);
-								}else{
-									callback('successful!');
-								}
-							})
+							switch(i.mode){
+								case 'delete':
+									connection.query('DELETE FROM ?? WHERE f_id =? AND lvl = ?',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e1,r1){
+										if(e1){
+											catch_error(e1)
+										}else{
+											callback('successful!')
+										}
+									})
+								break;
+								case 'add':
+									connection.query('INSERT INTO ?? (f_id,lvl) VALUES (?,?);',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e1,r1){
+										if(e1){
+											catch_error(e1);
+										}else{
+											callback('successful!');
+										}
+									})
+								break;
+								default:
+								break;
+							}
 						}else{
 							callback({'error':'hash id not found'});
 							catch_error('hash id not found.');
@@ -1111,7 +1166,6 @@ function weighting_function(i){
 }
 
 function view_submit_filter_cb(i,r,cb){
-	
 	if(r.length==0){
 		cb({message : 'failed',reason : 'no results obtained'});
 		return;
@@ -1142,7 +1196,7 @@ function view_submit_filter_cb(i,r,cb){
 			}
 			
 			var num = 0;
-			while(num<i.length){
+			while(num<i.length&&r.length>0){
 				var counting=0;
 				var dice = Math.random()*totalWeight;
 				var j = -1;
@@ -1755,23 +1809,17 @@ app.get('/img/*',function(req,res){
 
 /* ping question for login random question or later on for speciality use (api etc?) */
 app.post('/pingQ',function(req,res){
-	
 	var mode = req.body.mode;
-	var querystring = 'SELECT note,subject, hashed_id, question, answer, space, mark FROM table_masterquestions WHERE delete_flag = 0 ';
-	var tally = 0;
 	var escapedvar = [];
+	var queryOptions = '';
 	
 	if (req.body.subject != undefined && req.body.subject != ''){
-		//if(tally == 0) querystring += 'WHERE ';
-		//tally ++;
-		querystring += 'AND subject LIKE ? ';
+		queryOptions += ' AND subject LIKE ? ';
 		escapedvar.push(req.body.subject);
 	}
 	
 	if (req.body.hashed_id != undefined && req.body.hashed_id != ''){
-		//if(tally == 0){querystring += 'WHERE ';}else{querystring += 'AND '}
-		//tally ++;
-		querystring += 'AND hashed_id = ? ';
+		queryOptions += ' AND hashed_id = ? ';
 		escapedvar.push(req.body.hashed_id);
 	}
 	
@@ -1783,27 +1831,35 @@ app.post('/pingQ',function(req,res){
 			querystring0 += 'AND lvl LIKE ?'
 			escapedvar0.push(req.body.dp+'%');
 		}
-		
 		connection.query(querystring0,escapedvar0,function(e0,r0){
 			if(e0){
 				catch_error(e0)
 			}else{
 				
-				var qs = '';
-				
+				var querystring1;
 				if(r0.length==0){
-					res.send({message:'failed',reason:'no result'})
-					return;
-				}
-				
-				for (i=0;i<r0.length;i++){
-					if(qs!=''){
-						qs +=',';
+					if(/not syllabus/.test(req.body.option)){
+						querystring1='SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0' + queryOptions;
+					}else{
+						res.send({message:'failed',reason:'no result'})
+						return;
 					}
-					qs+=r0[i].f_id;
+				}else{
+					var qs = '';
+					for (i=0;i<r0.length;i++){
+						if(qs!=''){
+							qs +=',';
+						}
+						qs+=r0[i].f_id;
+					}
+					querystring1 = 'SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id';
+					if(/not syllabus/.test(req.body.option)){
+						querystring1 += ' NOT';
+					}
+					querystring1 += ' IN ('+qs+')' + queryOptions;
 				}
 				
-				connection.query('SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+qs+');',function(e,r){
+				connection.query(querystring1,escapedvar,function(e,r){
 					if(e){
 						catch_error(e);
 					}else{
@@ -1820,6 +1876,15 @@ app.post('/pingQ',function(req,res){
 										res.send(o[0])
 									})
 								break;
+								case 'categorise':
+									var json  = {
+										method : 'random',
+										length : req.body.length
+									}
+									view_submit_filter_cb(json,r,function(o){
+										res.send(o);
+									})
+								break;
 								default:
 								break;
 							}
@@ -1830,6 +1895,8 @@ app.post('/pingQ',function(req,res){
 		})
 	}else{
 		/* when syllabus is NOT defined. so use subject and/or hash_id to find questions */
+		
+		var querystring = 'SELECT note,subject, hashed_id, question, answer, space, mark FROM table_masterquestions WHERE delete_flag = 0 '+queryOptions;
 		connection.query(querystring,escapedvar,function(e,r){
 			if(e){
 				catch_error(e);
@@ -1842,6 +1909,15 @@ app.post('/pingQ',function(req,res){
 						}
 						view_submit_filter_cb(json,r,function(o){
 							res.send(o[0])
+						})
+					break;
+					case 'categorise':
+						var json  = {
+							method : 'random',
+							length : req.body.length
+						}
+						view_submit_filter_cb(json,r,function(o){
+							res.send(o);
 						})
 					break;
 					default:
@@ -1937,6 +2013,7 @@ app.get('/about',function(req,res){
 })
 
 app.get('/test',function(req,res){
+	res.render('../test.ejs')
 	/*
 	var json = {
 		method : 'random',

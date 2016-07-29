@@ -180,7 +180,7 @@ $(document).ready(function(){
 	});
 	
 	/* when the syllabus select field changes, enable the choose dp button */
-	$('#id_core_select_syllabus').change(function(){
+	$('.class_core_select_syllabus').change(function(){
 		if($(this).val()!=''){
 			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').removeClass('disabled');
 		}else{
@@ -398,7 +398,7 @@ $(document).ready(function(){
 					break;
 					case 'choosedp':
 						if(!$(this).hasClass('disabled')){
-							choosedp();
+							choosedp($(this));
 						}else{
 							$(this).removeClass('active');
 						}
@@ -446,7 +446,20 @@ $(document).ready(function(){
 				}
 			break;
 			
+			case 'cate':
+				switch(btn_id_split[3]){
+					case 'catego':
+						$(this).addClass('disabled')
+						catego();
+					break;
+					default:
+					break;
+				}
+			break;
+			
 			/* choose dot point functionalities */
+			/*
+			// legacy codes, no longer needed
 			case 'modalchoosedp':
 				if($(this).hasClass('disabled')){
 					
@@ -455,6 +468,7 @@ $(document).ready(function(){
 					adddp();
 				}
 			break;
+			*/
 			case 'login':
 				var username = $('#username').val().replace(/ /g,'');
 				var password = $('#password').val();
@@ -684,6 +698,124 @@ $(document).ready(function(){
 		'min-height' : $(window).height()-$('#id_navbar').height(),
 	});
 	
+	if($('#id_cate_div_option').length>0){
+		/* categorise specific binding */
+		
+		$('#id_cate_div_affix .well#id_core_div_dpmap').css('max-height',$(window).height()-document.getElementById('id_cate_div_affix').getBoundingClientRect().top-49);
+		
+		$(window).scroll(function(){
+			$('.affix-top,.affix').css('width',$('#id_cate_div_rightAns').width());
+			$('#id_cate_div_affix .well#id_core_div_dpmap').css('max-height',$(window).height()-document.getElementById('id_cate_div_affix').getBoundingClientRect().top-49);
+		})
+		
+		$(window).resize(function(){
+			$('.affix-top,.affix').css('width',$('#id_cate_div_rightAns').width());
+			$('#id_cate_div_affix .well#id_core_div_dpmap').css('max-height',$(window).height()-document.getElementById('id_cate_div_affix').getBoundingClientRect().top-49);
+		})
+		
+		$('#id_cate_tooltip_syllabusTooltip')
+			.tooltip({
+				trigger : 'click',
+				placement : 'right',
+				html : true
+			});
+		$('#id_cate_container_answer .panel-success #id_core_select_syllabus').off('change').change(function(){
+			var newSyllabus = $(this).val()
+			if($(this).val().replace(/ /g,'')==''){
+				return;
+			}
+			socket.emit('populate dot points',newSyllabus,function(o){
+				load_dp_map($('.panel-success #id_core_div_dpmap'),o,{collapse : false});
+				load_dp_map_satisfy_selected_dp($('.panel-success #id_core_input_dp').val(), $('.panel-success #id_core_div_dpmap'));
+				
+				var arr = [];
+				$('#id_cate_div_leftAns').children('div').each(function(){
+					arr.push($(this).attr('id'));
+				})
+				var json = {
+					syllabus : newSyllabus,
+					qHashedIdArr : arr
+				}
+				
+				$('.class_cate_div_dp').remove();
+				
+				socket.emit('hashed id query syllabus',json,function(o){
+					for(var i = 0; i<o.result.length; i++){
+						var appendDiv = '<div class = "class_cate_div_dp col-md-12">';
+						for(var j = 0; j<o.result[i].lvl.length;j++){
+							appendDiv += '<span class = "badge"><span>'+o.result[i].lvl[j]+'</span> <a class = "class_cate_close_labelClose" href = "#"><span class = "glyphicon glyphicon-remove-sign glyphicon-white"></span></a><span class = "hidden">'+newSyllabus+'</span></span>';	
+						}
+						appendDiv += '</div>';
+						
+						$('#'+o.result[i].hashed_id).append($(appendDiv))
+					}
+					
+					$('.class_cate_close_labelClose').off('click').click(function(){
+						var json = {
+							mode : 'delete',
+							hashed_id : $(this).parents('div.class_cate_div_dp ').parent().attr('id'),
+							target_syl : $(this).next().html(),
+							lvl : $(this).prev().html()
+						}
+						var _this = $(this);
+						socket.emit('categorise',json,function(o){
+							if(o=='successful!'){
+								_this.parent().remove();
+							}
+						})
+						return false;
+					})
+				})
+				
+				var timer;
+				$('.panel-success #id_core_div_dpmap li.btn-default').droppable({
+					greedy : true,
+					hoverClass : 'active',
+					tolerance : 'pointer',
+					/*
+					//mouseover to open a window doesn't work too well currently. for starters, the droppable location doesn't get updated. also, no event like on mouse leave to stop the timer
+					over : function(event,ui){
+						var target = $(this);
+						clearTimeout(timer);
+						timer = setTimeout(function(){
+							$(target.data('target')).collapse('show');
+							$('.panel-success #id_core_div_dpmap li.btn-default').droppable('disable').droppable('enable');
+						},1500)
+					},
+					*/
+					drop : function(event, ui){
+						var json = {
+							mode : 'add',
+							hashed_id : ui.draggable.attr('id'),
+							target_syl : $(this).parents('#id_cate_div_affix').find('#id_core_select_syllabus').val(),
+							lvl : $(this).html().split(' ')[0]
+						}
+						socket.emit('categorise',json,function(o){
+							if(o=='successful!'){
+								if(ui.draggable.find('.class_cate_div_dp').length==0){
+									var appendDiv = '<div class = "class_cate_div_dp col-md-12"></div>';
+									ui.draggable.append($(appendDiv))
+								}
+								ui.draggable.find('.class_cate_div_dp').append('<span class = "badge"><span>'+json.lvl+'</span> <a class = "class_cate_close_labelClose" href = "#"><span class = "glyphicon glyphicon-remove-sign glyphicon-white"></span></a><span class = "hidden">'+json.target_syl+'</span></span>');
+							}
+						})
+					}
+				});
+				
+				/* bind create new button */
+				$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
+					var t = $(this).parents('.panel-success').find('#id_core_select_syllabus').val();
+					adddp($(this),t,function(o){
+						$('#id_core_modal').modal('hide');
+						$('.panel-success #id_core_input_dp').val(o.newdp.split(' ')[0]);
+						$('.panel-success #id_core_select_syllabus').change();
+					});
+					//load_dp_map($('.panel-success #id_core_div_dpmap'),o,{collapse : false});
+				})
+			})
+		})
+	}
+	
 	/* http://stackoverflow.com/a/24600597/6059235 */
 	/*
 	var isMobile = window.matchMedia("only screen and (max-width: 760px)");
@@ -735,6 +867,88 @@ var addAFile =
 			'<input data-allowed-file-extensions=\'["jpg", "gif", "png", "svg" , "pdf", "tiff"]\' id = "id_modal_file_file" name = "id_modal_file_file[]" data-show-upload="false" data-show-caption="true" multiple type = "file">'+
 		'</div>'+
 	'</form>';
+
+
+/* catego */
+
+function catego(){
+	var json = {};
+	if($('.panel-success #id_core_select_subject').val().replace(/ /g,'')!=''){
+		json.subject = $('.panel-success #id_core_select_subject').val();
+	}
+	
+	if($('.panel-success #id_core_select_syllabus').val().replace(/ /g,'')!=''){
+		json.syllabus = $('.panel-success #id_core_select_syllabus').val();
+		if(json.option==undefined){
+			json.option = 'not syllabus';
+		}else{
+			json.option +='not syllabus';
+		}
+	}
+	
+	if(!$.isNumeric($('#id_cate_input_number').val())){
+		json.length = 5;
+	}else{
+		json.length = $('#id_cate_input_number').val();
+	}
+	
+	json.mode = 'categorise';
+	$.ajax({
+		type : 'POST',
+		url : 'pingQ',
+		data : json,
+		success : function(o){
+			if(o.message=='failed'){
+				info_modal(o.reason);
+			}else{
+				$('#id_cate_container_form').first().animate({'opacity':'0.0'},400,function(){
+					$('#id_cate_container_form').first().addClass('hidden');
+					$('#id_cate_container_answer').css('opacity','0.0').removeClass('hidden').animate({'opacity':'1.0'},400,function(){
+						$('#id_cate_div_affix').affix({
+							offset : {
+								top : $('#id_cate_div_rightAns').offset().top - 50
+							}
+						})
+					})
+				})
+				view_append_preview('all',null,$('#id_cate_div_leftAns'),o);
+				$('.affix-top,.affix').css('width',$('#id_cate_div_leftAns').width())
+				
+				$('#id_cate_div_leftAns').children('div.row')
+					.off('hover').hover(function(){
+						$(this).css({'opacity':'1.0'})
+						},function(){
+						$(this).animate({'opacity':'0.6'},400,function(){})						
+						})
+					.off('mousedown').on('mousedown',function(e){
+						e.preventDefault();
+						/*
+						$('#id_cate_canvas_grabbingAid').removeClass('hidden');
+						$('#id_cate_canvas_grabbingAid').css({
+							'top' : activeDiv.offset().top,
+							'left' : activeDiv.offset().left,
+							'width' : activeDiv.css('width'),
+							'height' : activeDiv.css('height')
+						})
+						$(document).off('mouseup').on('mouseup',function(e){
+							e.preventDefault();
+							$('#id_cate_canvas_grabbingAid').addClass('hidden');
+						})
+						*/
+					})
+					.draggable({
+						revert : true,
+						revertDuration : 200,
+						scroll : true,
+						opacity : 0.3,
+						zIndex : 5
+					})
+					
+					
+			}
+		}
+	})
+}	
 
 /* sampler */
 
@@ -1591,6 +1805,8 @@ function addsubject(){
 	});
 }
 
+/*
+// legacy codes. no longer needed
 function update_dp(){
 	
 	var dp = '';
@@ -1605,7 +1821,7 @@ function update_dp(){
 		}
 	}
 }
-
+*/
 function modal_ok(){
 	var home = $('.btn-default.active').parent().prev().children('select');
 	for (var i = 0;i<home.children('option').length;i++){
@@ -1832,88 +2048,124 @@ function escapeHtml(i){
 	});
 }
 
-function choosedp(){
-	$('#id_core_modal_dp .row.form-group select').html('<option></option>');
-	socket.emit('populate dot points',$('#id_core_select_syllabus').val(),function(o){
+function choosedp(btn){
+	$('#id_core_modal_dp .row .form-group select').html('<option></option>');
+	var t = btn.parent().parent().prev().find('select').val();
+	var dest = btn.parent().prev().children('input#id_core_input_dp').val();
+	socket.emit('populate dot points',t,function(o){
 		
-		/* empty dp map so new items can append */
-		$('#id_core_div_dpmap').empty();
-		
-		
-		for(var i=0;i<o.length;i++){
-			var obj = o[i].lvl.replace('.info','');
-			var concatString = obj+' '+o[i].description;
-			
-			/* make dpmap here */
-			var objsplit = obj.split('.');
-			var objsplitstage = objsplit[0];
-			for (var j = 0; j<objsplit.length;j++){
-				if($('#id_dpmap_ul_'+j+'-'+objsplitstage).length<1){
-					/* there is not yet an element with id #id_dpmap_div_ lvl _ dpno */
-					if(j==0){
-						/* append the first dp */
-						$('#id_core_div_dpmap').append('<ul class = "list-group"><li class = "btn btn-default list-group-item" data-toggle="collapse" data-target="#id_dpmap_ul_'+j+'-'+objsplitstage+'"></li><ul class = "list-group collapse" id = "id_dpmap_ul_'+j+'-'+objsplitstage+'"></ul></ul>');
-					}else{
-						var target = $('#id_dpmap_ul_'+Number(j-1)+'-'+objsplitstage.substring(0,objsplitstage.lastIndexOf('_')));
-						target.append('<ul class = "list-group"><li class = "btn btn-default list-group-item" data-toggle="collapse" data-target="#id_dpmap_ul_'+j+'-'+objsplitstage+'"></li><ul class = "list-group collapse" id = "id_dpmap_ul_'+j+'-'+objsplitstage+'"></ul></ul>');
-					}
-				}else{
-				}
-				
-				if(j==objsplit.length-1){
-					$('#id_dpmap_ul_'+j+'-'+objsplitstage).parent().children('li').html(concatString);
-				}else{
-					/* if there is already an element with id #id_dpmap_div_ lvl _ dpno */
-					objsplitstage += '_'+objsplit[j+1];					
-				}
-			}
-		}
-		
-		/* prepend the create new button */
-		$('#id_core_div_dpmap ul:first-child').prepend('<li class = "list-group-item btn-link class_dp_btn_createnew">+ new dot point</li>');
-		$('#id_core_div_dpmap ul').each(function(){
-			if($(this).html()==''){
-				$(this).html('<ul class = "list-group"><li class = "list-group-item btn-link class_dp_btn_createnew">+ new dot point</li></ul>');
-			}
-		});
-		
-		/* bind click listeners for li */
-		$('#id_core_div_dpmap li.btn-default').off('click').click(function(){
-			$('#id_core_div_dpmap li.active').removeClass('active');
-			$(this).addClass('active');
-			$('#id_core_input_dp').val($(this).html().split(' ')[0]);
-			$('#id_core_input_dp').change();
-		});
-		
-		/* bind create new button */
-		$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
-			adddp($(this));
-		})
-		
-		/* satisfy as much of the selected dp as possible */
-		if($('#id_core_input_dp').val()!=''){
-			var currdp = $('#id_core_input_dp').val().split('.');
-			var checklvl = '';
-			var findtarget = $('#id_core_div_dpmap').first();
-			
-			for(var j = 0;j<currdp.length;j++){
-				
-				if(j!=0){
-					checklvl += '.';
-				}
-				checklvl += currdp[j];
-				
-				findtarget.children('ul').children('li').each(function(){
-					if($(this).html().split(' ')[0]==checklvl){
-						$(this).click();
-						findtarget=$($(this).data('target'));
-						return false;
-					}
-				});
-			}
-		}
+		load_dp_map($('#id_core_div_dpmap'),o,{collapse : false})
+		load_dp_map_bind_event_listeners(t);
+		load_dp_map_satisfy_selected_dp(dest,$('#id_core_div_dpmap'));
 		
 		$('#id_core_modal_dp').modal('show');
+	});
+}
+
+var test = [];
+/* wip */
+function load_dp_map_satisfy_selected_dp(newdp,dpmap){
+	/* satisfy as much of the selected dp as possible */
+	if(newdp!=''){
+		var currdp = newdp.split('.');
+		var checklvl = '';
+		var findtarget = dpmap;
+
+		for(var j = 0;j<currdp.length;j++){
+			
+			if(j!=0){
+				checklvl += '.';
+			}
+			checklvl += currdp[j];
+			
+			findtarget.children('ul').children('li').each(function(){
+				//console.log($(this).html())
+				if($(this).html().split(' ')[0]==checklvl){
+					$(this).click(); 
+					findtarget=$($(this).data('target'));
+					return false;
+				}
+			});
+		}
+	}
+}
+
+function load_dp_map_bind_event_listeners(t){
+	/* bind click listeners for li */
+	$('#id_core_div_dpmap li.btn-default').off('click').click(function(){
+		$('#id_core_div_dpmap li.active').removeClass('active');
+		$(this).addClass('active');
+		var v = $(this).html().split(' ')[0];
+		$('.active').each(function(){
+			if($(this).attr('id')=='id_core_btn_choosedp'){
+				$(this).parent().prev().children('input#id_core_input_dp').val(escapeHtml(v));
+				$(this).parent().prev().children('input#id_core_input_dp').change();
+			}
+		})
+	});
+	
+	/* bind create new button */
+	$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
+		adddp($(this),t,function(cb){
+			var newdp = cb.newdp.split(' ')[0];
+			$('#id_core_input_dp').val(newdp);
+			socket.emit('populate dot points',t,function(o){
+				
+				load_dp_map($('#id_core_div_dpmap'),o,{collapse : false})
+				load_dp_map_bind_event_listeners(t);
+				load_dp_map_satisfy_selected_dp(newdp,$('#id_core_div_dpmap'));
+				
+				$('#id_core_modal').modal('hide');
+			});
+		});
+	})
+}
+
+function load_dp_map(t,o,option){
+	/* empty dp map so new items can append */
+	t.empty();
+	for(var i=0;i<o.length;i++){
+		var obj = o[i].lvl.replace('.info','');
+		var concatString = obj+' '+o[i].description;
+		var strIn;
+		
+		if(option.collapse){
+			strIn = ' in';
+		}else{
+			strIn = '';
+		}
+		
+		/* make dpmap here */
+		var objsplit = obj.split('.');
+		var objsplitstage = objsplit[0];
+		for (var j = 0; j<objsplit.length;j++){
+			if($('#id_dpmap_ul_'+j+'-'+objsplitstage).length<1){
+				/* there is not yet an element with id #id_dpmap_div_ lvl _ dpno */
+				if(j==0){
+					/* append the first dp */
+					t.append('<ul class = "list-group"><li class = "btn btn-default list-group-item" data-toggle="collapse" data-target="#id_dpmap_ul_'+j+'-'+objsplitstage+'"></li><ul class = "list-group collapse'+strIn+'" id = "id_dpmap_ul_'+j+'-'+objsplitstage+'"></ul></ul>');
+				}else{
+					var target = $('#id_dpmap_ul_'+Number(j-1)+'-'+objsplitstage.substring(0,objsplitstage.lastIndexOf('_')));
+					target.append('<ul class = "list-group"><li class = "btn btn-default list-group-item" data-toggle="collapse" data-target="#id_dpmap_ul_'+j+'-'+objsplitstage+'"></li><ul class = "list-group collapse'+strIn+'" id = "id_dpmap_ul_'+j+'-'+objsplitstage+'"></ul></ul>');
+				}
+			}else{
+			}
+			
+			if(j==objsplit.length-1){
+				$('#id_dpmap_ul_'+j+'-'+objsplitstage).parent().children('li').html(concatString);
+			}else{
+				/* if there is already an element with id #id_dpmap_div_ lvl _ dpno */
+				objsplitstage += '_'+objsplit[j+1];					
+			}
+		}
+	}
+	
+	/* prepend the create new button */
+	t.find('ul:first-child').prepend('<li class = "list-group-item btn-link class_dp_btn_createnew">+ new dot point</li>');
+	t.find('ul').each(function(){
+		if($(this).html()==''){
+			$(this).html('<ul class = "list-group"><li class = "list-group-item btn-link class_dp_btn_createnew">+ new dot point</li></ul>');
+		}
 	});
 }
 
@@ -1934,7 +2186,7 @@ function show_existing_items(){
 }
 
 /* when add a dp is clicked in choose dp modal */
-function adddp(i){
+function adddp(i,t,cb){
 	$('#id_core_modal .modal-title').html('Add a New Dot Point');
 	$('#id_core_modal .modal-body')
 		.html(appendAnInput)
@@ -1972,39 +2224,35 @@ function adddp(i){
 	
 	$('#id_core_modal .btn-primary').off('click').on('click',function(c){
 		if(c.which!=1){
-			return false;
-		}else{
-			var json = {
-				'target_syl' : $('#id_core_select_syllabus').val(),
-				'value' : $('#id_modal_input_input').val()}
-			socket.emit('save dp',json,function(o){
-				if(o=='success'){
-					$('#id_core_input_dp').val(json['value'].split(' ')[0]);
-					$('#id_core_modal_dp').modal('hide');
-					$('#id_core_modal').modal('hide');
-				}else{
-					info_modal(o);
-				}
-			})
-			return false;
+			return true;
 		}
+		
+		var json = {
+			'target_syl' : t,
+			'value' : $('#id_modal_input_input').val()}
+		socket.emit('save dp',json,function(o){
+			if(o=='success'){
+				cb({message:'success',newdp : json.value})
+			}else{
+				info_modal(o);
+			}
+		})
+		return false;
 	});
 	
 	$('#id_core_modal').off('keypress').on('keypress',function(k){
 		if(k.which==13){
 			var json = {
-				'target_syl' : $('#id_core_select_syllabus').val(),
+				'target_syl' : t,
 				'value' : $('#id_modal_input_input').val()}
 			socket.emit('save dp',json,function(o){
 				if(o=='success'){
-					$('#id_core_input_dp').val(json['value'].split(' ')[0]);
-					$('#id_core_modal_dp').modal('hide');
-					$('#id_core_modal').modal('hide');
+					cb({message:'success',newdp : json.value})
 				}else{
 					info_modal(o);
 				}
 			})
-			return false;	
+			return false;
 		}
 	})
 }
@@ -2204,6 +2452,7 @@ function addsubmit(){
 		
 		/* need hashed_id to find real id */
 		var json1 = {
+			'mode'			:'add',
 			'hashed_id'		:$('#id_core_input_hashedid').val(),
 			'target_syl'	:$('#id_core_select_syllabus').val(),
 			'lvl'			:$('#id_core_input_dp').val()
