@@ -806,7 +806,6 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('view submit',function(i,callback){
-		
 		var optionalString = '';
 		if(/exhaustive/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
@@ -814,9 +813,9 @@ io.on('connection',function(socket){
 				var ssplit = s.split(/exhaustive|\r|\n|\r\n| /);
 				var optionFlag = true;
 				optionalString += ' id NOT IN ( '
-				for(var i = 0; i<ssplit.length; i++){
-					if(ssplit[i]){
-						optionalString += connection.escape(ssplit[i]) + ',';
+				for(var j = 0; j<ssplit.length; j++){
+					if(ssplit[j]){
+						optionalString += connection.escape(ssplit[j]) + ',';
 						optionFlag = false;
 					}
 				}
@@ -853,11 +852,11 @@ io.on('connection',function(socket){
 						catch_error(e);
 					}else{
 						var querystring = '';
-						for (i=0;i<r.length;i++){
+						for (var j=0;j<r.length;j++){
 							if(querystring!=''){
 								querystring +=',';
 							}
-							querystring+=r[i].f_id;
+							querystring+=r[j].f_id;
 						}
 						connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id IN ('+querystring+') '+optionalString+';',function(e1,r1){
 							if(e1){

@@ -19,6 +19,8 @@ Currently worked on goals:
 Future updates:
 
 Change log
+v0.1.9.1 - 31/07/2016 - fixed issue with curriculum select questions
+			- fixed issue of adding more blocks to view/generate
 v0.1.9 - 29/07/2016 - fixed issue with choosing dp
 			- added categorising feature
 v0.1.8.4 - 25/07/2016 - added algorithm to prioritise questions that have not appeared (including new questions) + have not been removed often
