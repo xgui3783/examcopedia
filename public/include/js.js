@@ -2241,15 +2241,15 @@ function adddp(i,t,cb){
 	
 	$('#id_core_modal .btn-primary').off('click').on('click',function(c){
 		
+		if(c.which!=1){
+			return true;
+		}
+		
 		if($(this).hasClass('disabled')){
 			return false;
 		}
 		$(this).addClass('disabled');
 		var _this = $(this)
-		
-		if(c.which!=1){
-			return true;
-		}
 		
 		var json = {
 			'target_syl' : t,
