@@ -950,14 +950,9 @@ io.on('connection',function(socket){
 		/* console.log(socket.request.user); */
 		
 		var r=cleanup(i.hashed_id,i.question,i.answer);
-		var hashedid = r[0];
+		
 		var question = r[1];
 		var answer = r[2];
-		
-		var json = {
-			'hashedid' : r[0],
-			'question' : r[1],
-			'answer' : r[2]}
 		
 		restricting_access(socket.request.user,'add submit',i,null,function(o){
 			if(o=='true'){
@@ -1111,6 +1106,15 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('globaledit',function(i,callback){
+		var r=cleanup(i.data.hashed_id,i.data.question,i.data.answer);
+		
+		var json = {
+			hashed_id : r[0],
+			question : r[1],
+			answer : r[2],
+			mark : i.data.mark
+		}
+		
 		restricting_access(socket.request.user,i.mode,i.data,null,function(o){
 			if(o=='true'){
 				/* carry out task */
@@ -1122,7 +1126,7 @@ io.on('connection',function(socket){
 				switch(i.mode){
 					case 'save':
 						querystring = 'UPDATE table_masterquestions SET ? WHERE hashed_id = ?';
-						queryterms = [i.data,i.data.hashed_id];
+						queryterms = [json,i.data.hashed_id];
 						returnstring = 'Saved to database!';
 					break;
 					case 'remove':
