@@ -2420,12 +2420,12 @@ function addsubmit(){
 	var flag = true;
 	
 	if($('.panel-primary #id_core_select_subject').val().replace(' ','')==''){
-		$('#id_core_select_subject').parent().parent().addClass('has-error');
+		$('.panel-primary #id_core_select_subject').parent().parent().addClass('has-error');
 		flag = false;
 	}
 	
 	if($('.panel-primary #id_core_textarea_qn').val().replace(' ','')==''){
-		$('#id_core_textarea_qn').parent().parent().addClass('has-error');
+		$('.panel-primary #id_core_textarea_qn').parent().parent().addClass('has-error');
 		flag = false;
 	}
 	
@@ -2435,16 +2435,19 @@ function addsubmit(){
 	}
 	
 	submit_filter();
+	/*
+	//obsolete. as using [space INT blank|lines|box] for spaces now
 	var space = 'spacesheader';
 	$('#id_add_formgroup_spaces').children('.row').each(function(){
 		space += '_' + $(this).children('.form-inline').children('input').val()+'.' + $(this).children('.form-inline').children('select').val();
 	});
+	*/
 	var json = {
 		'hashed_id'	:$('.panel-primary #id_core_input_hashedid').val(),
 		'subject'	:$('.panel-primary #id_core_select_subject').val(),
 		'question'	:$('.panel-primary #id_core_textarea_qn').val(),
 		'answer'	:$('.panel-primary #id_core_textarea_ans').val(),
-		'space'		:space,
+		'space'		:'',
 		'mark'		:$('.panel-primary #id_core_input_marks').val()
 		}
 		
@@ -2472,7 +2475,7 @@ function addsubmit(){
 			'target_syl'	:$('.panel-primary #id_core_select_syllabus').val(),
 			'lvl'			:$('.panel-primary #id_core_input_dp').val()
 			}
-		if($('#id_core_select_syllabus').val()==''){
+		if($('.panel-primary #id_core_select_syllabus').val()==''){
 			info_modal(o);
 			
 			/* resetting hashed id, qs and ans text fields */
