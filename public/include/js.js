@@ -2124,7 +2124,8 @@ function load_dp_map_bind_event_listeners(t){
 	$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
 		adddp($(this),t,function(cb){
 			var newdp = cb.newdp.split(' ')[0];
-			$('#id_core_input_dp').val(newdp);
+			console.log(newdp);
+			$('.panel-primary #id_core_input_dp').val(newdp);
 			socket.emit('populate dot points',t,function(o){
 				
 				load_dp_map($('#id_core_div_dpmap'),o,{collapse : false})
@@ -2239,6 +2240,13 @@ function adddp(i,t,cb){
 	modal_shown_focus('input');
 	
 	$('#id_core_modal .btn-primary').off('click').on('click',function(c){
+		
+		if($(this).hasClass('disabled')){
+			return false;
+		}
+		$(this).addClass('disabled');
+		var _this = $(this)
+		
 		if(c.which!=1){
 			return true;
 		}
@@ -2248,7 +2256,8 @@ function adddp(i,t,cb){
 			'value' : $('#id_modal_input_input').val()}
 		socket.emit('save dp',json,function(o){
 			if(o=='success'){
-				cb({message:'success',newdp : json.value})
+				_this.removeClass('disabled');
+				cb({message:'success',newdp : json.value});
 			}else{
 				info_modal(o);
 			}
@@ -2257,13 +2266,21 @@ function adddp(i,t,cb){
 	});
 	
 	$('#id_core_modal').off('keypress').on('keypress',function(k){
+		
 		if(k.which==13){
+			if($('#id_core_modal .btn-primary').hasClass('disabled')){
+				return false;
+			}
+			$('#id_core_modal .btn-primary').addClass('disabled');
+			var _this = $('#id_core_modal .btn-primary');
+			
 			var json = {
 				'target_syl' : t,
 				'value' : $('#id_modal_input_input').val()}
 			socket.emit('save dp',json,function(o){
 				if(o=='success'){
-					cb({message:'success',newdp : json.value})
+					_this.removeClass('disabled');
+					cb({message:'success',newdp : json.value});
 				}else{
 					info_modal(o);
 				}
