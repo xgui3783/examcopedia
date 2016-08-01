@@ -2440,12 +2440,12 @@ function addsubmit(){
 		space += '_' + $(this).children('.form-inline').children('input').val()+'.' + $(this).children('.form-inline').children('select').val();
 	});
 	var json = {
-		'hashed_id'	:$('#id_core_input_hashedid').val(),
-		'subject'	:$('#id_core_select_subject').val(),
-		'question'	:$('#id_core_textarea_qn').val(),
-		'answer'	:$('#id_core_textarea_ans').val(),
+		'hashed_id'	:$('.panel-primary #id_core_input_hashedid').val(),
+		'subject'	:$('.panel-primary #id_core_select_subject').val(),
+		'question'	:$('.panel-primary #id_core_textarea_qn').val(),
+		'answer'	:$('.panel-primary #id_core_textarea_ans').val(),
 		'space'		:space,
-		'mark'		:$('#id_core_input_marks').val()
+		'mark'		:$('.panel-primary #id_core_input_marks').val()
 		}
 		
 	$('#id_core_input_addsubmit').addClass('disabled');
@@ -2468,9 +2468,9 @@ function addsubmit(){
 		/* need hashed_id to find real id */
 		var json1 = {
 			'mode'			:'add',
-			'hashed_id'		:$('#id_core_input_hashedid').val(),
-			'target_syl'	:$('#id_core_select_syllabus').val(),
-			'lvl'			:$('#id_core_input_dp').val()
+			'hashed_id'		:$('.panel-primary #id_core_input_hashedid').val(),
+			'target_syl'	:$('.panel-primary #id_core_select_syllabus').val(),
+			'lvl'			:$('.panel-primary #id_core_input_dp').val()
 			}
 		if($('#id_core_select_syllabus').val()==''){
 			info_modal(o);
