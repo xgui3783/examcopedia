@@ -1,7 +1,14 @@
 $(document).ready(function(){
-	$('#id_login_img_googlesignin').click(function(){
+	$('#id_login_img_googlesignin')
+	.click(function(){
 		window.location.href = '/auth/google';
-	});
+	})
+	.hover(function(){
+		$(this).children('img').css('visibility','hidden');
+	},function(){
+		$(this).children('img').css('visibility','visible');
+	})
+	
 	$('#id_login_img_facebooksignin').click(function(){
 		window.location.href = '/auth/facebook';
 	});

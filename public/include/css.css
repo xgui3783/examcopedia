@@ -194,11 +194,6 @@ overflow-x:hidden;
 overflow-y:scroll;
 }
 
-.imgcontainer img
-{
-visibility:hidden;
-}
-
 .imgcontainer
 {
 display:inline-block;
@@ -211,13 +206,8 @@ display:inline-block;
 
 #id_login_img_googlesignin
 {
-background: url('signinwithgoogle.png') no-repeat;
+background: url('signinwithgooglehover.png') no-repeat;
 }
-
-	#id_login_img_googlesignin:hover
-	{
-	background: url('signinwithgooglehover.png') no-repeat;
-	}
 
 #id_login_img_facebooksignin
 {

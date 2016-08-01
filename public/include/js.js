@@ -498,6 +498,9 @@ $(document).ready(function(){
 					$(this).parent().toggleClass('active');
 					$('#id_login_panelbody_loginpanelbody').collapse('toggle');
 					return false;
+				}else if($(this).hasClass('disabled')){
+					info_modal('You will need to login for this feature.');
+					return false;
 				}else{
 					return true;
 				}

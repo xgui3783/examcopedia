@@ -301,9 +301,13 @@ function cleanup(hashedid,q,a){
 		for (var i = 1; i<s_split.length;i++){
 			if(s_split[i].substring(0,2)=='r='){
 				var r = s_split[i].split('=')[1];
+				toBeRotated.push([s_split[0],r]);
+				
+				/*
 				if(r==90||r==180||r==270){
 					toBeRotated.push([s_split[0],r]);
 				}
+				*/
 			}else{
 				returnstring +=' '+s_split[i];
 			}
@@ -317,9 +321,13 @@ function cleanup(hashedid,q,a){
 		for (var i = 0; i<s_split.length;i++){
 			if(s_split[i].substring(0,2)=='r='){
 				var r = s_split[i].split('=')[1];
+				toBeRotated.push([s_split[0],r]);
+				
+				/*
 				if(r==90||r==180||r==270){
 					toBeRotated.push([s_split[0],r]);
 				}
+				*/
 			}else{
 				returnstring +=' '+s_split[i];
 			}
@@ -2013,36 +2021,6 @@ app.get('/about',function(req,res){
 
 app.get('/test',function(req,res){
 	res.render('../test.ejs')
-	/*
-	var json = {
-		method : 'random',
-		length : 1
-	}
-	var mr = [];
-	mr.push({
-		id : '1',
-		note : 'weigh=200000;',
-	})
-	mr.push({
-		id : '2',
-		note : 'weigh=200;',
-	})
-	mr.push({
-		id : '3',
-		note : 'weigh=20;',
-	})
-	mr.push({
-		id : '4',
-		note : 'weigh=1;',
-	})
-	mr.push({
-		id : '5',
-		note : 'weigh=0;',
-	})
-	view_submit_filter_cb(json,mr,function(o){
-		res.send(o);
-	})
-	*/
 })
 
 app.get('/changelog',function(req,res){
