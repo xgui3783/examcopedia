@@ -570,6 +570,31 @@ io.on('connection',function(socket){
 		}
 	})
 	
+	socket.join(socket.request.user.sessionID);
+	
+	socket.on('clear inbox',function(i,cb){
+		switch(i){
+			case 'chat':
+				var newNotes1 = socket.request.user.notes1.replace(/chat:.*;/,function(s){
+					return 'chat:;'
+				})
+			break;
+			case 'news':
+				var newNotes1 = socket.request.user.notes1.replace(/news:.*;/,function(s){
+					return 'news:;'
+				})
+			
+			break;
+			default:
+			break;
+		}
+		connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?',[newNotes1,socket.request.user.id],function(e,r){
+			if(e){
+				catch_error(e)
+			}
+		})
+	})
+	
 	/* generate pdf */
 	socket.on('make pdf',function(i,callback){
 		var doc = new PDFDoc({bufferPages : true});
@@ -698,6 +723,7 @@ io.on('connection',function(socket){
 				callback(e);
 				catch_error(e);
 			}else{
+				subscriptionDelivery('chat',{id:r.insertId});
 				connection.query('SELECT * FROM comment_db WHERE id = ?',r.insertId,function(e1,r1){
 					if(e1){
 						catch_error(e1);
@@ -930,17 +956,23 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('save dp',function(i,callback){
-		var target_syl = 'curriculum_'+i.target_syl;
-		var target_level = i.value.split(' ')[0]+'.info';
-		
-		/* only split the first instance of a space. as description may contain spaces */
-		var info = i.value.substring(i.value.indexOf(' ')+1);
-		
-		connection.query('INSERT INTO ?? (lvl,description) VALUES (?,?);',[target_syl,target_level,info],function(e,r){
-			if(e){
-				catch_error(e);
+		restricting_access(socket.request.user,'add dp',i,null,function(o){
+			if(o=='true'){
+				var target_syl = 'curriculum_'+i.target_syl;
+				var target_level = i.value.split(' ')[0]+'.info';
+				
+				/* only split the first instance of a space. as description may contain spaces */
+				var info = i.value.substring(i.value.indexOf(' ')+1);
+				
+				connection.query('INSERT INTO ?? (lvl,description) VALUES (?,?);',[target_syl,target_level,info],function(e,r){
+					if(e){
+						catch_error(e);
+					}else{
+						callback('success');
+					}
+				})
 			}else{
-				callback('success');
+				callback('Adding DP request received and pending.')
 			}
 		})
 	})
@@ -1004,36 +1036,42 @@ io.on('connection',function(socket){
 	
 	socket.on('add new curriculum',function(i,callback){
 		/* check if curriculum has name */
-		var newcurrname = 'curriculum_'+i;
-		connection.query(
-		'CREATE TABLE ?? ('+
-		'id int(8) NOT NULL AUTO_INCREMENT,'+
-		'f_id int(8),'+
-		
-		/* use 5.3.1 to indicate 5th chapter, 3rd small chapter, 1st smaller chapter
-		use 5.info for chapter description */
-		
-		'lvl varchar(64) NOT NULL,'+
-		'description varchar(1024),' +
-		'notes varchar(8192),'+
-		
-		'FOREIGN KEY(f_id) REFERENCES table_masterquestions(id),'+
-		'PRIMARY KEY(id));',newcurrname,function(e1){
-			if(e1){
-				/* catch error */
-				catch_error(e1);
-				callback(e1);
-			}else{
-				connection.query('INSERT INTO ?? (`id`, `f_id`, `lvl`, `description`, `notes`) VALUES (NULL, NULL, "0.info", "irrelevant", NULL);',newcurrname,function(e2,r2){
-					if(e2){
-						catch_error(e2);
-						callback(e2);
+		restricting_access(socket.request.user,'add new curriculum',i,null,function(o){
+			if(o=='true'){
+				var newcurrname = 'curriculum_'+i;
+				connection.query(
+				'CREATE TABLE ?? ('+
+				'id int(8) NOT NULL AUTO_INCREMENT,'+
+				'f_id int(8),'+
+				
+				/* use 5.3.1 to indicate 5th chapter, 3rd small chapter, 1st smaller chapter
+				use 5.info for chapter description */
+				
+				'lvl varchar(64) NOT NULL,'+
+				'description varchar(1024),' +
+				'notes varchar(8192),'+
+				
+				'FOREIGN KEY(f_id) REFERENCES table_masterquestions(id),'+
+				'PRIMARY KEY(id));',newcurrname,function(e1){
+					if(e1){
+						/* catch error */
+						catch_error(e1);
+						callback(e1);
 					}else{
-						callback('New curriculum created!');						
+						connection.query('INSERT INTO ?? (`id`, `f_id`, `lvl`, `description`, `notes`) VALUES (NULL, NULL, "0.info", "irrelevant", NULL);',newcurrname,function(e2,r2){
+							if(e2){
+								catch_error(e2);
+								callback(e2);
+							}else{
+								callback('New curriculum created!');						
+							}
+						})
 					}
-				})
+				});
+			}else{
+				callback('Request to add new curriculum received and will be reviewed ASAP.')
 			}
-		});
+		})
 	});
 	
 	socket.on('categorise',function(i,callback){
@@ -1082,8 +1120,29 @@ io.on('connection',function(socket){
 		});
 	});
 	
+	socket.on('populate activities',function(callback){
+		//socket.request.user
+		//logic: find latest login timestamp, find all edits in the mean time, return the the edits
+		//probably check admin level? above... 5 can see edits
+
+		connection.query('SELECT * FROM req_log ORDER BY id DESC LIMIT 50',function(e,r){
+			if(e){
+				catch_error(e)
+			}else{
+				callback({user:socket.request.user,data:r})
+			}
+		})
+	})
+	
 	socket.on('modify site config',function(i,callback){
-		eval('var newState = { '+ i.column + ':' + i.newState + '}');
+		
+		//escape eval strings
+		var newColEscaped = i.column.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+		if(isNaN(i.newState)){
+			return;
+		}
+		
+		eval('var newState = { '+ newColEscaped + ':' + i.newState + '}');
 		connection.query('UPDATE table_config SET ? WHERE adminLvl = ?;',[newState,i.adminLvl],function(e,r){
 			if(e){
 				callback(e);
@@ -1109,7 +1168,6 @@ io.on('connection',function(socket){
 		var r=cleanup(i.data.hashed_id,i.data.question,i.data.answer);
 		
 		var json = {
-			hashed_id : r[0],
 			question : r[1],
 			answer : r[2],
 			mark : i.data.mark
@@ -1132,7 +1190,7 @@ io.on('connection',function(socket){
 					case 'remove':
 						querystring = 'UPDATE table_masterquestions SET delete_flag = ? WHERE hashed_id = ?';
 						queryterms = [1,i.data.hashed_id];
-						returnstring = 'Marked for deletion!';
+						returnstring = 'Deleted from the database!';
 					break;
 					default:
 					break;
@@ -1338,7 +1396,7 @@ passport.serializeUser(function(user,done){
 })
 
 passport.deserializeUser(function(email,done){
-	connection.query('SELECT displayName, admin,email, sessionID, notes1 FROM user_db WHERE email = ?;',email,function(e,r){
+	connection.query('SELECT id, displayName, admin,email, sessionID, notes1 FROM user_db WHERE email = ?;',email,function(e,r){
 		if(e){
 			return done(e);
 		}else{
@@ -1371,6 +1429,8 @@ function docEnd(array,doc){
 		doc.end();
 	}
 }
+
+var newLineCounter = 0;
 
 function writeToPDF(obj,doc,docy,arrAsyncCallBack){
 	var newdocy;
@@ -1407,9 +1467,17 @@ function writeToPDF(obj,doc,docy,arrAsyncCallBack){
 										width : 400,
 										continued : false
 									});
-									doc.moveDown();
-									qDocY = doc.y;
+									
+									//so that there are no more than 3 consecutive new line characters
+									if(newLineCounter<2){
+										newLineCounter++;
+										doc.moveDown();
+										qDocY = doc.y;
+									}
+									
 								break;
+								
+								//I forget what this is for. probably parsing the MCQ
 								case '<div class="col-md-8">':
 									doc.text('  ',100,qDocY,{
 										width : 400,
@@ -1475,14 +1543,20 @@ function writeToPDF(obj,doc,docy,arrAsyncCallBack){
 									*/
 								break;
 							}
+							
+							//replacing special tabs
 							return '';
 						});
 					}else{
-						var writeQ = obj[frag].substring(0,index);
+						//replacing tab spacing because pdfdoc does not parse them at all
+						var writeQ = obj[frag].substring(0,index).replace(/\t/g,' ');
 						doc.text(writeQ,100,qDocY,{
 							width : 400,
 							continued : true
 						});
+						
+						//reset new line counter so new new line characters can be drawn
+						newLineCounter = 0;
 						
 						obj[frag] = obj[frag].substring(index);
 						qDocY = doc.y;
@@ -1494,9 +1568,13 @@ function writeToPDF(obj,doc,docy,arrAsyncCallBack){
 					qDocY += boxLines * 24;
 					boxLines = 0;
 				}
-				doc.text(obj[frag],100,qDocY,{
+				
+				//replacing tab spacing because pdf doc does not parse them at all
+				doc.text(obj[frag].replace(/\t/g,' '),100,qDocY,{
 					width : 400,
 				});
+				//reset new line counter so new new line characters can be drawn
+				newLineCounter = 0;
 				newdocy = doc.y;
 			break;
 			case 'questionMark':
@@ -1506,7 +1584,7 @@ function writeToPDF(obj,doc,docy,arrAsyncCallBack){
 			break;
 		}
 	}
-	docy = newdocy+50;
+	docy = newdocy+5;
 	return docy;
 }
 
@@ -1590,45 +1668,200 @@ function thirdpartylogin(mode,profile,token,callback){
 	})
 }
 
+//if target = chat, then json.id = int, if target = news, json.id = int, json.keyword = [keyword1, keyword2 ... ]
+function subscriptionDelivery(target,json){
+	connection.query('SELECT * FROM user_db',function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			for (var i = 0; i<r.length; i++){
+				switch(target){
+					case 'chat':
+						userNotification('chat',json.id,r[i]);
+					break;
+					case 'news':
+						if(/subscription:.*?;/.test(r[i].notes1)){
+							r[i].notes1.replace(/subscription:.*?;/,function(s){
+								//json.keyword
+								var ssplit = s.replace(/\;|subscription:|\ /g,'').split(',');
+								for (var j = 0; j<ssplit.length; j++){
+									if(json.keyword.indexOf(ssplit[j])>-1||ssplit[j]=='all'){
+										io.sockets.to(r[i].sessionID).emit('receive news',json.rowData);
+										userNotification('news',json.id,r[i]);
+										break;
+									}
+								}
+							})
+						}else{
+							var newNotes1 = r[i].notes1 + 'subscription: ;'
+							connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?',[newNotes1,r[i].id],function(e1,r1){
+								if(e1){
+									catch_error(e1);
+								}
+							})
+						}
+					break;
+					default:
+					break;
+					
+				}
+			}
+		}
+	})
+}
+
+function userNotification(mode,objId,user){
+	switch(mode){
+		case 'news':
+			if(/news:.*?;/.test(user.notes1)){
+				var newNotes1 = user.notes1.replace(/news:.*?;/,function(s){
+					//only keep the latest 20 entries
+					var ssplit = s.replace(/news:|;/,'').split(',');
+					if(ssplit.length<20){
+						return s.substring(0,s.length-1)+','+objId+';';
+					}else{
+						return ssplit.splice(0,1).join(',')+','+objId+';';
+					}
+				})
+			}else{
+				var newNotes1 = user.notes1+'news:'+objId+';';
+			}
+			
+			connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?;',[newNotes1,user.id],function(e,r){
+				if(e){
+					catch_error(e)
+				}
+			})
+		break;
+		case 'chat':
+			if(/chat:.*?;/.test(user.notes1)){
+				var newNotes1 = user.notes1.replace(/chat:.*?;/,function(s){
+					//only keep the latest 20 entries
+					var ssplit = s.replace(/chat:|;/,'').split(',');
+					if(ssplit.length<20){
+						return s.substring(0,s.length-1)+','+objId+';';
+					}else{
+						return ssplit.splice(0,1).join(',')+','+objId+';';
+					}
+				})
+			}else{
+				var newNotes1 = user.notes1+'chat:'+objId+';';
+			}
+			
+			connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?;',[newNotes1,user.id],function(e,r){
+				if(e){
+					catch_error(e)
+				}
+			})
+			
+		break;
+		default:
+		break;
+	}
+}
+
 function restricting_access(user, mode, json, res, callback){
-	/* 
-	
-	logic goes like this: if user.admin is larger than 8, then the changes will always go live () admin status
-	if user.admin is 8 or less, then by default, the user can add and categorise, but not able to edit or remove from db...
-	
-	*/
-	
-	var control = 'true';
-	//var control = 'restricted';
-	
-	connection.query('INSERT INTO ?? (requester,mode,notes1) VALUES (?,?,?);',['req_log',user.displayName,mode,control],function(e,r){
+	connection.query('INSERT INTO ?? (requester,mode) VALUES (?,?);',['req_log',user.displayName,mode],function(e,r){
 		if(e){
 			catch_error(e);
 			callback({'error' : e});
 		}else{
+			subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
 			fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'.json',JSON.stringify(json),'utf8',function(){
-				switch(mode){
-					case 'save':
-					//break;
-					case 'remove':
-						if(user.admin>8){
-							callback('true');
-						}else{
-							callback('pending');
+				connection.query('SELECT * FROM table_config WHERE adminLvl = ?',user.admin,function(e1,r1){
+					if(e1){
+						catch_error(e1);
+						callback({'error':e1})
+					}else if(r1.length==0){
+						callback({'error':'admin lvl not found'})
+					}else{
+						switch(mode){
+							case 'add dp':
+								if(r1[0].addNewDP=='1'){
+									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+										if(e2){
+											catch_error(e2)
+										}
+									})
+									callback('true');									
+								}else{
+									callback('pending');
+								}								
+							break;
+							case 'add new curriculum':
+								if(r1[0].addNewCurricula=='1'){
+									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+										if(e2){
+											catch_error(e2)
+										}
+									})
+									callback('true');									
+								}else{
+									callback('pending');
+								}
+							break;
+							case 'save':
+								if(r1[0].editQ=='1'){
+									connection.query('SELECT * FROM table_masterquestions WHERE hashed_id = ?',json.hashed_id,function(es,rs){
+										if(es){
+											catch_error(es);
+										}else{
+											fs.writeFile(app.get('persistentDataDir')+'reqlog/'+r.insertId+'_overwritten.json',JSON.stringify(rs[0]),'utf8',function(){
+												callback('true');
+											})
+											connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+												if(e2){
+													catch_error(e2)
+												}
+											})
+										}
+									})
+								}else{
+									callback('pending');
+								}
+							break;
+							case 'categorise':
+							//break;
+							case 'remove':
+								if(r1[0].editQ=='1'){
+									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+										if(e2){
+											catch_error(e2)
+										}
+									})
+									callback('true');
+								}else{
+									callback('pending');
+								}
+							break;
+							case 'add submit':
+								if(r1[0].addNewQ=='1'){
+									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+										if(e2){
+											catch_error(e2)
+										}
+									})
+									callback('true');
+								}else{
+									callback('pending');
+								}
+							break;
+							//break;
+							default:
+								if(user.admin>8){
+									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){
+										if(e2){
+											catch_error(e2)
+										}
+									})
+									callback('true');
+								}else{
+									callback('pending');
+								}
+							break;
 						}
-					break;
-					case 'add submit':
-					//break;
-					case 'categorise':
-					//break;
-					default:
-						if(user.admin>8){
-							callback('true');
-						}else{
-							callback(control);
-						}
-					break;
-				}
+					}
+				})
 			});
 		}
 	})
@@ -1814,6 +2047,22 @@ app.get('/img/*',function(req,res){
 			res.sendfile(app.get('persistentDataDir')+'img/imageunlinked.png');
 		}else{
 			res.sendfile(app.get('persistentDataDir')+req.url);
+		}
+	})
+})
+
+app.get('/reqlog/*',checkAuth,function(req,res){
+	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
+		if(e){
+			res.send({error : req.url+' does not exist'});
+		}else{
+			fs.readFile(app.get('persistentDataDir')+req.url,function(e,data){
+				if(e){
+					catch_error(e);
+				}else{
+					res.send({data:JSON.parse(data)});
+				}
+			})
 		}
 	})
 })
@@ -2024,7 +2273,10 @@ app.get('/about',function(req,res){
 })
 
 app.get('/test',function(req,res){
-	res.render('../test.ejs')
+	res.render('../navbar.ejs',{
+		user : req.user,
+		errors : req.flash('error')
+	})
 })
 
 app.get('/changelog',function(req,res){

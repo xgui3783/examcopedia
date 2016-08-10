@@ -11,14 +11,21 @@ Realised goals:
 - API allowing others to interact with the webapp
 
 Currently worked on goals:
-- implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
+- answers to be printed in pdf
 - implement moderator approval process of addition/edition of questions
 - username/password/account locked status message in login screen
 - local registration
 
+Backburner:
+- implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
+
 Future updates:
 
 Change log
+v0.1.9.2 - 10/08/2016 - fixed some issues with generating certain style of questions
+			- added notification, allowing users to see what has been changed
+			- improved chat functionalities. fixed some chat bugs
+			- caught a cold
 v0.1.9.1 - 31/07/2016 - fixed issue with curriculum select questions
 			- fixed issue of adding more blocks to view/generate
 v0.1.9 - 29/07/2016 - fixed issue with choosing dp

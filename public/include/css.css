@@ -171,6 +171,20 @@ right:0;
 z-index:10;
 }
 
+#id_core_well_news
+{
+padding:0;
+background-color:#fff;
+position:absolute;
+right:0;
+z-index:10;
+}
+
+#id_activities_div_activities
+{
+padding:0;
+}
+
 #id_login_nav_randomQuestionNav
 {
 min-height:0;

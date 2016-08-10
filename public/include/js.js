@@ -43,14 +43,47 @@ $(document).ready(function(){
 	/* binding chatter box */
 	if($('#id_navbar_chatter').length>0){
 		$('#id_core_well_chatterbox').css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top));
+		
+		$('#id_navbar_chatter').click(function(){
+			$('#id_core_well_chatterbox').collapse('toggle');
+			$(this).parent().toggleClass('active');
+			
+			var i = 0;
+			while(
+				i<Number($('#id_navbar_chatter').children('span.label').html())){
+				$('#id_view_well_generalChatWell').children('div.row').eq(i)
+					.addClass('bg-info')
+					.css('height','auto')
+				i++;
+				}
+			setTimeout(function(){
+				$('#id_view_well_generalChatWell').children('div.row.bg-info').removeClass('bg-info');
+			},5000)
+			
+			redPill('remove','#id_navbar_chatter');
+			
+			socket.emit('clear inbox','chat',function(o){
+				
+			});
+			return false;
+		});
+	}
+
+	
+	if($('#id_navbar_news').length>0){
+		$('#id_core_well_news').css('top',parseInt($('#id_navbar_news').css('height'))+parseInt($('#id_navbar_news').offset().top));
+		
+		$('#id_navbar_news').click(function(){
+			$('#id_core_well_news').collapse('toggle');
+			$(this).parent().toggleClass('active');
+			redPill('remove','#id_navbar_news');
+			socket.emit('clear inbox','news',function(o){
+				
+			});
+			return false;
+		});
 	}
 	
-	$('#id_navbar_chatter').click(function(){
-		$('#id_core_well_chatterbox').collapse('toggle');
-		$(this).parent().toggleClass('active');
-		redPill('remove','#id_navbar_chatter');
-		return false;
-	});
 	
 	$('#id_view_btn_sendGeneralChat').off('click').click(function(){
 		
@@ -76,6 +109,7 @@ $(document).ready(function(){
 	socket.on('receive general chat',function(o){
 		appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell',true);
 		if(!$('#id_core_well_chatterbox').hasClass('in')){
+			generalChatQ.push(o);
 			redPill('add','#id_navbar_chatter');
 		}
 	});
@@ -836,6 +870,8 @@ $(document).ready(function(){
 
 
 /* constants */
+var generalChatQ = [];
+
 var appendAPanel = 
 	'<div class = "panel panel-default">'+
 		'<div class = "panel-heading"></div>'+
@@ -1246,16 +1282,7 @@ function redPill(mode,target){
 			}
 		break;
 		case 'remove':
-			var i = 0;
-			while(
-				i<Number(t.children('span.label').html())){
-				$('#id_view_well_generalChatWell').children('div.row').eq(i).addClass('bg-info');
-				i++;
-				}
 			t.children('span.label').remove();
-			setTimeout(function(){
-				$('#id_view_well_generalChatWell').children('div.row.bg-info').removeClass('bg-info');
-			},5000)
 		break;
 		default:
 		break;
@@ -1473,7 +1500,7 @@ function viewgo(){
 		if($(this).hasClass('disabled')) return false;
 		$(this).addClass('disabled');
 		
-		var comment = escapeHtml($('#id_view_input_chatbox').val());
+		var comment = $('#id_view_input_chatbox').val();
 		if(comment.replace(/ /g,'')!=''){
 			var json = {
 				'target' : $('#id_view_input_hashedid').val(),
@@ -1595,7 +1622,13 @@ function bind_viewdiv_overlay(target){
 			})
 		})
 		.click(function(){
-			$('#id_view_modal_editcomment').modal('show');
+			
+			$('#id_view_modal_editcomment')
+				.modal('show')
+				.find('input,textarea,select')
+					.val('')
+					.addClass('disabled');
+					
 			$('#id_view_well_comment').empty();
 			var json = {
 				'mode' : 'random',
@@ -1613,6 +1646,9 @@ function bind_viewdiv_overlay(target){
 				url : 'pingQ',
 				data : json,
 				success : function(o){
+					
+					$('#id_view_modal_editcomment').find('input,textarea,select').removeClass('disabled')
+					
 					$('#id_view_input_hashedid').val(o.hashed_id);
 					$('#id_core_select_subject').val(o.subject);
 					$('#id_core_textarea_qn').val(o.question);
@@ -2058,7 +2094,8 @@ var entityMap = {
 "/": '&#x2F;',
 "\n":"<br>",
 "\r":"<br>",
-"\r\n":"<br>"
+"\r\n":"<br>",
+"\t":"&nbsp;"
 };
 
 function escapeHtml(i){
@@ -2127,7 +2164,6 @@ function load_dp_map_bind_event_listeners(t){
 	$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
 		adddp($(this),t,function(cb){
 			var newdp = cb.newdp.split(' ')[0];
-			console.log(newdp);
 			$('.panel-primary #id_core_input_dp').val(newdp);
 			socket.emit('populate dot points',t,function(o){
 				

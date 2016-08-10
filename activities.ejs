@@ -1,0 +1,137 @@
+<script>
+socket.emit('populate activities',function(o){
+	for (var i = 0; i<o.data.length; i++){
+		decodeJson(o.data[i],function(string){
+			o.user.notes1.replace(/subscription:.*?;/,function(s){
+				var sPruned = s.replace(/subscription:|\;/g,'');
+				if(sPruned.replace(/ /g,'')!=''){
+					var ssplit = sPruned.split(',');
+					for (var j = 0; j<ssplit.length; j++){
+						var patt = new RegExp(ssplit[j]);
+						if((patt.test(string)||ssplit[j]=='all')&&($('#id_activities_div_activities').children().length<11)){
+							$('#id_activities_div_activities').append(string);
+							break;
+						}
+					}
+				}
+			})
+		});
+	}
+})
+
+socket.on('receive news',function(o){
+	decodeJson(o,function(string){
+		$('#id_activities_div_activities').prepend(string);
+		if(!$('#id_core_well_news').hasClass('in')){
+			redPill('add','#id_navbar_news')
+		}
+	})
+})
+
+function decodeJson(json,cb){
+	var stringOut = '';
+	stringOut += escapeHtml(json.requester);
+	var auxClass = '';
+	switch(json.mode){
+		case 'add submit':
+			auxClass = 'alert-info';
+			
+			stringOut += ' added a new question';
+			moreInfo(json.id,function(o){
+				if(o.error){
+					info_modal(o.error);
+				}else{
+					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+					cb(infoStyler(stringOut,json,auxClass));
+				}
+			})
+		break;
+		case 'categorise':
+			auxClass = 'alert-success';
+			
+			moreInfo(json.id,function(o){
+				if(o.error){
+					info_modal(o.error);
+				}else{
+					switch(o.data.mode){
+						case 'add':
+							stringOut += ' categorised an existing question under';
+						break;
+						case 'delete':
+							stringOut += ' removed the categorisation of an existing question from'
+						break;
+						default:
+							stringOut += ' did something in categorisation with'
+						break;
+					}
+					stringOut += ' <strong>' + escapeHtml(o.data.target_syl) + ' : ' + escapeHtml(o.data.lvl) +'</strong>';
+					cb(infoStyler(stringOut,json,auxClass));
+				}
+			})
+		break;
+		case 'save':
+			auxClass = 'alert-warning';
+			
+			stringOut += ' updated an existing question';
+			moreInfo(json.id,function(o){
+				if(o.error){
+					info_modal(o.error);
+				}else{
+					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+					cb(infoStyler(stringOut,json,auxClass));
+				}
+			})
+		break;
+		case 'remove':
+			auxClass = 'alert-danger';
+			
+			stringOut += ' removed an existing question';
+			moreInfo(json.id,function(o){
+				if(o.error){
+					info_modal(o.error);
+				}else{
+					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+					cb(infoStyler(stringOut,json,auxClass));
+				}
+			})
+		break;
+		default:
+			stringOut += ' did something'
+			cb(stringOut)
+		break;
+	}
+	
+}
+
+function infoStyler(stringOut,json,auxClass){
+	if(!/true/.test(json.notes1)){
+		stringOut += ' (pending approval)'
+	}
+	return '<div class = "alert '+auxClass+'">'+stringOut+'<% if (user){} %></div>';
+}
+
+function moreInfo(id,cb){
+	$.ajax({
+		type : 'GET',
+		url : 'reqlog/'+id+'.json',
+		success : function(o){
+			cb(o)
+		}
+	})
+}
+
+</script>
+<style>
+#id_activities_div_activities .alert
+{
+margin-bottom:0;
+}
+</style>
+<div class = "row">
+	<div id = "id_activities_div_activities" class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">
+
+	</div>
+	<div class = "btn btn-link col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+		see more activities
+	</div>
+</div>

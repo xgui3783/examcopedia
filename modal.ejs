@@ -20,7 +20,16 @@
 			</div>
 		</div>
 	</div>
-	
+<% if (user.admin>0){ %>
+	<div class = "bg-default col-xs-12 col-sm-12 col-md-4 collapse" id = "id_core_well_news">
+		<div class = "text-center hidden-md hidden-lg">
+			<a href="#" class="btn btn-block" onclick="$('#id_navbar_news').click();return false;" aria-label="close" id = "nowhere">&times;</a>
+		</div>
+		<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<%- include('activities.ejs') %>
+		</div>
+	</div>
+<% } %>
 	<div id = "id_core_modal_autoplaySetting" class = "modal fade" role = "dialog">
 		<div class = "modal-dialog">
 			<div class = "modal-content">
