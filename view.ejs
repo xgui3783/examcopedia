@@ -72,7 +72,7 @@
 							<i>[sup text] [sub text]</i>
 							</div>
 						</div>
-						<div class = "panel panel-default">
+						<div class = "panel panel-default hidden">
 							<div class = "panel-heading btn btn-block btn-default" data-toggle="collapse" data-target="#id_add_div_uploadimages">
 								<span class = "glyphicon glyphicon-picture"></span> Attach Images
 							</div>
@@ -308,8 +308,9 @@
 					var questionNumber = 'question' + j;
 					json[blockNumber][questionNumber]={};
 					json[blockNumber][questionNumber]['questionNumber'] = rows.eq(j).children('div').eq(0).text();
-					json[blockNumber][questionNumber]['questionMark'] = rows.eq(j).children('div').eq(2).text();
+					json[blockNumber][questionNumber]['questionMark'] = rows.eq(j).children('div').eq(6).text();
 					json[blockNumber][questionNumber]['questionBody'] = rows.eq(j).children('div').eq(1).html();
+					json[blockNumber][questionNumber]['questionAnswer'] = parsing_preview(rows.eq(j).children('div').eq(4).html(),rows.eq(j).attr('id'));
 				}
 			}
 			socket.emit('make pdf',json,function(o){

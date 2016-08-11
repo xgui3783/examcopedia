@@ -9,9 +9,9 @@ Realised goals:
 - generate printable PDF
 - implement pasting of image from clipboard
 - API allowing others to interact with the webapp
+- answers to be printed in pdf
 
 Currently worked on goals:
-- answers to be printed in pdf
 - implement moderator approval process of addition/edition of questions
 - username/password/account locked status message in login screen
 - local registration
@@ -22,6 +22,9 @@ Backburner:
 Future updates:
 
 Change log
+v0.1.9.3 - 11/08/2016 - added answer keys to generated pdf
+			- fixed categorise new label not bound
+			- fixed subscription notification
 v0.1.9.2 - 10/08/2016 - fixed some issues with generating certain style of questions
 			- added notification, allowing users to see what has been changed
 			- improved chat functionalities. fixed some chat bugs

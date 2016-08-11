@@ -834,6 +834,23 @@ $(document).ready(function(){
 									ui.draggable.append($(appendDiv))
 								}
 								ui.draggable.find('.class_cate_div_dp').append('<span class = "badge"><span>'+json.lvl+'</span> <a class = "class_cate_close_labelClose" href = "#"><span class = "glyphicon glyphicon-remove-sign glyphicon-white"></span></a><span class = "hidden">'+json.target_syl+'</span></span>');
+								
+								/* need to rebind close label button */
+								$('.class_cate_close_labelClose').off('click').click(function(){
+									var json = {
+										mode : 'delete',
+										hashed_id : $(this).parents('div.class_cate_div_dp ').parent().attr('id'),
+										target_syl : $(this).next().html(),
+										lvl : $(this).prev().html()
+									}
+									var _this = $(this);
+									socket.emit('categorise',json,function(o){
+										if(o=='successful!'){
+											_this.parent().remove();
+										}
+									})
+									return false;
+								})
 							}
 						})
 					}
@@ -1438,6 +1455,7 @@ function viewgo(){
 						'length' : length
 						}
 					socket.emit('view submit',json,function(o){
+						console.log(o)
 						if(o.message=='failed'&&o.reason=='no results obtained'){
 							info_modal('No questions satisfy your query. Check if "exhaustive" method was applied.');
 						}
@@ -1559,6 +1577,8 @@ function viewlocaledit(mode){
 	var target = $('#'+$('#id_view_input_hashedid').val());
 	switch(mode){
 		case 'save':
+			target.find('#id_view_div_qnMarkdown').html(escapeHtml($('#id_core_textarea_qn').val()));
+			target.find('#id_view_div_ansMarkdown').html(escapeHtml($('#id_core_textarea_ans').val()));
 			target.find('#id_view_div_qncontainer').children('h4').html(parsing_preview($('#id_core_textarea_qn').val(),$('#id_view_input_hashedid').val()));
 			target.find('#id_view_div_mark').find('h4').html($('#id_core_input_marks').val());
 		break;
@@ -1640,7 +1660,19 @@ function bind_viewdiv_overlay(target){
 					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment',false)
 				}
 			});
-
+			
+			
+			$('#id_view_modal_editcomment').find('input,textarea,select').removeClass('disabled')
+			
+			$('#id_view_input_hashedid').val($(this).attr('id'));
+			//already escapeHtml when parsing
+			$('#id_core_select_subject').val($(this).find('div#id_view_div_subject').html());
+			$('#id_core_textarea_qn').val($(this).find('div#id_view_div_qnMarkdown').html());
+			$('#id_core_textarea_ans').val($(this).find('div#id_view_div_ansMarkdown').html());
+			$('#id_core_input_marks').val($(this).find('div#id_view_div_mark').html());
+			
+			/*
+			//instead of pinging the question, just get question and answer from local
 			$.ajax({
 				type : 'POST',
 				url : 'pingQ',
@@ -1669,6 +1701,7 @@ function bind_viewdiv_overlay(target){
 					
 				}
 			})
+			*/
 		});
 	target.sortable({
 		axis : 'y',
@@ -1706,17 +1739,6 @@ function view_append_preview(mode, length, target, row){
 	var bookkeeper = [];
 	switch (mode){
 		case 'random':
-			/*
-			//this is no longer needed, as server now handles the randomisation of questions and weighing of questions
-			var counter = 1;
-			var randomArray = shuffleArray(row);
-			do{
-				append_one(counter,target,row[counter-1]);
-				bookkeeper.push(row[counter-1].hashed_id);
-				counter ++;
-			}while(counter - 1 < length && counter < row.length)
-		break;
-			*/
 		case 'all':
 			for (var i=0;i<row.length;i++){
 				append_one(i+1,target,row[i]);
@@ -1768,16 +1790,24 @@ function decode_select(i){
 
 function append_one(counter,target,json){
 	var qn_container = 
-		'<div id="'+json.hashed_id+'" class = "row id_sync_active">'+
+		'<div id="'+escapeHtml(json.hashed_id)+'" class = "row id_sync_active">'+
 			'<div class = "col-xs-1 col-xs-offset-1"><h4>'+counter+'.</h4>'+
 			'</div>'+
 			'<div class = "col-xs-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
 			'</div>'+
+			'<div class = "hidden" id = "id_view_div_anscontainer"></div>'+
+			'<div class = "hidden" id = "id_view_div_qnMarkdown"></div>'+
+			'<div class = "hidden" id = "id_view_div_ansMarkdown"></div>'+
+			'<div class = "hidden" id = "id_view_div_subject"></div>'+
 			'<div class = "col-sm-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
 	target.append(qn_container);
 	$('.id_sync_active').find('#id_view_div_qncontainer').children('h4').html(parsing_preview(json.question,json.hashed_id));
+	$('.id_sync_active').find('#id_view_div_qnMarkdown').html(escapeHtml(json.question));
+	$('.id_sync_active').find('#id_view_div_ansMarkdown').html(escapeHtml(json.answer));
+	$('.id_sync_active').find('#id_view_div_subject').html(escapeHtml(json.subject));
+	
 	append_spaces($('.id_sync_active #id_view_div_spaces'),json.space+'_1.blank');
 	$('.id_sync_active #id_view_div_mark').find('h4').html(json.mark);
 	$('.id_sync_active').removeClass('id_sync_active');
