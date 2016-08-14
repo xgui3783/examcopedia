@@ -2042,7 +2042,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 									try{
 										var stat = fs.statSync(app.get('persistentDataDir')+imageFilename);
 										var thisImgData = jsonImgData[imageFilename];
-										var percentWidth;
+										var percentWidth=100;
 										if(/width/.test(thisImgData.style)){
 											thisImgData.style.replace(/width\:.*?\%/,function(s){
 												percentWidth = s.replace(/width\:|%/g,'');
