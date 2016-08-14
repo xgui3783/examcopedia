@@ -1762,7 +1762,6 @@ function callToPdf(arrFlag,i,callback){
 	if(arrFlag.length!=0){
 		return;
 	}
-	
 	/* title page and other misc */
 	var doc = new PDFDoc({bufferPages : true});
 	var pdfFilename = String(Date.now())+'.pdf';
@@ -2055,6 +2054,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 										var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
 										doc.image(app.get('persistentDataDir')+imageFilename,100,qDocY,{fit : [targetWidth,targetHeight]});
 										imgFullDir = app.get('persistentDataDir')+imageFilename;
+										qDocY += targetHeight;
 									}
 									catch(error){
 										doc.image(app.get('persistentDataDir')+'img/imageunlinked.png',100,qDocY,{fit : [400,200]});
