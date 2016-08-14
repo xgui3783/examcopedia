@@ -572,6 +572,218 @@ io.on('connection',function(socket){
 	
 	socket.join(socket.request.user.sessionID);
 	
+	socket.on('admin moderation',function(json,cb){
+		switch(json.mode){
+			case 'reject':
+			case 'approve':
+				adminModDecide(json.mode,json.target,socket,function(o){
+					if(o.error){
+						catch_error(o.error)
+						cb(o)
+					}else{
+						cb({success:true})
+					}
+				})
+			break;
+			case 'undo':
+			
+				connection.query('SELECT * FROM req_log WHERE id = ?',json.target,function(e,r){
+					if(e){
+						catch_error(e);
+						cb(e);
+					}else{
+						if(r.length!=1){
+							cb({error:'Selecting req_log Error'});
+							return;
+						}
+						
+						/* make a note in the req_log that the req has been undone and by whom */
+						connection.query('UPDATE req_log SET notes1 = ? WHERE id = ?',[r[0].notes1+' undo '+socket.request.user.id,json.target],function(e2,r2){
+							if(e2){
+								catch_error(e2)
+							}
+						})
+						
+						fs.readFile(app.get('persistentDataDir')+'reqlog/'+r[0].id+'.json',function(e1,d){
+							if(e1){
+								catch_error(e1);
+								cb(e1);
+								return;
+							}else{
+								var jsonData = JSON.parse(d)
+								switch(r[0].mode){
+									case 'add submit':
+										/* read json file and put delete_flag as 1 */
+										connection.query('UPDATE table_masterquestions SET delete_flag = 1 WHERE hashed_id = ?',jsonData.hashed_id,function(e2,r2){
+											if(e2){
+												catch_error(e2);
+												cb(e2);
+											}else{
+												cb({success:true})
+											}
+										})
+										
+									break;
+									case 'remove':
+										/* read json file and put delete_flag as 0 */
+										connection.query('UPDATE table_masterquestions SET delete_flag = 0 WHERE hashed_id = ?',jsonData.hashed_id,function(e2,r2){
+											if(e2){
+												catch_error(e2);
+												cb(e2);
+											}else{
+												cb({success:true})
+											}
+										})
+									
+									break;
+									case 'add new curriculum':
+										/* delete the said table */
+										connection.query('DROP TABLE ??','curriculum_'+jsonData,function(e2,r2){
+											if(e2){
+												catch_error(e2);
+												cb(e2);
+											}else{
+												cb({success:true})
+											}
+										})
+									break;
+									case 'add dp':
+										/* delete the associated dp */
+										connection.query('DELETE FROM ?? WHERE lvl = ?',['curriculum_'+jsonData.target_syl,jsonData.value+'.info'],function(e2,r2){
+											if(e2){
+												catch_error(e2);
+												cb(e2);
+											}else{
+												cb({success:true})
+											}
+										})
+									break;
+									case 'categorise':
+										/* need to read json file to see if categories are added or removed */
+										switch(jsonData.mode){
+											case 'add':
+												connection.query('SELECT * FROM table_masterquestions WHERE hashed_id = ?',jsonData.hashed_id,function(e2,r2){
+													if(e2){
+														catch_error(e2);
+														cb(e2);
+													}else if(r2.length!=1){
+														cb({error:'Found multiple questions with the same hash_id'})
+													}else{
+														connection.query('DELETE FROM ?? WHERE lvl = ? AND f_id = ?',['curriculum_'+jsonData.target_syl,jsonData.lvl,r2[0].id],function(e3,r3){
+															if(e3){
+																catch_error(e3);
+																cb(e3);
+															}else{
+																cb({success:true})
+															}
+														})
+													}
+												})
+											break;
+											case 'delete':
+												connection.query('SELECT * FROM table_masterquestions WHERE hashed_id = ?',jsonData.hashed_id,function(e2,r2){
+													if(e2){
+														catch_error(e2);
+														cb(e2);
+													}else if(r2.length!=1){
+														cb({error:'Found multiple questions with the same hash_id'})
+													}else{
+														connection.query('INSERT INTO ?? (lvl,f_id) VALUES (?,?);',['curriculum_'+jsonData.target_syl,jsonData.lvl,r2[0].id],function(e3,r3){
+															if(e3){
+																catch_error(e3);
+																cb(e3);
+															}else{
+																cb({success:true})
+															}
+														})
+													}
+												})
+											break;
+											default:
+											break;
+										}
+									break;
+									case 'save':
+										/* need to read _overwrite.json */
+										fs.readFile(app.get('persistentDataDir')+'reqlog/'+r[0].id+'_overwritten.json',function(e2,d2){
+											if(e2){
+												catch_error(e2);
+												cb(e2)
+											}else{
+												var jsonData2 = JSON.parse(d2);
+												var newJsonData2;
+												if(jsonData2.edit0){
+													/* for backwards compatibility */
+													newJsonData2 = jsonData2.edit0;
+												}else{
+													newJsonData2 = jsonData2;
+												}
+												connection.query('UPDATE table_masterquestions SET ? WHERE id = ?',[newJsonData2,newJsonData2.id],function(e3,d3){
+													if(e3){
+														catch_error(e3);
+														cb(e3);
+													}else{
+														cb({success:true})
+													}
+												})
+											}
+										})
+									break;
+								}
+								
+								/* log admin undo decision */
+								connection.query('INSERT INTO req_log (requester,mode,notes1) VALUES(?,?,?)',[socket.request.user.id,'admin','undo '+json.target],function(e2,r2){
+									if(e){
+										catch_error(e)
+									}else{
+										var target = [];
+										if(jsonData.subject){
+											target.push(jsonData.subject);
+										}
+										if(jsonData.target_syl){
+											target.push(jsonData.target_syl);
+										}
+										subscriptionDelivery('news',{id:r2.insertId,rowData:[{id:r2.insertId,notes1:'',requester:socket.request.user.id,mode:'admin'}],keyword:target});
+									}
+								})
+							}
+						})
+					}
+				})
+			break;
+			default:
+			break;
+		}
+	})
+	
+	socket.on('ping activity',function(id,cb){
+		connection.query('SELECT * FROM req_log WHERE id = ?',id,function(e,r){
+			if(e){
+				catch_error(e);
+				cb(e);
+			}else{				
+				if(r[0].mode=='admin'){
+					cb({row:r[0]});
+					return;
+				}
+				fs.readFile(app.get('persistentDataDir')+'reqlog/'+id+'.json',function(e1,data){
+					if(e1){
+						catch_error(e1);
+						cb(e1);
+					}else{
+						fs.readFile(app.get('persistentDataDir')+'reqlog/'+id+'_overwritten.json',function(e2,data2){
+							if(e2){
+								cb({row:r[0],json:JSON.parse(data)})
+							}else{
+								cb({row:r[0],json:JSON.parse(data),overwritten:JSON.parse(data2)})
+							}
+						})
+					}
+				})
+			}
+		})
+	})
+	
 	socket.on('clear inbox',function(i,cb){
 		switch(i){
 			case 'chat':
@@ -597,100 +809,38 @@ io.on('connection',function(socket){
 	
 	/* generate pdf */
 	socket.on('make pdf',function(i,callback){
-		
-		/* title page and other misc */
-		var doc = new PDFDoc({bufferPages : true});
-		var pdfFilename = String(Date.now())+'.pdf';
-		var stream = doc.pipe(fs.createWriteStream(app.get('persistentDataDir')+'pdfout/'+ pdfFilename));
-		docy = doc.y+20;
-		var arrAsyncCallBack = [];
-		
-		doc.info['Title'] = 'exam generated by examcopedia';
-		doc.info['Author'] = 'examcopedia';
-		
-		pdfTitlePage(doc,'Compiled Exam');
-		
-		var j = 1;
-		
-		for(var block in i){
-			
-			doc.addPage();
-			
-			if(Object.keys(i).length>1){
-				doc.font('Times-Roman').fontSize(50).text('Section '+j,50,300,{ width : 500})
-				
-				j++;
-				
-				doc.addPage();
-				doc.fontSize(12).font('Times-Roman');
-				doc.lineWidth(0.3);
-				docy = doc.y + 20;
-			}
-			
-			for(var question in i[block]){
-				parseBody(i[block][question],'questionBody',doc,arrAsyncCallBack);
-			}
-		}
-		
-		/* adding page numbers */
-		
-		var range = doc.bufferedPageRange();
-		var logo = logos[Math.floor(Math.random()*logos.length)];
-		//range.start range.count
-		//doc.switchToPage(idx) //0 indexed
-		for(var k=1; k<range.count; k++){
-			doc.switchToPage(k);
-			doc.fontSize(12);
-			doc.moveTo(50,70).lineTo(570,70).stroke();
-			doc.font('Times-Italic').text(logo,50,55,{width : doc.width, align:'center'});
-			doc.moveTo(50,690).lineTo(570,690).stroke();
-			doc.font('Times-Roman').text('Page '+ (k+1) + ' of '+ range.count,50,700,{width : doc.width, align:'center'});
-		}
-		
-		/* start to write the answers */
-		doc.addPage();
-		pdfNormalTitle(doc,'Answer Keys');
-		
-		j = 1;
-		
-		for(var block in i){
-			
-			doc.addPage();
-			docy = doc.y+20;
-			doc.fontSize(12).font('Times-Roman');
-			
-			if(Object.keys(i).length>1){
-				doc.font('Times-Roman').fontSize(50).text('Section '+j,50,300,{ width : 500})
-				
-				j++;
-				
-				doc.addPage();
-				doc.fontSize(12).font('Times-Roman');
-				doc.lineWidth(0.3);
-				docy = doc.y + 20;
-			}
-			
-			for(var question in i[block]){
-				parseBody(i[block][question],'questionAnswer',doc,arrAsyncCallBack);
-			}
-		}
-		
-		/* when pdf is done writing */
-		stream.on('finish',function(){
-			var json = {
-				result : 'success',
-				url : 'pdfout/'+pdfFilename,
-			}
-			callback(json);
-			setTimeout(function(){
-				fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
-					if(e){
+		/* need to parse async info, like image size */
+		var arrImg = [];
+		var arrFlag = [];
+		JSON.stringify(i).replace(/<img.*?>/g,function(s){
+			arrImg.push(s);
+			/* arrFlag gets populated. After asynch img size determined, they will be spliced away */
+			arrFlag.push(false);
+		})
+		for(var j = 0; j<arrImg.length; j++){
+			var styler;
+			arrImg[j].replace(/style\=\\?\".*?\\?\"/,function(s){
+				styler=s.replace(/style\=|\\\"/g,'');
+			})
+			arrImg[j].replace(/src\=\\?\".*?\\?\"/,function(s){
+				var imgUrl = s.replace(/src\=|\\\"/g,'')
+				gm(app.get('persistentDataDir')+imgUrl).size(function(e,v){
+					if(e&&e.code==1){
+						/* file cannot be found */
+						jsonImgData[imgUrl]={};
+					}else if(e){
 						catch_error(e);
+						callback(e);
+					}else{
+						jsonImgData[imgUrl]={};
+						jsonImgData[imgUrl]['dimension']=v;
+						jsonImgData[imgUrl]['style']=styler;
+						arrFlag.splice(0,1);
+						callToPdf(arrFlag,i,callback);
 					}
 				})
-			},1000*60*30)
-		})
-		docEnd(arrAsyncCallBack,doc);
+			})
+		}
 	})
 	
 	/* user login db. to be implemented */
@@ -707,9 +857,31 @@ io.on('connection',function(socket){
 		})
 	})	
 	
+	/* deciphering user id to display name */
+	socket.on('decode user id',function(i,cb){
+		if(isNaN(i)){
+			cb(i);
+		}else{
+			connection.query('SELECT displayName FROM user_db WHERE id = ?',i,function(e,r){
+				if(e){
+					catch_error(e);
+					cb(e)
+				}else{
+					cb(r[0].displayName);
+				}
+			})
+		}
+	})
+	
 	/* receiving and broadcasting general chat */
 	socket.on('send general chat',function(i,callback){
-		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.displayName,i,'general chat'],function(e,r){
+		var userId = '';
+		if(/\{\{.*?\}\}/.test(i)&&socket.request.user.admin==9){
+			userId = 'system';
+		}else{
+			userId = socket.request.user.id;
+		}
+		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[userId,i,'general chat'],function(e,r){
 			if(e){
 				callback(e);
 				catch_error(e);
@@ -721,7 +893,7 @@ io.on('connection',function(socket){
 						callback(e1);
 					}else{
 						var json = {
-							'user' : socket.request.user.displayName,
+							'user' : userId,
 							'message' : i,
 							'created' : r1[0].created
 							}
@@ -747,13 +919,13 @@ io.on('connection',function(socket){
 	
 	/* receive comments */
 	socket.on('send comment',function(i,callback){
-		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.displayName,i.comment,i.target],function(e,r){
+		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.id,i.comment,i.target],function(e,r){
 			if(e){
 				catch_error(e)
 				callback(e)
 			}else{
 				var json = {
-					'user' : socket.request.user.displayName
+					'user' : socket.request.user.id
 					}
 				callback(json)
 			}
@@ -765,21 +937,6 @@ io.on('connection',function(socket){
 		socket.join(i);
 		socket.hashedid=i;
 	})
-	
-	/* probably don't need this, since on disconnection, everything gets deleted any way */
-	/*
-	socket.on('delete thumbnail',function(i,callback){
-		var path = app.get('persistentDataDir')+'img/' + i.hashedid + '/' + i.filename;
-		fs.unlink(path,function(e){
-			if(e){
-				catch_error(e)
-				callback('error');
-			}else{
-				callback('done');
-			}
-		})
-	})
-	*/
 	
 	socket.on('hashed id query syllabus',function(i,cb){
 		var curr = 'curriculum_'+i.syllabus;
@@ -993,6 +1150,13 @@ io.on('connection',function(socket){
 				if(o.error){
 					callback(o);
 				}else{
+					
+					connection.query(
+						'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark,delete_flag) VALUES (?,?,?,?,?,?,1);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
+							if(e){
+								catch_error(e);
+							}
+						})
 					callback('Submission of question received. A moderator will assess the submission ASAP.');
 				}
 			}
@@ -1159,12 +1323,14 @@ io.on('connection',function(socket){
 		var r=cleanup(i.data.hashed_id,i.data.question,i.data.answer);
 		
 		var json = {
+			hashed_id : i.data.hashed_id,
 			question : r[1],
 			answer : r[2],
-			mark : i.data.mark
+			mark : i.data.mark,
+			subject : i.data.subject
 		}
 		
-		restricting_access(socket.request.user,i.mode,i.data,null,function(o){
+		restricting_access(socket.request.user,i.mode,json,null,function(o){
 			if(o=='true'){
 				/* carry out task */
 				
@@ -1223,6 +1389,195 @@ function weighting_function(i){
 	/* this is because the weighing value is designed to be inversely proportional to the pick frequency */
 	
 	return Math.exp(-i);
+}
+
+function adminModDecide(decision,id,socket,cb){
+	connection.query('SELECT * FROM req_log WHERE id = ?',id,function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			var newNotes1 = r[0].notes1 + ' ' + decision + ':' + socket.request.user.id+';';
+			connection.query('UPDATE req_log SET notes1 = ? WHERE id = ?',[newNotes1,id],function(e1,r1){
+				if(e1){
+					catch_error(e1);
+				}
+			})
+			connection.query('INSERT INTO req_log (requester,mode,notes1) VALUES (?,?,?)',[socket.request.user.id,'admin',decision + ' ' + id],function(e1,r1){
+				if(e1){
+					catch_error(e1)
+				}else{
+					if(decision=='reject'){
+						cb({success:true})
+						return;
+					}
+					
+					fs.readFile(app.get('persistentDataDir')+'reqlog/'+id+'.json',function(e2,d){
+						
+						if(e2){
+							catch_error(e2)
+						}
+						
+						var i = JSON.parse(d);
+						
+						switch(r[0].mode){
+							case 'add dp':
+								var target_syl = 'curriculum_'+i.target_syl;
+								var target_level = i.value.split(' ')[0]+'.info';
+								
+								/* only split the first instance of a space. as description may contain spaces */
+								var info = i.value.substring(i.value.indexOf(' ')+1);
+								
+								connection.query('INSERT INTO ?? (lvl,description) VALUES (?,?);',[target_syl,target_level,info],function(e3,r3){
+									if(e3){
+										catch_error(e3);
+										cb(e3);
+									}else{
+										cb({success:true});
+									}
+								})
+							break;
+							case 'add new curriculum':
+								var newcurrname = 'curriculum_'+i;
+								connection.query(
+								'CREATE TABLE ?? ('+
+								'id int(8) NOT NULL AUTO_INCREMENT,'+
+								'f_id int(8),'+
+								
+								/* use 5.3.1 to indicate 5th chapter, 3rd small chapter, 1st smaller chapter
+								use 5.info for chapter description */
+								
+								'lvl varchar(64) NOT NULL,'+
+								'description varchar(1024),' +
+								'notes varchar(8192),'+
+								
+								'FOREIGN KEY(f_id) REFERENCES table_masterquestions(id),'+
+								'PRIMARY KEY(id));',newcurrname,function(e3){
+									if(e3){
+										/* catch error */
+										catch_error(e3);
+										cb(e3);
+									}else{
+										connection.query('INSERT INTO ?? (`id`, `f_id`, `lvl`, `description`, `notes`) VALUES (NULL, NULL, "0.info", "irrelevant", NULL);',newcurrname,function(e4,r4){
+											if(e2){
+												catch_error(e4);
+												cb(e4);
+											}else{
+												cb({success:true});						
+											}
+										})
+									}
+								});
+							break;
+							case 'add submit':
+								/* has already been cleaned up */
+								connection.query('SELECT * FROM table_masterquestions WHERE hashed_id = ?',i.hashed_id,function(e3,r3){
+									if(e3){
+										catch_error(e3)
+										cb(e3)
+									}else{
+										connection.query('UPDATE table_masterquestions SET delete_flag = "0" WHERE id = ?',r3[0].id,function(e4,r4){
+											if(e4){
+												catch_error(e4)
+												cb(e4)
+											}else{
+												cb({success:true,mode:'add submit',id:r3[0].id})
+											}
+										})
+									}
+								})
+							break;
+							case 'categorise':
+								connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e3,r3){
+									if(e){
+										catch_error(e3);
+										cb(e3);
+									}else{
+										if(r.length>0){
+											switch(i.mode){
+												case 'delete':
+													connection.query('DELETE FROM ?? WHERE f_id =? AND lvl = ?',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e4,r4){
+														if(e4){
+															catch_error(e4);
+															cb(e4);
+														}else{
+															cb({success:true,mode:'remove tag',id:r3[0].id,target_syl:i.target_syl,lvl:i.lvl})
+														}
+													})
+												break;
+												case 'add':
+													connection.query('INSERT INTO ?? (f_id,lvl) VALUES (?,?);',['curriculum_'+i.target_syl,r[0].id,i.lvl],function(e4,r4){
+														if(e1){
+															catch_error(e4);
+														}else{
+															callback({success:true,mode:'add tag',id:r3[0].id,target_syl:i.target_syl,lvl:i.lvl});
+														}
+													})
+												break;
+												default:
+												break;
+											}
+										}else{
+											callback({error:'hash id not found'});
+											catch_error('hash id not found.');
+										}
+									}
+								})
+							break;
+							case 'save':
+							case 'remove':
+								var querystring;
+								var queryterms;
+								var returnstring;
+								var mode;
+								
+								switch(i.mode){
+									case 'save':
+										querystring = 'UPDATE table_masterquestions SET ? WHERE hashed_id = ?';
+										queryterms = [i,i.hashed_id];
+										mode = 'update';
+									break;
+									case 'remove':
+										querystring = 'UPDATE table_masterquestions SET delete_flag = ? WHERE hashed_id = ?';
+										queryterms = [1,i.hashed_id];
+										mode = 'remove';
+									break;
+									default:
+									break;
+								}
+								connection.query(querystring,queryterms,function(e4,r4){
+									if(e4){
+										catch_error(e4)
+										cb(e4);
+									}else{
+										connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?',i.hashed_id,function(e5,r5){
+											if(e5){
+												catch_error(e5);
+												cb(e5)
+											}else{
+												cb({success:true,mode:mode,id:r5[0].id});
+											}
+										})
+									}
+								})
+							break;
+							default:
+							
+							break;
+						}
+					
+					var target = [];
+					if(i.subject){
+						target.push(i.subject);
+					}
+					if(i.target_syl){
+						target.push(i.target_syl);
+					}
+					subscriptionDelivery('news',{id:r1.insertId,rowData:[{id:r1.insertId,notes1:'',requester:socket.request.user.id,mode:'admin'}],keyword:target});
+					})
+				}
+			})
+		}
+	})
 }
 
 function view_submit_filter_cb(i,r,cb){
@@ -1402,6 +1757,107 @@ passport.deserializeUser(function(email,done){
 
 app.use(express.static('public'));
 
+function callToPdf(arrFlag,i,callback){
+	/* empty arrFlag indicates all of the image have been parsed */
+	if(arrFlag.length!=0){
+		return;
+	}
+	
+	/* title page and other misc */
+	var doc = new PDFDoc({bufferPages : true});
+	var pdfFilename = String(Date.now())+'.pdf';
+	var stream = doc.pipe(fs.createWriteStream(app.get('persistentDataDir')+'pdfout/'+ pdfFilename));
+	docy = doc.y+20;
+	var arrAsyncCallBack = [];
+	
+	doc.info['Title'] = 'exam generated by examcopedia';
+	doc.info['Author'] = 'examcopedia';
+	
+	pdfTitlePage(doc,'Compiled Exam');
+	
+	var j = 1;
+	
+	for(var block in i){
+		
+		doc.addPage();
+		
+		if(Object.keys(i).length>1){
+			doc.font('Times-Roman').fontSize(50).text('Section '+j,50,300,{ width : 500})
+			
+			j++;
+			
+			doc.addPage();
+			doc.fontSize(12).font('Times-Roman');
+			doc.lineWidth(0.3);
+			docy = doc.y + 20;
+		}
+		
+		for(var question in i[block]){
+			parseBody(i[block][question],'questionBody',doc,arrAsyncCallBack);
+		}
+	}
+	
+	/* adding page numbers */
+	
+	var range = doc.bufferedPageRange();
+	var logo = logos[Math.floor(Math.random()*logos.length)];
+	//range.start range.count
+	//doc.switchToPage(idx) //0 indexed
+	for(var k=1; k<range.count; k++){
+		doc.switchToPage(k);
+		doc.fontSize(12);
+		doc.moveTo(50,70).lineTo(570,70).stroke();
+		doc.font('Times-Italic').text(logo,50,55,{width : doc.width, align:'center'});
+		doc.moveTo(50,690).lineTo(570,690).stroke();
+		doc.font('Times-Roman').text('Page '+ (k+1) + ' of '+ range.count,50,700,{width : doc.width, align:'center'});
+	}
+	
+	/* start to write the answers */
+	doc.addPage();
+	pdfNormalTitle(doc,'Answer Keys');
+	
+	j = 1;
+	
+	for(var block in i){
+		
+		doc.addPage();
+		docy = doc.y+20;
+		doc.fontSize(12).font('Times-Roman');
+		
+		if(Object.keys(i).length>1){
+			doc.font('Times-Roman').fontSize(50).text('Section '+j,50,300,{ width : 500})
+			
+			j++;
+			
+			doc.addPage();
+			doc.fontSize(12).font('Times-Roman');
+			doc.lineWidth(0.3);
+			docy = doc.y + 20;
+		}
+		
+		for(var question in i[block]){
+			parseBody(i[block][question],'questionAnswer',doc,arrAsyncCallBack);
+		}
+	}
+	
+	/* when pdf is done writing */
+	stream.on('finish',function(){
+		var json = {
+			result : 'success',
+			url : 'pdfout/'+pdfFilename,
+		}
+		callback(json);
+		setTimeout(function(){
+			fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
+				if(e){
+					catch_error(e);
+				}
+			})
+		},1000*60*30)
+	})
+	docEnd(arrAsyncCallBack,doc);
+}
+
 function docEnd(array,doc){
 	if(array.length==0){
 		doc.flushPages();
@@ -1409,6 +1865,7 @@ function docEnd(array,doc){
 	}
 }
 
+var jsonImgData = {};
 var newLineCounter = 0;
 var arrAns = [];
 var docy = 0;
@@ -1458,7 +1915,21 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 		/* if there are images in this block */
 			var height = docy+(lines*lineHeight);
 			qBodyTrimSplit[k].match(/src=".*?"/g).forEach(function(v,idx,array){
-				height += 300;	
+	
+				/* img info should be in jsonImgData */
+				var objId = v.replace(/src\=|\"/g,'');
+				var thisImgData = jsonImgData[objId];
+				var percentWidth;
+				if(/width/.test(thisImgData.style)){
+					thisImgData.style.replace(/width\:.*?\%/,function(s){
+						percentWidth = s.replace(/width\:|%/g,'');
+					})
+				}
+				//full width = 400px
+				//thisImgData.dimension.width
+				var targetWidth = 400/100*percentWidth;
+				var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
+				height += targetHeight;	
 				arrAsyncCallBack.push(false);
 			});
 			if(height > 690){
@@ -1571,14 +2042,25 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 									var imageFilename = s.split('src="')[1].split('"')[0];
 									try{
 										var stat = fs.statSync(app.get('persistentDataDir')+imageFilename);
-										doc.image(app.get('persistentDataDir')+imageFilename,100,qDocY,{fit : [400,200]});
+										var thisImgData = jsonImgData[imageFilename];
+										var percentWidth;
+										if(/width/.test(thisImgData.style)){
+											thisImgData.style.replace(/width\:.*?\%/,function(s){
+												percentWidth = s.replace(/width\:|%/g,'');
+											})
+										}
+										//full width = 400px
+										//thisImgData.dimension.width
+										var targetWidth = 400/100*percentWidth;
+										var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
+										doc.image(app.get('persistentDataDir')+imageFilename,100,qDocY,{fit : [targetWidth,targetHeight]});
 										imgFullDir = app.get('persistentDataDir')+imageFilename;
 									}
 									catch(error){
 										doc.image(app.get('persistentDataDir')+'img/imageunlinked.png',100,qDocY,{fit : [400,200]});
 										imgFullDir = app.get('persistentDataDir')+'img/imageunlinked.png';
 									}
-									qDocY += 200;
+									qDocY += 15;
 									arrAsyncCallBack.splice(0,1);
 									/*
 									// cannot invoke async, as writing pdf is either sync or async and asyc obtaining dimensions ruins the format
@@ -1819,7 +2301,7 @@ function userNotification(mode,objId,user){
 }
 
 function restricting_access(user, mode, json, res, callback){
-	connection.query('INSERT INTO ?? (requester,mode) VALUES (?,?);',['req_log',user.displayName,mode],function(e,r){
+	connection.query('INSERT INTO ?? (requester,mode) VALUES (?,?);',['req_log',user.id,mode],function(e,r){
 		if(e){
 			catch_error(e);
 			callback({'error' : e});
@@ -1839,12 +2321,12 @@ function restricting_access(user, mode, json, res, callback){
 										if(e2){
 											catch_error(e2)
 										}else{
-											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 											callback('true');	
 										}
 									})								
 								}else{
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 									callback('pending');
 								}								
 							break;
@@ -1854,13 +2336,13 @@ function restricting_access(user, mode, json, res, callback){
 										if(e2){
 											catch_error(e2)
 										}else{
-											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});	
+											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});	
 											callback('true');	
 										}
 									})								
 								}else{
 									callback('pending');
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 								}
 							break;
 							case 'save':
@@ -1876,14 +2358,14 @@ function restricting_access(user, mode, json, res, callback){
 												if(e2){
 													catch_error(e2)
 												}else{
-													subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+													subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 													callback('true');
 												}
 											})
 										}
 									})
 								}else{
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 									callback('pending');
 								}
 							break;
@@ -1895,13 +2377,13 @@ function restricting_access(user, mode, json, res, callback){
 										if(e2){
 											catch_error(e2)
 										}else{
-											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 											callback('true');
 										}
 									})
 								}else{
 									callback('pending');
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 								}
 							break;
 							case 'add submit':
@@ -1910,13 +2392,13 @@ function restricting_access(user, mode, json, res, callback){
 										if(e2){
 											catch_error(e2)
 										}else{
-											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 											callback('true');
 										}
 									})
 								}else{
 									callback('pending');
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 								}
 							break;
 							//break;
@@ -1926,13 +2408,13 @@ function restricting_access(user, mode, json, res, callback){
 										if(e2){
 											catch_error(e2)
 										}else{
-											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+											callback('true');
+											subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'true',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 										}
 									})
-									callback('true');
 								}else{
 									callback('pending');
-									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,requester:user.displayName,mode:mode}],keyword:[json.subject,json.target_syl]});
+									subscriptionDelivery('news',{id:r.insertId,rowData:[{id:r.insertId,notes1:'',requester:user.id,mode:mode}],keyword:[json.subject,json.target_syl]});
 								}
 							break;
 						}
@@ -2221,6 +2703,11 @@ app.post('/pingQ',function(req,res){
 										res.send(o);
 									})
 								break;
+								case 'all':
+									view_submit_filter_cb({method : 'all'},r,function(o){
+										res.send(o);
+									})
+								break;
 								default:
 								break;
 							}
@@ -2253,6 +2740,11 @@ app.post('/pingQ',function(req,res){
 							length : req.body.length
 						}
 						view_submit_filter_cb(json,r,function(o){
+							res.send(o);
+						})
+					break;
+					case 'all':
+						view_submit_filter_cb({method : 'all'},r,function(o){
 							res.send(o);
 						})
 					break;
@@ -2349,9 +2841,12 @@ app.get('/about',function(req,res){
 })
 
 app.get('/test',function(req,res){
-	res.render('../navbar.ejs',{
-		user : req.user,
-		errors : req.flash('error')
+	fs.readFile(app.get('persistentDataDir')+'/reqlog/100_overwritten.json',function(e,d){
+		if(e){
+			catch_error(e)
+		}else{
+			res.send(JSON.parse(d))
+		}
 	})
 })
 

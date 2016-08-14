@@ -1,113 +1,209 @@
 <script>
+
+$('#id_core_well_news')
+	.click(function(e){
+		e.stopPropagation();
+	})
+	.on('hidden.bs.collapse',function(){
+		$('#id_navbar_news').parent().removeClass('active');
+	})
+
 socket.emit('populate activities',function(o){
 	for (var i = 0; i<o.data.length; i++){
-		decodeJson(o.data[i],function(string){
+		arrDelay.push(false);
+		arrData.push(o.data[i]);
+	}
+	for (var j = 0; j<o.data.length; j++){
+		decodeJson(o.data[j],j,function(string,_int){
+			arrDelay.splice(0,1);
 			o.user.notes1.replace(/subscription:.*?;/,function(s){
 				var sPruned = s.replace(/subscription:|\;/g,'');
 				if(sPruned.replace(/ /g,'')!=''){
 					var ssplit = sPruned.split(',');
-					for (var j = 0; j<ssplit.length; j++){
-						var patt = new RegExp(ssplit[j]);
-						if((patt.test(string)||ssplit[j]=='all')&&($('#id_activities_div_activities').children().length<11)){
-							$('#id_activities_div_activities').append(string);
+					for (var k = 0; k<ssplit.length; k++){
+						var patt = new RegExp(ssplit[k]);
+						if(patt.test(string)||ssplit[k]=='all'){
+							jsonString[_int] = string;
 							break;
 						}
 					}
 				}
 			})
+			populateActivities(o.data.length);
 		});
 	}
 })
 
+var arrData = []
+var arrDelay = [];
+var jsonString = {};
+	
+function populateActivities(l){
+	if(arrDelay.length!=0){
+		return;
+	}
+	var maxNews = 10;
+	for(var i = 0; i<l; i++){
+		if(jsonString[i]&&maxNews!=0){
+			$('#id_activities_div_activities').append(jsonString[i]);
+			maxNews--;
+		}
+	}
+	bindActivities();
+	decodeUsername(null);
+
+}
+
 socket.on('receive news',function(o){
-	decodeJson(o,function(string){
+	console.log(o)
+	decodeJson(o,null,function(string,_int){
 		$('#id_activities_div_activities').prepend(string);
+		decodeUsername(null);
 		if(!$('#id_core_well_news').hasClass('in')){
 			redPill('add','#id_navbar_news')
 		}
+		bindActivities();
 	})
 })
 
-function decodeJson(json,cb){
+function decodeJson(json,j,cb){
 	var stringOut = '';
-	stringOut += escapeHtml(json.requester);
-	var auxClass = '';
-	switch(json.mode){
-		case 'add submit':
-			auxClass = 'alert-info';
-			
-			stringOut += ' added a new question';
-			moreInfo(json.id,function(o){
-				if(o.error){
-					info_modal(o.error);
-				}else{
-					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
-					cb(infoStyler(stringOut,json,auxClass));
-				}
-			})
-		break;
-		case 'categorise':
-			auxClass = 'alert-success';
-			
-			moreInfo(json.id,function(o){
-				if(o.error){
-					info_modal(o.error);
-				}else{
-					switch(o.data.mode){
-						case 'add':
-							stringOut += ' categorised an existing question under';
-						break;
-						case 'delete':
-							stringOut += ' removed the categorisation of an existing question from'
-						break;
-						default:
-							stringOut += ' did something in categorisation with'
-						break;
-					}
-					stringOut += ' <strong>' + escapeHtml(o.data.target_syl) + ' : ' + escapeHtml(o.data.lvl) +'</strong>';
-					cb(infoStyler(stringOut,json,auxClass));
-				}
-			})
-		break;
-		case 'save':
-			auxClass = 'alert-warning';
-			
-			stringOut += ' updated an existing question';
-			moreInfo(json.id,function(o){
-				if(o.error){
-					info_modal(o.error);
-				}else{
-					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
-					cb(infoStyler(stringOut,json,auxClass));
-				}
-			})
-		break;
-		case 'remove':
-			auxClass = 'alert-danger';
-			
-			stringOut += ' removed an existing question';
-			moreInfo(json.id,function(o){
-				if(o.error){
-					info_modal(o.error);
-				}else{
-					stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
-					cb(infoStyler(stringOut,json,auxClass));
-				}
-			})
-		break;
-		default:
-			stringOut += ' did something'
-			cb(stringOut)
-		break;
-	}
 	
+	if(/\{\{.*?\}\}/.test(json.requester)){
+	/*
+		stringOut = '<div class = "row">'+
+					'<div class = "alert alert-'+name+'">'+
+						escapeHtml(comment)+
+						' <span class = "text-muted">(' + +escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
+					'</div>'+
+				'</div>'
+	*/
+	}else{
+		stringOut += '<span class = "hidden class_core_span_userName">'+escapeHtml(json.requester)+'</span>';
+		var auxClass = '';
+		switch(json.mode){
+			case 'admin':
+				auxClass = 'side-info';
+				var ssplit = json.notes1.split(' ');
+				switch(ssplit[0]){
+					case 'approve':
+					stringOut += ' approved a submission.'
+					break;
+					case 'reject':
+					stringOut += ' rejected a submission.'
+					break;
+					case 'undo':
+					stringOut += ' undid a change.'
+					break;
+					default:
+					break;
+				}
+				cb(infoStyler(stringOut,json,auxClass),j);
+			break;
+			case 'add submit':
+				auxClass = 'side-primary';
+				
+				stringOut += ' added a new question';
+				moreInfo(json.id,function(o){
+					if(o.error){
+						info_modal(o.error);
+					}else{
+						stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+						cb(infoStyler(stringOut,json,auxClass),j);
+					}
+				})
+			break;
+			case 'add new curriculum':
+				auxClass = 'side-success';
+				moreInfo(json.id,function(o){
+					stringOut += ' added a new curriculum named <strong>' + escapeHtml(o.data) + '</strong>';
+					cb(infoStyler(stringOut,json,auxClass),j);
+				})
+			break;
+			case 'add dp':
+				auxClass = 'side-success';
+				moreInfo(json.id,function(o){
+					stringOut += ' added a new dot point <strong>'+escapeHtml(o.data.value)+'</strong> under the syllabus named <strong>' + escapeHtml(o.data.target_syl) + '</strong>';
+					cb(infoStyler(stringOut,json,auxClass),j);
+				})					
+			break;
+			case 'categorise':
+				auxClass = 'side-success';
+				
+				moreInfo(json.id,function(o){
+					if(o.error){
+						info_modal(o.error);
+					}else{
+						switch(o.data.mode){
+							case 'add':
+								stringOut += ' categorised an existing question under';
+							break;
+							case 'delete':
+								stringOut += ' removed the categorisation of an existing question from'
+							break;
+							default:
+								stringOut += ' did something in categorisation with'
+							break;
+						}
+						stringOut += ' <strong>' + escapeHtml(o.data.target_syl) + ' : ' + escapeHtml(o.data.lvl) +'</strong>';
+						cb(infoStyler(stringOut,json,auxClass),j);
+					}
+				})
+			break;
+			case 'save':
+				auxClass = 'side-warning';
+				
+				stringOut += ' updated an existing question';
+				moreInfo(json.id,function(o){
+					if(o.error){
+						info_modal(o.error);
+					}else{
+						stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+						cb(infoStyler(stringOut,json,auxClass),j);
+					}
+				})
+			break;
+			case 'remove':
+				auxClass = 'side-danger';
+				
+				stringOut += ' removed an existing question';
+				moreInfo(json.id,function(o){
+					if(o.error){
+						info_modal(o.error);
+					}else{
+						stringOut += ' under <strong>' + escapeHtml(o.data.subject) +'</strong>';
+						cb(infoStyler(stringOut,json,auxClass),j);
+					}
+				})
+			break;
+			default:
+				stringOut += ' did something'
+				cb(stringOut,j)
+			break;
+		}
+	}
 }
 
 function infoStyler(stringOut,json,auxClass){
-	if(!/true/.test(json.notes1)){
-		stringOut += ' (pending approval)'
+	if(json.mode!='admin'){
+		if(!/true/.test(json.notes1)){
+			if(/approve|reject/.test(json.notes1)){
+				json.notes1.replace(/approve.*?\;|reject.*?\;/,function(s){
+					var ssplit = s.replace(';','').split(':');
+					stringOut += ' (' + ssplit[0] + ' by <span class = "hidden class_core_span_userName">'+escapeHtml(ssplit[1])+'</span>)'	
+				})
+			}else{
+				stringOut += ' (pending approval)'
+			}
+		}else{
+			if(/undo/.test(json.notes1)){
+				json.notes1.replace(/undo [0-9]*/,function(s){
+					stringOut += ' (undone by <span class = "hidden class_core_span_userName">'+s.replace(/ |undo/g,'')+'</span>)'
+				})
+			}
+		}
 	}
-	return '<div class = "alert '+auxClass+'">'+stringOut+'<% if (user){} %></div>';
+	return '<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12 side '+auxClass+'" id="id_activities_alert_'+json.id+'">'+stringOut+'<% if (user){} %></div>';
 }
 
 function moreInfo(id,cb){
@@ -120,11 +216,225 @@ function moreInfo(id,cb){
 	})
 }
 
+function bindActivityModalBtn(row){
+
+	if(!row||/approve|reject|undo/.test(row.notes1)){
+		$('#id_core_modal_activityPreviewer').find('div.btn-primary').addClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-success').addClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-danger').addClass('disabled');
+	}else if(/true/.test(row.notes1)){
+		/* need to test if approved/rejected */
+		$('#id_core_modal_activityPreviewer').find('div.btn-primary').removeClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-success').addClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-danger').addClass('disabled');
+	}else{
+		$('#id_core_modal_activityPreviewer').find('div.btn-primary').addClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-success').removeClass('disabled');
+		$('#id_core_modal_activityPreviewer').find('div.btn-danger').removeClass('disabled');
+	}
+	
+	$('#id_core_modal_activityPreviewer').find('div.btn-default').removeClass('disabled');
+	
+	$('#id_core_modal_activityPreviewer').find('div.btn').off('click').click(function(){
+		if($(this).hasClass('disabled')){
+			return;
+		}
+		$(this).addClass('disabled');
+		var _this = $(this);
+		var json = {}
+		var successMessage;
+		switch($(this).attr('id')){
+			case 'id_core_btn_previewerUndo':
+				json.mode = 'undo';
+				successMessage = 'Action undone.';
+			break;
+			case 'id_core_btn_previewerReject':
+				json.mode = 'reject';
+				successMessage = 'Submission rejected.';
+			break;
+			case 'id_core_btn_previewerApprove':
+				json.mode = 'approve';
+				successMessage = 'Submission approved.';
+			break;
+			default:
+			break;
+			
+		}
+		json.target = row.id;
+		socket.emit('admin moderation',json,function(o){
+			if(o.error){
+				info_modal(o.error)
+			}else{
+				_this.removeClass('disabled');
+				$('#id_core_modal_activityPreviewer').modal('hide');
+				info_modal(successMessage);
+			}
+		})
+	})
+}
+
+function bindActivities(){
+	$('#id_activities_div_activities div.side')
+	/* http://stackoverflow.com/questions/805133/how-do-i-unbind-hover-in-jquery */
+	/* so I can't just go $(this).off('hover') huh... */
+		.unbind('mouseenter mouseleave')
+		.hover(function(){
+			$(this).animate({'background-color':'#efefef'},100)
+		},function(){
+			$(this).animate({'background-color':'#fff'},300)
+		})
+		.off('click').click(function(){
+			$('#id_core_modal_activityPreviewer').find('div.modal-body').empty();
+			$('#id_core_modal_activityPreviewer').modal('show')
+			socket.emit('ping activity',$(this).attr('id').split('_')[3],function(o){
+				if(o.error){
+					info_modal(o.error);
+				}else{
+					bindActivityModalBtn(o.row);
+					decodeJson(o.row,null,function(string){
+						$('#id_core_modal_activityPreviewer').find('div.modal-body').append('<div class = "row">'+string+'</div><hr>');
+						decodeUsername(null);
+						if(o.row.mode!='admin'){
+							if(o.json.question){
+								$('#id_core_modal_activityPreviewer').find('div.modal-body').append(appendModalNews(o));
+							}else{
+								/* no question field in json, there should be a hashed_id field */
+								$.ajax({
+									type : 'POST',
+									url : 'pingQ',
+									data : {mode : 'all', hashed_id : o.json.hashed_id},
+									success : function(p){
+										if(o.message=='failed'){
+											info_modal(p.reason)
+										}else{
+											var jsonIn = {row:o.row,json:p}
+											$('#id_core_modal_activityPreviewer').find('div.modal-body').append(appendModalNews(jsonIn))
+											
+										}
+									}
+								})
+							}
+						}
+					})
+				}
+			})
+		})
+}
+
+function appendModalNews(o){
+	var appendString;
+	if(o.overwritten){
+		appendString = 
+			'<div class = "row">'+
+				'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+
+					'<div class = "panel panel-success">'+
+						'<div class = "panel-heading"><span class = "glyphicon glyphicon-ok"></span> newly saved'+
+						'</div>'+
+						'<div class = "panel-body">'+
+							'<div class = "row">'+
+								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question)+
+								'</div>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
+				'</div>'+
+				'<hr>'+
+				'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+
+					'<div class = "panel panel-danger">'+
+						'<div class = "panel-heading"><span class = "glyphicon glyphicon-remove"></span> discarded'+
+						'</div>'+
+						'<div class = "panel-body">'+
+							'<div class = "row">'+
+								'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+parsing_preview(o.overwritten.question)+
+								'</div>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
+				'</div>'+
+			'</div>';
+	}else{
+		var auxClass;
+		var doNotShow = '';
+		switch(o.row.mode){
+			case 'add submit':
+				auxClass = 'primary';
+				glyphClass = 'plus';
+				title = 'newly submitted';
+			break;
+			case 'categorise':
+				auxClass = 'success';
+				glyphClass = 'tags';
+				title = 'newly categorised';
+			break;
+			case 'remove':
+				auxClass = 'danger';
+				glyphClass = 'remove';
+				title = 'removed';
+			break;
+			default:
+				doNotShow = 'hidden';
+				auxClass = 'default';
+				glyphClass = 'info-sign';
+				title = 'information';
+			break;
+		}
+		appendString = 
+			'<div class = "row">'+
+				'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+
+					'<div class = "'+doNotShow+' panel panel-'+auxClass+'">'+
+						'<div class = "panel-heading"><span class = "glyphicon glyphicon-'+glyphClass+'"></span> '+ title +
+						'</div>'+
+						'<div class = "panel-body">'+
+							'<div class = "row">'+
+								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question)+
+								'</div>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
+				'</div>'+
+			'</div>';
+	}
+	return appendString;
+}
+
 </script>
 <style>
-#id_activities_div_activities .alert
+#id_activities_div_activities .side:hover
 {
-margin-bottom:0;
+cursor:pointer;
+}
+
+.side
+{
+padding-top:25px;
+padding-bottom:20px;
+margin-bottom:1px;
+margin-left:1px;
+border-left:10px solid;
+}
+.side-primary
+{
+border-color: #428bca;
+}
+.side-success
+{
+border-color: #5cb85c;
+}
+.side-info
+{
+border-color: #5bc0de;
+}
+.side-danger
+{
+border-color: #d9534f;
+}
+.side-default
+{
+border-color: #f9f9f9;
+}
+.side-warning
+{
+border-color: #fcf8e3;
 }
 </style>
 <div class = "row">
@@ -132,6 +442,6 @@ margin-bottom:0;
 
 	</div>
 	<div class = "btn btn-link col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
-		see more activities
+		see more activities (to be implemented)
 	</div>
 </div>

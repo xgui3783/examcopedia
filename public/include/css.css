@@ -5,6 +5,12 @@ overflow-y:scroll;
 overflow-x:hidden;
 }
 
+.modal-open
+{
+	overflow-y:scroll;
+	overflow-x:hidden;
+}
+
 div.carousel-inner div.item
 {
 text-align:center;

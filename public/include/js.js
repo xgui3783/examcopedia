@@ -2,6 +2,12 @@
 var socket = io();
 
 $(document).ready(function(){
+	
+	$(window).off('click').click(function(){
+		$('#id_core_well_news').collapse('hide');
+		$('#id_core_well_chatterbox').collapse('hide');
+	})
+
 	$('#id_login_img_googlesignin').click(function(){
 		window.location.href = '/auth/google';
 	});
@@ -39,10 +45,25 @@ $(document).ready(function(){
 		.on('show.bs.collapse',function(){
 			$(this).parent().removeClass('hidden');
 		})
-		
+	
 	/* binding chatter box */
 	if($('#id_navbar_chatter').length>0){
-		$('#id_core_well_chatterbox').css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top));
+		
+		$('#id_core_well_chatterbox').click(function(e){
+			e.stopPropagation();
+		})
+		
+		$('#id_core_well_chatterbox')
+			.css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top))
+			.blur(function(){
+				console.log('chat blur')
+			})
+			.on('shown.bs.collapse',function(){
+				$('#id_view_input_generalChatBox').focus();
+			})
+			.on('hidden.bs.collapse',function(){
+				$('#id_navbar_chatter').parent().removeClass('active');
+			})
 		
 		$('#id_navbar_chatter').click(function(){
 			$('#id_core_well_chatterbox').collapse('toggle');
@@ -107,7 +128,7 @@ $(document).ready(function(){
 	})
 	
 	socket.on('receive general chat',function(o){
-		appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell',true);
+		decodeUsername(appendComment(o.user,o.message,o.created,'#id_view_well_generalChatWell',true));
 		if(!$('#id_core_well_chatterbox').hasClass('in')){
 			generalChatQ.push(o);
 			redPill('add','#id_navbar_chatter');
@@ -118,6 +139,7 @@ $(document).ready(function(){
 		for (var i = 0; i<o.length; i++){
 			appendComment(o[i].username, o[i].comment, o[i].created, '#id_view_well_generalChatWell',false);
 		}
+		decodeUsername(null);
 	})
 	
 	/* tooltip for view/generation > option */
@@ -1455,7 +1477,6 @@ function viewgo(){
 						'length' : length
 						}
 					socket.emit('view submit',json,function(o){
-						console.log(o)
 						if(o.message=='failed'&&o.reason=='no results obtained'){
 							info_modal('No questions satisfy your query. Check if "exhaustive" method was applied.');
 						}
@@ -1526,7 +1547,7 @@ function viewgo(){
 				}
 			socket.emit('send comment',json,function(o){
 				if(o.user){
-					appendComment(o.user,comment,'Just nowT.','#id_view_well_comment',true);
+					decodeUsername(appendComment(o.user,comment,'Just nowT.','#id_view_well_comment',true))
 					$('#id_view_input_chatbox').val('');
 					$('#id_view_btn_sendcomment').removeClass('disabled');
 				}
@@ -1555,6 +1576,8 @@ function viewgo(){
 		$('#id_view_modal_editcomment').find('.in').removeClass('in');
 	})
 }
+
+
 
 function viewglobaledit(mode){
 	var data = {
@@ -1603,16 +1626,34 @@ function viewlocaledit(mode){
 	$('#id_view_modal_editcomment').modal('hide');
 }
 
+
 function appendComment(name,comment,timestamp,target,animation){
-	var appendCommentString = '<div class ="row">'+
-				'<blockquote>'+
-					escapeHtml(comment)+
-					'<footer>'+
-						escapeHtml(name)+' <span class = "text-muted">('+escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
-					'</footer>'+
-				'</blockquote>'+
-			'</div>';
-			
+	var appendCommentString;
+	
+	if(/system/.test(name)){
+		var alertClass;
+		var alertComment = comment.replace(/\{\{.*?\}\}/,function(s){
+			alertClass = s.replace(/\{|\}/g,'');
+			return '';
+		})
+		appendCommentString = '<div class = "row">'+
+					'<div class = "alert alert-'+alertClass+'">System: '+
+						escapeHtml(alertComment)+
+						' <span class = "text-muted">(' + escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
+					'</div>'+
+				'</div>'
+	}else{
+		appendCommentString = '<div class ="row">'+
+					'<blockquote>'+
+						escapeHtml(comment)+
+						'<footer>'+
+							'<span class = "class_core_span_userName hidden">'+escapeHtml(name)+'</span> <span class = "text-muted">('+escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
+						'</footer>'+
+					'</blockquote>'+
+				'</div>';
+				
+	}
+	
 	var newComment = $(appendCommentString);
 	if($(target).children('.row').length==0){
 		$(target).append(newComment);
@@ -1627,6 +1668,8 @@ function appendComment(name,comment,timestamp,target,animation){
 			
 		})
 	}
+	
+	return newComment;
 }
 
 function bind_viewdiv_overlay(target){
@@ -1659,6 +1702,7 @@ function bind_viewdiv_overlay(target){
 				for(var i=0;i<o.length;i++){
 					appendComment(o[i].username,o[i].comment,o[i].created,'#id_view_well_comment',false)
 				}
+				decodeUsername(null);
 			});
 			
 			
@@ -1667,8 +1711,8 @@ function bind_viewdiv_overlay(target){
 			$('#id_view_input_hashedid').val($(this).attr('id'));
 			//already escapeHtml when parsing
 			$('#id_core_select_subject').val($(this).find('div#id_view_div_subject').html());
-			$('#id_core_textarea_qn').val($(this).find('div#id_view_div_qnMarkdown').html());
-			$('#id_core_textarea_ans').val($(this).find('div#id_view_div_ansMarkdown').html());
+			$('#id_core_textarea_qn').val(returnNewLine($(this).find('div#id_view_div_qnMarkdown').html()));
+			$('#id_core_textarea_ans').val(returnNewLine($(this).find('div#id_view_div_ansMarkdown').html()));
 			$('#id_core_input_marks').val($(this).find('div#id_view_div_mark').html());
 			
 			/*
@@ -1713,6 +1757,46 @@ function bind_viewdiv_overlay(target){
 			renumber(ui.item.parent());
 		}
 	});
+}
+
+function decodeUsername(target){
+	if(target){
+		if($(this).hasClass('class_core_span_userName')){
+			var _this = $(this);
+		}else{
+			var _this = $(this).find('.class_core_span_userName');
+		}
+		
+		if(isNaN(_this.html())){
+			return;
+		}
+		
+		socket.emit('decode user id',_this.html(),function(o){
+			if(o.error){
+				info_modal(o.error)
+			}else{
+				_this.html(escapeHtml(o));
+				_this.removeClass('hidden');
+			}
+		})
+	}else{
+		$('.class_core_span_userName').each(function(v,idx,arr){
+			var _this = $(this);
+			
+			if(isNaN(_this.html())){
+				return;
+			}
+		
+			socket.emit('decode user id',_this.html(),function(o){
+				if(o.error){
+					info_modal(o.error)
+				}else{
+					_this.html(escapeHtml(o));
+					_this.removeClass('hidden');
+				}
+			})
+		})
+	}
 }
 
 function renumber(target){
@@ -2112,6 +2196,18 @@ function concatstyle(i,p){
 	}
 	
 	return r;
+}
+
+/* turn br into \n */
+var brToN = {
+	'<br>':'\n',
+	'<br\>':'\n'
+}
+
+function returnNewLine(s){
+	return String(s).replace(/\<br\\?\>/g,function(r){
+		return brToN[r];
+	})
 }
 
 /* escape function */

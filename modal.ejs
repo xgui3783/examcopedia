@@ -29,6 +29,32 @@
 <%- include('activities.ejs') %>
 		</div>
 	</div>
+	<div id = "id_core_modal_activityPreviewer" class = "modal fade" role = "dialog">
+		<div class = "modal-dialog">
+			<div class = "modal-content">
+				<div class = "modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4>Preview Activity</h4>
+				</div>
+				<div class = "modal-body">
+				</div>
+				<div class = "modal-footer">
+					<div class = "btn btn-primary" id = "id_core_btn_previewerUndo">
+					<span class = "glyphicon glyphicon-backward"></span> Undo
+					</div>
+					<div class = "btn btn-danger" id = "id_core_btn_previewerReject">
+					<span class = "glyphicon glyphicon-remove"></span> Reject
+					</div>
+					<div class = "btn btn-success" id = "id_core_btn_previewerApprove">
+					<span class = "glyphicon glyphicon-ok"></span> Approve
+					</div>
+					<div class = "btn btn-default" data-dismiss="modal" data-target="#id_core_modal_activityPreviewer">
+					Close
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 <% } %>
 	<div id = "id_core_modal_autoplaySetting" class = "modal fade" role = "dialog">
 		<div class = "modal-dialog">
