@@ -55,7 +55,6 @@ function populateActivities(l){
 }
 
 socket.on('receive news',function(o){
-	console.log(o)
 	decodeJson(o,null,function(string,_int){
 		$('#id_activities_div_activities').prepend(string);
 		decodeUsername(null);
@@ -216,8 +215,12 @@ function moreInfo(id,cb){
 	})
 }
 
+
 function bindActivityModalBtn(row){
 
+	$('#id_core_modal_activityPreviewer').click(function(e){
+		e.stopPropagation();
+	})
 	if(!row||/approve|reject|undo/.test(row.notes1)){
 		$('#id_core_modal_activityPreviewer').find('div.btn-primary').addClass('disabled');
 		$('#id_core_modal_activityPreviewer').find('div.btn-success').addClass('disabled');
@@ -332,7 +335,7 @@ function appendModalNews(o){
 						'</div>'+
 						'<div class = "panel-body">'+
 							'<div class = "row">'+
-								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question)+
+								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question,o.json.hashed_id)+
 								'</div>'+
 							'</div>'+
 						'</div>'+
@@ -345,7 +348,7 @@ function appendModalNews(o){
 						'</div>'+
 						'<div class = "panel-body">'+
 							'<div class = "row">'+
-								'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+parsing_preview(o.overwritten.question)+
+								'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+parsing_preview(o.overwritten.question,o.overwritten.hashed_id)+
 								'</div>'+
 							'</div>'+
 						'</div>'+
@@ -386,7 +389,7 @@ function appendModalNews(o){
 						'</div>'+
 						'<div class = "panel-body">'+
 							'<div class = "row">'+
-								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question)+
+								'<div class = "col-xs-12 col-sm12 col-md-12 col-lg-12">'+parsing_preview(o.json.question,o.json.hashed_id)+
 								'</div>'+
 							'</div>'+
 						'</div>'+

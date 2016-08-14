@@ -33,6 +33,7 @@
 				<li class = "hidden-xs"><a href = "/profile" id = "id_navbar_profile">Hello <%= user.displayName %></a></li>
 				<li><a href ="#" id = "id_navbar_chatter"><span class = "glyphicon glyphicon-comment"></span> chatter<% if(chatLength >0){%> <span class="label label-danger"><%= chatLength %></span><%} %></a></li>
 			<% } %>
+			<% if(user){ %>
 			<% if(user.admin>0){ %>
 			
 			<% var newsLength=0; %>
@@ -46,6 +47,7 @@
 			<% }) %>
 			<% } %>
 				<li><a href ="#" id = "id_navbar_news"><span class = "glyphicon glyphicon-bell"></span> recent<% if(newsLength >0){%> <span class="label label-danger"><%= newsLength %></span><%} %></a></li>
+			<% } %>
 			<% } %>
 				<li><a href = "/about" id = "id_navbar_about"><span class = "glyphicon glyphicon-tint"></span> about</a></li>
 			<% if(user){ %>

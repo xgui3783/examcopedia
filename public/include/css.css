@@ -3,12 +3,13 @@ body
 background-color:#fcfcfc;
 overflow-y:scroll;
 overflow-x:hidden;
+padding-right:0px!important;
 }
 
 .modal-open
 {
-	overflow-y:scroll;
-	overflow-x:hidden;
+overflow-y:scroll;
+overflow-x:hidden;
 }
 
 div.carousel-inner div.item

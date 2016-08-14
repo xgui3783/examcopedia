@@ -3,6 +3,14 @@ var socket = io();
 
 $(document).ready(function(){
 	
+	$(document)
+	.on('show.bs.modal',function(){
+		$('body').css('padding-right','0')
+	})
+	.on('hidden.bs.modal',function(){
+		$('body').css('padding-right','0')
+	})
+	
 	$(window).off('click').click(function(){
 		$('#id_core_well_news').collapse('hide');
 		$('#id_core_well_chatterbox').collapse('hide');
