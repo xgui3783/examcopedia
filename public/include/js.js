@@ -78,13 +78,13 @@ $(document).ready(function(){
 			$(this).parent().toggleClass('active');
 			
 			var i = 0;
-			while(
-				i<Number($('#id_navbar_chatter').children('span.label').html())){
-				$('#id_view_well_generalChatWell').children('div.row').eq(i)
-					.addClass('bg-info')
-					.css('height','auto')
-				i++;
-				}
+			
+			while(i<Number($('#id_navbar_chatter').children('span.label').html())){
+			$('#id_view_well_generalChatWell').children('div.row').eq(i)
+				.addClass('bg-info')
+				.css('height','auto')
+			i++;}
+			
 			setTimeout(function(){
 				$('#id_view_well_generalChatWell').children('div.row.bg-info').removeClass('bg-info');
 			},5000)
@@ -554,6 +554,7 @@ $(document).ready(function(){
 		a_id_split = $(this).attr('id').split('_');
 		switch(a_id_split[1]){
 			/* when anchors in navbar is clicked */
+			case 'api':
 			case 'about':
 				return true;
 			break;

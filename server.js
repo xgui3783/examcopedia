@@ -19,6 +19,7 @@ var session = require('express-session');
 var PDFDoc = require('pdfkit');
 var request = require('request');
 var passportSocketIO = require('passport.socketio');
+var nodemailer = require('nodemailer');
 
 var logos = [
 	'join.examcopedia.club',
@@ -30,6 +31,15 @@ app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'./public/');
 
 var authConfig = require(app.get('persistentDataDir')+'include/config.js');
 
+var transporter = nodemailer.createTransport(authConfig.email);
+
+var verifyEmail = transporter.templateSender({
+	subject : 'examcopedia registration - confirmation of your e-mail address',
+	text : 'Dear {{username}}: \n\nTo complete your registration at examcopedia, copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. \n\n{{link}}\n\nIf you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.\n\n🐼',
+	html : 'Dear {{username}}: <br><br>To complete your registration at examcopedia, click the link below or copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. <br><br><a href = "{{link}}">{{link}}</a><br><br>If you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.<br><br>🐼',
+},{
+	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
+})
 
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
@@ -571,6 +581,33 @@ io.on('connection',function(socket){
 	})
 	
 	socket.join(socket.request.user.sessionID);
+	
+	socket.on('check api',function(cb){
+		connection.query('SELECT api FROM user_db WHERE id = ?',socket.request.user.id,function(e,r){
+			if(e){
+				catch_error(e)
+				cb(e);
+			}else{
+				if(r.length!=1){
+					cb({error:'User cannot be found.'})
+				}else{
+					cb(r[0])
+				}
+			}
+		})
+	})
+	
+	socket.on('enable api',function(cb){
+		var newApiKey = sha256(String(Date.now()));
+		connection.query('UPDATE user_db SET api = ? WHERE id = ?',[newApiKey,socket.request.user.id],function(e,r){
+			if(e){
+				catch_error(e);
+				cb(e);
+			}else{
+				cb({success:true,api:newApiKey});
+			}
+		})
+	})
 	
 	socket.on('admin moderation',function(json,cb){
 		switch(json.mode){
@@ -1712,13 +1749,32 @@ function catch_error(e){
 /* using local strategy to authenticate user. implement 3rd party authentication process later */
 passport.use('local',new localStrategy(
 	function(username,password,done){
-		/* temporary username and password */
-		if(username=='panda'&&password=='pandaeatsbamboo'){
-			var user = {'email':'panda@pandamakes.com.au','name':'Panda Makes','admin':0,'sessionID':'no sessionID'};
-			return done(null, user);
-		}else{
-			return done(null, false, {message : 'Incorrect username or password!'});
-		}
+		/* client:sha256(pswd) -> sha256(sha256(pswd)+salt)  */
+		var newSessionId = sha256(String(Date.now()));
+		connection.query('SELECT displayName,admin,email,authMethod, authId, salt, passtoken FROM user_db WHERE authMethod = ? AND email = ?',['local',username],function(e,r){
+			if(e){
+				catch_error(e);
+				return done(null, false, e);
+			}else{
+				if(r.length==0){
+					return done(null, false, {message :'Username and/or password incorrect.'});
+				}else if (r.length>1){
+					return done(null, false, {message :'Username and/or password incorrect.'});
+				}else{
+					if(sha256(password+r[0].salt) == r[0].passtoken){
+						connection.query('UPDATE user_db SET SessionID = ? WHERE authMethod = ? AND email = ?',[newSessionId,'local',username],function(e1,r1){
+							if(e1){
+								catch_error(e1);
+							}
+						})
+						r[0].sessionID = newSessionId;
+						return done(null,r[0]);
+					}else{
+						return done(null, false, {message :'Username and/or password incorrect.'});
+					}
+				}
+			}
+		})
 	}
 ));
 
@@ -1738,11 +1794,11 @@ passport.use('googleAuth',new googleStrategy(authConfig.google,function (token,t
 	}))
 
 passport.serializeUser(function(user,done){
-	done(null,user.email);
+	done(null,[user.authMethod,user.authId]);
 })
 
-passport.deserializeUser(function(email,done){
-	connection.query('SELECT id, displayName, admin,email, sessionID, notes1 FROM user_db WHERE email = ?;',email,function(e,r){
+passport.deserializeUser(function(authMethodId,done){
+	connection.query('SELECT id, displayName, admin,email, sessionID, notes1,authMethod FROM user_db WHERE authMethod = ? AND authId = ?;',[authMethodId[0],authMethodId[1]],function(e,r){
 		if(e){
 			return done(e);
 		}else{
@@ -2185,7 +2241,7 @@ function thirdpartylogin(mode,profile,token,callback){
 		break;
 	}
 	
-	connection.query('SELECT displayName, admin, email, sessionID FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
+	connection.query('SELECT displayName, admin, email, sessionID, authMethod FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
 		if(e){
 			catch_error(e);
 			callback(null);
@@ -2445,11 +2501,95 @@ function checkAuth(req,res,next){
 app.get('/auth/facebook',passport.authenticate('facebookAuth',{scope : 'email'}));
 app.get('/auth/facebook/callback',passport.authenticate('facebookAuth',{successRedirect : '/',failureRedirect : '/login'}));
 
-/* routes auth local */
+/* local register */
 
+app.post('/localRegister',function(req,res){
+	
+	var newAuthId = sha256(String(Date.now()));
+	var newSalt = sha256(newAuthId);
+	var newPswd = sha256(req.body.password+newSalt);
+	connection.query('SELECT * FROM user_db WHERE authMethod = ? AND email = ?',['local',req.body.username],function(e,r){
+		if(e){
+			catch_error(e)
+			res.send(e)
+		}else{
+			if(r.length>0){
+				res.send({error:true,message:'User already exist!'})
+			}else{
+				connection.query('SELECT * FROM user_db WHERE (authMethod IS NULL OR authMethod = "") AND email = ?',[req.body.username],function(e1,r1){
+					if(e1){
+						catch_error(e1)
+						res.send(e1)
+					}else{
+						if(r1.length>0){
+							connection.query('UPDATE user_db SET authId = ?,passtoken = ?,salt=?,displayName=? WHERE authMethod = "" AND email = ?',[newAuthId,newPswd,newSalt,req.body.fullname,req.body.username],function(e2,r2){
+								if(e2){
+									catch_error(e2)
+									res.send(e2)
+								}else{
+									res.send({success:true})
+									verifyTimout(newAuthId,req.body);
+								}
+							})
+						}else{
+							connection.query('INSERT INTO user_db (authId,passtoken,email,salt,displayName) VALUES (?,?,?,?,?)',[newAuthId,newPswd,req.body.username,newSalt,req.body.fullname],function(e2,r2){
+								if(e2){
+									catch_error(e2)
+									res.send(e2)
+								}else{
+									res.send({success:true})
+									verifyTimout(newAuthId,req.body);
+								}
+							})
+						}
+					}
+				})
+			}
+		}
+	})
+})
+
+function verifyTimout(authId,body){
+	
+	setTimeout(function(){
+		connection.query('DELETE from user_db WHERE authId = ? AND (authMethod IS NULL OR authMethod = ?)',[authId,''],function(e,r){
+			if(e){
+				catch_error(e)
+			}
+		})
+	},99*60*1000)
+	
+	verifyEmail({
+		to : body.username,
+	},{
+		username : body.fullname,
+		link : 'http://join.examcopedia.club/verify?token='+authId,
+	},function(e,i){
+		if(e){
+			catch_error(e)
+		}
+	})
+}
+
+app.get('/verify',function(req,res){
+	connection.query('UPDATE user_db SET authMethod = "local" WHERE authId = ? AND (authMethod = "" OR authMethod IS NULL)',req.param('token'),function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			if(r.affectedRows==1){
+				res.send('Thanks for verifying your e-mail address.')
+			}else{
+				res.send('Your e-mail address was not verified. Perhaps try to register and verify it again?')
+			}
+		}
+	})
+	
+})
+
+/* routes auth local */
 app.post('/loggingLocal',passport.authenticate('local',{successRedirect : '/', failureRedirect : '/login', failureFlash : true}))
 
-/* toues auth google */
+/* routes auth google */
 app.get('/auth/google',passport.authenticate('googleAuth',{scope : ['profile','email']}));
 app.get('/auth/google/callback', 
 	passport.authenticate('googleAuth',{failureRedirect : '/login'}),
@@ -2465,12 +2605,7 @@ fs.stat('mobileuploads',function(e,s){
 			if(e1){
 				catch_error(e1);
 			}
-			else{
-				
-			}
 		});
-	}else{
-		
 	}
 });
 	
@@ -2515,6 +2650,22 @@ fs.stat(app.get('persistentDataDir')+'pdfout',function(e,s){
 })
 
 /* creates req_log table */
+connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "apicalls"',function(e,r){
+	if(e){
+		catch_error(e);
+	}else{
+		if(r.length!=0){
+			return;
+		}
+		connection.query('	CREATE TABLE `apicalls` ( `id` int(8) NOT NULL AUTO_INCREMENT, `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `apikey` varchar(32) NOT NULL, PRIMARY KEY (`id`)) ',function(e1,r1){
+			if(e1){
+				catch_error(e1);
+			}
+		});
+	}
+})
+
+/* creates req_log table */
 connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "req_log"',function(e,r){
 	if(e){
 		catch_error(e);
@@ -2525,8 +2676,6 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 		connection.query('CREATE TABLE `req_log` ( `id` int(16) NOT NULL AUTO_INCREMENT, `requester` varchar(256) NOT NULL, `mode` varchar(32) NOT NULL, `notes1` varchar(256) NOT NULL, `notes2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1);
-			}else{
-				
 			}
 		});
 	}
@@ -2540,8 +2689,6 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 		connection.query('CREATE TABLE `user_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `authMethod` varchar(8) NOT NULL,`sessionID` varchar(64),`admin` int(1) NOT NULL, `authID` varchar(256) NOT NULL, `displayName` varchar(256) NOT NULL, `email` varchar(256) NOT NULL, `salt` varchar(64) NOT NULL, `passtoken` varchar(64) NOT NULL, `notes1` varchar(8196) NOT NULL, `notes2` varchar(8196) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1)
-			}else{
-				
 			}
 		})
 	}
@@ -2555,8 +2702,6 @@ connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_S
 		connection.query('CREATE TABLE `comment_db` ( `id` int(16) NOT NULL AUTO_INCREMENT, `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, `username` varchar(256) NOT NULL, `comment` varchar(8196) NOT NULL, `ref` varchar(64) NOT NULL, `note1` varchar(256) NOT NULL, `note2` varchar(256) NOT NULL, PRIMARY KEY (`id`))',function(e1,r1){
 			if(e1){
 				catch_error(e1);
-			}else{
-				
 			}
 		})
 	}
@@ -2625,8 +2770,87 @@ app.get('/reqlog/*',checkAuth,function(req,res){
 	})
 })
 
+/* check if req has valid api key or if it's from local/trusted source */
+function checkAPI(req,res,next){
+	var ref = req.headers.referer;
+	if(/join\.examcopedia\.club/.test(ref)||/127\.0\.0\.1/.test(ref)){
+		return next();
+	}else{
+		if(req.body.apikey==''||req.body.apikey==undefined||req.body.apikey==0){
+			res.send({error:'Error when searching api key.'})
+		}else{
+			connection.query('SELECT * FROM user_db WHERE api = ?',req.body.apikey,function(e,r){
+				if(e){
+					catch_error(e)
+					res.send({error:'Error when searching api key.'})
+				}else{
+					if(r.length!=1){
+						res.send({error:'Error with api key. Please contact an admin, quoting your username and apikey. We will try to fix it ASAP.'})
+					}else{
+						connection.query('INSERT INTO apicalls (apikey) VALUES (?);',req.body.apikey,function(e1,r1){
+							if(e1){
+								catch_error(e1);
+								res.send({error:'Error storing api calls. Contact an admin.'})
+							}else{
+								req.insertId = r1.insertId;
+								req.referer = ref;
+								return next();
+							}
+						})
+					}
+				}
+			})
+		}
+	}
+}
+
+/* make apilog folder */
+fs.stat(app.get('persistentDataDir')+'apilog',function(e,s){
+	if(e){
+		catch_error(e);
+		fs.mkdir(app.get('persistentDataDir')+'apilog',function(e1){
+			if(e1){
+				catch_error(e1)
+			}
+		})
+	}
+})
+
+function writeAPICallLog(req,res,json){
+	var jsonIn = {
+		referer : req.referer,
+		request : req.body,
+		response : json
+		}
+	
+	/* check if the req came from local or foreign */
+	if(req.insertId){
+		/* sterilise the notes1 field */
+		if(Array.isArray(json)){
+			for (var i = 0; i<json.length; i++){
+				json[i].note = '';
+			}
+		}else{
+			json.note = '';
+		}
+		
+		/* log the api call */
+		fs.writeFile(app.get('persistentDataDir')+'apilog/'+req.insertId+'.json',JSON.stringify(jsonIn),'utf8',function(e){
+			if(e){
+				catch_error(e);
+			}
+		})
+		
+		res.send(json);
+		
+	}else{
+		res.send(json)
+	}
+	
+}
+
 /* ping question for login random question or later on for speciality use (api etc?) */
-app.post('/pingQ',function(req,res){
+app.post('/pingQ',checkAPI,function(req,res){
 	var mode = req.body.mode;
 	var escapedvar = [];
 	var queryOptions = '';
@@ -2659,7 +2883,7 @@ app.post('/pingQ',function(req,res){
 					if(/not syllabus/.test(req.body.option)){
 						querystring1='SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0' + queryOptions;
 					}else{
-						res.send({message:'failed',reason:'no result'})
+						writeAPICallLog(req,res,{error:true,message:'failed',reason:'no result'});
 						return;
 					}
 				}else{
@@ -2682,7 +2906,7 @@ app.post('/pingQ',function(req,res){
 						catch_error(e);
 					}else{
 						if(r.length==0){
-							res.send({message:'failed',reason:'no result'})
+							writeAPICallLog(req,res,{error:true,message:'failed',reason:'no result'});
 						}else{
 							switch (mode){
 								case 'random':
@@ -2691,7 +2915,9 @@ app.post('/pingQ',function(req,res){
 										length : 1
 									}
 									view_submit_filter_cb(json,r,function(o){
-										res.send(o[0])
+										/* need to remove note */
+										
+										writeAPICallLog(req,res,o[0]);
 									})
 								break;
 								case 'categorise':
@@ -2700,12 +2926,14 @@ app.post('/pingQ',function(req,res){
 										length : req.body.length
 									}
 									view_submit_filter_cb(json,r,function(o){
-										res.send(o);
+										/* need to remove note */
+										writeAPICallLog(req,res,o);
 									})
 								break;
 								case 'all':
 									view_submit_filter_cb({method : 'all'},r,function(o){
-										res.send(o);
+										/* need to remove note */
+										writeAPICallLog(req,res,o);
 									})
 								break;
 								default:
@@ -2731,7 +2959,7 @@ app.post('/pingQ',function(req,res){
 							length : 1
 						}
 						view_submit_filter_cb(json,r,function(o){
-							res.send(o[0])
+							writeAPICallLog(req,res,o[0]);
 						})
 					break;
 					case 'categorise':
@@ -2740,12 +2968,12 @@ app.post('/pingQ',function(req,res){
 							length : req.body.length
 						}
 						view_submit_filter_cb(json,r,function(o){
-							res.send(o);
+							writeAPICallLog(req,res,o);
 						})
 					break;
 					case 'all':
 						view_submit_filter_cb({method : 'all'},r,function(o){
-							res.send(o);
+							writeAPICallLog(req,res,o);
 						})
 					break;
 					default:
@@ -2840,7 +3068,16 @@ app.get('/about',function(req,res){
 	})
 })
 
+app.get('/api',function(req,res){
+	res.render('../api.ejs',{
+		user : req.user,
+		errors : req.flash('error')
+	})
+})
+
 app.get('/test',function(req,res){
+	res.send('hello!')
+	/*
 	fs.readFile(app.get('persistentDataDir')+'/reqlog/100_overwritten.json',function(e,d){
 		if(e){
 			catch_error(e)
@@ -2848,6 +3085,7 @@ app.get('/test',function(req,res){
 			res.send(JSON.parse(d))
 		}
 	})
+	*/
 })
 
 app.get('/changelog',function(req,res){

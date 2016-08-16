@@ -59,7 +59,6 @@ $('.class_profileOtherUsers_btn_editNotes').off('click').click(function(){
 	$(this).addClass('disabled');
 	
 	$('#id_core_modal .modal-title').html('Edit note for '+escapeHtml($(this).parent().parent().children('td.displayName').html()).replace(/<br>+/g,''));
-	console.log($(this).next().html());
 	$('#id_core_modal .modal-body').html('<textarea class = "form-control" placeholder = "Enter note here ...">'+escapeHtml($(this).next().html()).replace(/<br>+/g,'\n')+'</textarea>');
 	$('#id_core_modal').modal('show');
 	

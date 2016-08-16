@@ -11,10 +11,10 @@ Realised goals:
 - API allowing others to interact with the webapp
 - answers to be printed in pdf
 - implement moderator approval process of addition/edition of questions
+- local registration
 
 Currently worked on goals:
 - username/password/account locked status message in login screen
-- local registration
 
 Backburner:
 - implement "swap out" button in view/generate > random, so that educators can swap out the questions they don't like and replace it with a new random question
@@ -22,6 +22,7 @@ Backburner:
 Future updates:
 
 Change log
+v0.10.1 - 16/08/2016 - added local registration
 v0.10 - 14/08/2016 - fixed height of images
 			- redesigned reqlog requester
 			- implemented moderator approval/ undo system

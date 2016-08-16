@@ -69,24 +69,15 @@ $(document).ready(function(){
 		}
 	});
 	
+	/*
 	$('#id_login_btn_register').off('click').click(function(){
 		info_modal('Registration will become available in the future.')
 		return false;
 	});
+	*/
 	
 	$('#username,#password').off('keydown').keydown(function(e){
 		if(e.which==13){
-			$('#id_login_form_local').submit();
-		}
-	})
-	
-	$('#id_login_btn_login').off('click').click(function(){
-		var username = $('#username').val().replace(/ /g,'');
-		var password = $('#password').val();
-		if(username==''||password==''){
-			info_modal('Username and passwords are required!');
-			return false;
-		}else{
 			$('#id_login_form_local').submit();
 		}
 	})

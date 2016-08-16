@@ -1,1 +1,68 @@
-There doesn't seem to be anything here yet.
+<div class = "row">
+	<div class = "col-xs-11 col-sm-11 col-md-11 col-lg-11 col-md-offset-1 col-lg-offset-1">
+		<h2><%= user.displayName %></h2>
+		<hr>
+		<h4 class = "text-right"><%= user.email %></h4>
+		<% if(user.authMethod!='local'){ %>
+		<h4 class = "text-right">logged in via <%= user.authMethod%></h4>
+		<% }else{ %>
+		<div class = "text-right">
+			<div id = "id_profile_btn_changepswd" class = "btn btn-default">change password
+			</div>
+		</div>
+		<% } %>
+		<div class = "text-right">
+			<a class = "btn btn-default text-right" href = "/logout"><span class = "glyphicon glyphicon-log-out"></span> logout</a>
+		</div>
+		<hr>
+	</div>
+	<div class = "col-xs-11 col-sm-11 col-md-11 col-lg-11 col-md-offset-1 col-lg-offset-1">
+		<div class = "row">
+			<div class = "btn btn-default disabled" id = "id_profile_btn_api">Waiting on API
+			</div>
+		</div>
+	</div>
+	<div class = "col-xs-11 col-sm-11 col-md-11 col-lg-11 col-md-offset-1 col-lg-offset-1">
+		<div class = "row">
+			
+		</div>
+	</div>
+</div>
+<script>
+$('#id_profile_btn_changepswd').off('click').click(function(){
+	/* change pswd here */
+})
+
+socket.emit('check api',function(o){
+	if(o.error){
+		info_modal(o.error)
+	}else{
+		if(o.api!=0&&o.api!=''&&o.api!=undefined){
+			$('#id_profile_btn_api')
+				.html('API already enabled')
+				.parent().parent().html('<div class = "row"><div class = "col-xs-12 col-sm-12 col-md-2 col-lg-2">API key: </div><div class = "col-xs-12 col-sm-12 col-md-10 col-lg-10"><input class = "form-control" readonly value="'+o.api+'"></div></div>');
+		}else{
+			$('#id_profile_btn_api')
+				.html('Enable API')
+				.removeClass('disabled')
+				.off('click').click(function(){
+					if($(this).hasClass('disabled')){
+						return false;
+					}
+					$(this).addClass('disabled');
+					socket.emit('enable api',function(o1){
+						if(o1.error){
+							info_modal(o1.error)
+						}else{
+							$('#id_profile_btn_api')
+								.html('API enabled')
+								.addClass('disabled')
+								.parent().parent().html('<div class = "row"><div class = "col-xs-12 col-sm-12 col-md-2 col-lg-2">API key: </div><div class = "col-xs-12 col-sm-12 col-md-10 col-lg-10"><input class = "form-control" readonly value="'+o1.api+'"></div></div>');
+						}
+						})
+						return;
+					})
+		}
+	}
+})
+</script>
