@@ -2241,7 +2241,7 @@ function thirdpartylogin(mode,profile,token,callback){
 		break;
 	}
 	
-	connection.query('SELECT displayName, admin, email, sessionID, authMethod FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
+	connection.query('SELECT authId,displayName, admin, email, sessionID, authMethod FROM user_db WHERE authMethod = ? AND authID = ?;',[mode,id],function(e,r){
 		if(e){
 			catch_error(e);
 			callback(null);
@@ -2253,7 +2253,7 @@ function thirdpartylogin(mode,profile,token,callback){
 						catch_error(e1);
 						callback(null);
 					}else{
-						var user = {'email':email,'name':name,'admin':0,'sessionID':sessionID};
+						var user = {authId : id, authMethod : mode,'email':email,'name':name,'admin':0,'sessionID':sessionID};
 						callback(user);
 					}
 				})
