@@ -307,10 +307,11 @@ function bindActivities(){
 									url : 'pingQ',
 									data : {mode : 'all', hashed_id : o.json.hashed_id},
 									success : function(p){
-										if(o.message=='failed'){
+										console.log(p)
+										if(p.message=='failed'){
 											info_modal(p.reason)
 										}else{
-											var jsonIn = {row:o.row,json:p}
+											var jsonIn = {row:o.row,json:p[0]}
 											$('#id_core_modal_activityPreviewer').find('div.modal-body').append(appendModalNews(jsonIn))
 											
 										}
@@ -358,6 +359,7 @@ function appendModalNews(o){
 	}else{
 		var auxClass;
 		var doNotShow = '';
+		var parsePreview = [];
 		switch(o.row.mode){
 			case 'add submit':
 				auxClass = 'primary';
@@ -381,6 +383,7 @@ function appendModalNews(o){
 				title = 'information';
 			break;
 		}
+		
 		appendString = 
 			'<div class = "row">'+
 				'<div class = "col-xs-12 col-sm-12 col-md-12 col-lg-12">'+
