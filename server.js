@@ -41,6 +41,14 @@ var verifyEmail = transporter.templateSender({
 	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
 })
 
+var thankyouEmail = transporter.templateSender({
+	subject : 'Confirmation of registration',
+	text : 'Dear {{username}}: \n\nThank you for registering. \n\nWe hate spam mails, too. We promise this is the last e-mail we will send.\n\n\n\n🐼',
+	html : 'Dear {{username}}: <br><br>Thank you for registering.  <br><br>We hate spam mails, too. We promise this is the last e-mail we will send.<br><br>🐼',
+},{
+	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
+})
+
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
 app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
@@ -855,23 +863,25 @@ io.on('connection',function(socket){
 			arrFlag.push(false);
 		})
 		for(var j = 0; j<arrImg.length; j++){
-			var styler;
+			var styler='';
 			arrImg[j].replace(/style\=\\?\".*?\\?\"/,function(s){
 				styler=s.replace(/style\=|\\\"/g,'');
 			})
 			arrImg[j].replace(/src\=\\?\".*?\\?\"/,function(s){
 				var imgUrl = s.replace(/src\=|\\\"/g,'')
+				
+				/* gm operations are asynch. if styler is in the loop then the width of all images will be the same */
+				jsonImgData[imgUrl]={};
+				jsonImgData[imgUrl]['style']=styler;
+				
 				gm(app.get('persistentDataDir')+imgUrl).size(function(e,v){
 					if(e&&e.code==1){
 						/* file cannot be found */
-						jsonImgData[imgUrl]={};
 					}else if(e){
 						catch_error(e);
 						callback(e);
 					}else{
-						jsonImgData[imgUrl]={};
 						jsonImgData[imgUrl]['dimension']=v;
-						jsonImgData[imgUrl]['style']=styler;
 						arrFlag.splice(0,1);
 						callToPdf(arrFlag,i,callback);
 					}
@@ -2578,12 +2588,20 @@ app.get('/verify',function(req,res){
 		}else{
 			if(r.affectedRows==1){
 				res.send('Thanks for verifying your e-mail address.')
+				thankyouEmail({
+					to : body.username,
+				},{
+					username : body.fullname,
+				},function(e1,i){
+					if(e){
+						catch_error(e1)
+					}
+				})
 			}else{
 				res.send('Your e-mail address was not verified. Perhaps try to register and verify it again?')
 			}
 		}
 	})
-	
 })
 
 /* routes auth local */

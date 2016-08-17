@@ -91,8 +91,9 @@
 				
 				$('#id_login_form_local').submit(function(e){
 					if($('#id_login_tab_register').parent().hasClass('active')){
-						e.preventDefault();
 						$('#id_login_btn_register').click();
+						e.preventDefault();
+						return;
 					}
 				
 					$('id_login_form_local input').parent().parent().removeClass('has-error');
@@ -169,7 +170,9 @@
 							url : '/localRegister',
 							data : json,
 							success : function(o){
-								console.log(o)
+								if(o.success){
+									info_modal('Please check your inbox for an e-mail of verification.')
+								}
 							}
 						})
 						
