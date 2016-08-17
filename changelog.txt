@@ -22,6 +22,10 @@ Backburner:
 Future updates:
 
 Change log
+v0.10.2 - 17/08/2016 - added left and right arrow support
+			- fixed img width bug
+			- fixed answer displaying incorrectly
+			
 v0.10.1 - 16/08/2016 - added local registration
 v0.10 - 14/08/2016 - fixed height of images
 			- redesigned reqlog requester

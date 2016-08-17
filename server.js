@@ -966,13 +966,21 @@ io.on('connection',function(socket){
 	
 	/* receive comments */
 	socket.on('send comment',function(i,callback){
-		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[socket.request.user.id,i.comment,i.target],function(e,r){
+		var user;
+		
+		if (socket.request.user.admin==9&&/^\{\{.*?\}\}/.test(i.comment)){
+			user = 'system';
+		}else{
+			user = socket.request.user.id;
+		}
+		
+		connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?)',[user,i.comment,i.target],function(e,r){
 			if(e){
 				catch_error(e)
 				callback(e)
 			}else{
 				var json = {
-					'user' : socket.request.user.id
+					'user' : user
 					}
 				callback(json)
 			}
@@ -1036,9 +1044,9 @@ io.on('connection',function(socket){
 	
 	socket.on('view submit',function(i,callback){
 		var optionalString = '';
-		if(/exhaustive/.test(socket.request.user.notes1)){
+		if(/exhaustive.*?;/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
-			socket.request.user.notes1.replace(/exhaustive.*/,function(s){
+			socket.request.user.notes1.replace(/exhaustive.*?;/,function(s){
 				var ssplit = s.split(/exhaustive|\r|\n|\r\n| /);
 				var optionFlag = true;
 				optionalString += ' id NOT IN ( '
@@ -1135,7 +1143,7 @@ io.on('connection',function(socket){
 					appendExhaustString += r[l].id;
 				}
 				
-				var notes1 = socket.request.user.notes1.replace(/exhaustive.*/,function(s){
+				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?;/,function(s){
 					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString;
 				});
 				
@@ -1188,8 +1196,8 @@ io.on('connection',function(socket){
 						if(e){
 							catch_error(e);
 						}else{
+							systemCommentLog(socket.request.user.id,r.insertId,{file:'file',action:'add',result:'pass'})
 							callback('Addition of question successful!');
-							
 							/* trash cleaning function here. do the rotation, remove the unneeded photos */
 						}
 					})
@@ -1197,14 +1205,15 @@ io.on('connection',function(socket){
 				if(o.error){
 					callback(o);
 				}else{
-					
 					connection.query(
 						'INSERT INTO table_masterquestions (hashed_id, subject, question, answer, space, mark,delete_flag) VALUES (?,?,?,?,?,?,1);',[i.hashed_id,i.subject,question,answer,i.space,i.mark],function(e,r){
 							if(e){
 								catch_error(e);
+							}else{
+								systemCommentLog(socket.request.user.id,r.insertId,{file:'file',action:'add',result:'approval'});
+								callback('Submission of question received. A moderator will assess the submission ASAP.');
 							}
 						})
-					callback('Submission of question received. A moderator will assess the submission ASAP.');
 				}
 			}
 		});
@@ -1290,6 +1299,7 @@ io.on('connection',function(socket){
 										if(e1){
 											catch_error(e1)
 										}else{
+											systemCommentLog(socket.request.user.id,r[0].id,{file:'categorise',action:i.mode,result:'pass',target_syl:i.target_syl,dp:i.lvl})
 											callback('successful!')
 										}
 									})
@@ -1299,6 +1309,7 @@ io.on('connection',function(socket){
 										if(e1){
 											catch_error(e1);
 										}else{
+											systemCommentLog(socket.request.user.id,r[0].id,{file:'categorise',action:i.mode,result:'pass',target_syl:i.target_syl,dp:i.lvl})
 											callback('successful!');
 										}
 									})
@@ -1316,7 +1327,14 @@ io.on('connection',function(socket){
 				if(o.error){
 					callback(o);
 				}else{
-					callback('pending approval.');
+				connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?;',i.hashed_id,function(e,r){
+						if(e){
+							catch_error(e)
+						}else{
+							systemCommentLog(socket.request.user.id,r[0].id,{file:'categorise',action:i.mode,result:'approval',oldTarget_syl:i.target_syl,oldDP:i.lvl})
+							callback('pending approval.');
+						}
+					})
 				}
 			}
 		});
@@ -1404,6 +1422,13 @@ io.on('connection',function(socket){
 						catch_error(e)
 						callback(e);
 					}else{
+						connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?',i.data.hashed_id,function(e1,r1){
+							if(e1){
+								catch_error(e1)
+							}else{
+								systemCommentLog(socket.request.user.id,r1[0].id,{file:'file',action:i.mode,result:'pass'})
+							}
+						})
 						callback(returnstring);
 					}
 				})
@@ -1411,7 +1436,14 @@ io.on('connection',function(socket){
 				if(o.error){
 					callback(o)
 				}else{
-					callback('Submission received. Pending approval.');
+					connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?',i.data.hashed_id,function(e1,r1){
+						if(e1){
+							catch_error(e1)
+						}else{
+							systemCommentLog(socket.request.user.id,r1[0].id,{file:'file',action:i.mode,result:'approval'})
+							callback('Submission received. Pending approval.');
+						}
+					})
 				}
 			}
 		})
@@ -1438,6 +1470,7 @@ function weighting_function(i){
 	return Math.exp(-i);
 }
 
+/* on everything except undos */
 function adminModDecide(decision,id,socket,cb){
 	connection.query('SELECT * FROM req_log WHERE id = ?',id,function(e,r){
 		if(e){
@@ -1454,6 +1487,29 @@ function adminModDecide(decision,id,socket,cb){
 					catch_error(e1)
 				}else{
 					if(decision=='reject'){
+						switch(r[0].mode){
+							case 'add submit':
+							case 'categorise':
+							case 'save':
+							case 'remove':
+								fs.readFile(app.get('persistentDataDir')+'reqlog/'+id+'.json',function(e2,d){
+									if(e2){
+										catch_error(e2)
+									}else{
+										var i = JSON.parse(d);
+										connection.query('SELECT id FROM table_masterquestions WHERE id = ?',i.hashed_id,function(e3,r3){
+											if(e3){
+												catch_eror(e3)
+											}else{
+												systemCommentLog(socket.request.user.id,r3[0].id,{file:'admin',decision:'reject',originalEvent:r[0].mode});
+											}
+										})
+									}
+								})
+							break;
+							default:
+							break;
+						}
 						cb({success:true})
 						return;
 					}
@@ -1462,9 +1518,34 @@ function adminModDecide(decision,id,socket,cb){
 						
 						if(e2){
 							catch_error(e2)
+							return;
 						}
 						
 						var i = JSON.parse(d);
+						
+						switch(r[0].mode){
+							case 'add submit':
+							case 'categorise':
+							case 'save':
+							case 'remove':
+								fs.readFile(app.get('persistentDataDir')+'reqlog/'+id+'.json',function(e2,d){
+									if(e2){
+										catch_error(e2)
+									}else{
+										var i = JSON.parse(d);
+										connection.query('SELECT id FROM table_masterquestions WHERE id = ?',i.hashed_id,function(e3,r3){
+											if(e3){
+												catch_eror(e3)
+											}else{
+												systemCommentLog(socket.request.user.id,r3[0].id,{file:'admin',decision:'approve',originalEvent:r[0].mode});
+											}
+										})
+									}
+								})
+							break;
+							default:
+							break;
+						}
 						
 						switch(r[0].mode){
 							case 'add dp':
@@ -2788,10 +2869,18 @@ app.get('/reqlog/*',checkAuth,function(req,res){
 	})
 })
 
+function systemCommentLog(user,target,mode){
+	//user = userId
+	//target = questionid
+	//mode.file=file => mode.action = add | save | remove; 
+	//mode.file=categorise => mode.action = delete | add; result= approval | pass; mode.target_syl mode.dp
+	//mode.file=admin =>mode.decision=approve | reject | undo; mode.originalEvent = add submit | categorise | save | remove
+}
+
 /* check if req has valid api key or if it's from local/trusted source */
 function checkAPI(req,res,next){
 	var ref = req.headers.referer;
-	if(/join\.examcopedia\.club/.test(ref)||/127\.0\.0\.1/.test(ref)){
+	if(/^http\:\/\/join\.examcopedia\.club/.test(ref)||/^http\:\/\/127\.0\.0\.1/.test(ref)){
 		return next();
 	}else{
 		if(req.body.apikey==''||req.body.apikey==undefined||req.body.apikey==0){

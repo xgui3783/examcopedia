@@ -33,7 +33,14 @@ mode : all will return ALL questions that satisfy the selection criteria.<br><br
 	]
 </pre>
 nb: <br>
-Returns array, <br>
-Space and note fields are mostly obsolete, <br>
-Be mindful of tags, in particular [imgFILENAME_jpg w=50] translates to GET(http://join.examcopedia.club/img/HASHED_ID/FILENAME.jpg), and set width to 50% <br>
-Other tags such as [sub THIS TEXT IS BEEN SUBBED],[sup SUPPED]. 
+returns array <br>
+decode tags: <br>
+[imgFILENAME_jpg w=50] translates to 
+<pre>
+GET
+http://join.examcopedia.club/img/HASHED_ID/FILENAME.jpg
+</pre> 
+and set width to 50% <br>
+[sub SUBSCRIPT]<br>
+[sup SUPERSCRIPT] <br>
+If error, res.error will be populated with the error message.

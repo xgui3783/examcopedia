@@ -64,7 +64,7 @@ $(document).ready(function(){
 		$('#id_core_well_chatterbox')
 			.css('top',parseInt($('#id_navbar_chatter').css('height'))+parseInt($('#id_navbar_chatter').offset().top))
 			.blur(function(){
-				console.log('chat blur')
+				
 			})
 			.on('shown.bs.collapse',function(){
 				$('#id_view_input_generalChatBox').focus();
@@ -646,6 +646,7 @@ $(document).ready(function(){
 						'<div class = "col-md-1" id = "id_core_div_previewmark"><strong><h4></h4></strong></div>'+
 					'</div>');
 			}
+			$('#id_core_textarea_qn').val($('#id_core_textarea_qn').val().replace(/\-\>/g,'➡').replace(/\<\-/g,'⬅').replace(/\<\-\>/g,'↔'))
 			$('#id_core_div_previewbody h4').html(parsing_preview($('#id_core_textarea_qn').val(),null));
 			
 			var space = 'spacesheader';
@@ -666,6 +667,7 @@ $(document).ready(function(){
 					.removeClass('hidden')
 					.html('<div class = "row"><div class = "col-md-2"><h4>Ans 5.</h4></div><div class = "col-md-9" id = "id_core_div_previewbody2"><h4></h4></div></div>');
 			}
+			$('#id_core_textarea_ans').val($('#id_core_textarea_ans').val().replace(/\-\>/g,'➡').replace(/\<\-/g,'⬅').replace(/\<\-\>/g,'↔'))
 			$('#id_core_div_previewbody2 h4').html(parsing_preview($('#id_core_textarea_ans').val(),null));
 		}
 	});
@@ -829,6 +831,9 @@ $(document).ready(function(){
 						socket.emit('categorise',json,function(o){
 							if(o=='successful!'){
 								_this.parent().remove();
+							}else if(o=='pending approval.'){
+								_this.parent().remove();
+								info_modal('Submission received. A moderator will review your request ASAP.')
 							}
 						})
 						return false;
@@ -859,6 +864,10 @@ $(document).ready(function(){
 							lvl : $(this).html().split(' ')[0]
 						}
 						socket.emit('categorise',json,function(o){
+							if(o.error){
+								info_modal(o.error);
+								return;
+							}
 							if(o=='successful!'){
 								if(ui.draggable.find('.class_cate_div_dp').length==0){
 									var appendDiv = '<div class = "class_cate_div_dp col-md-12"></div>';
@@ -878,10 +887,15 @@ $(document).ready(function(){
 									socket.emit('categorise',json,function(o){
 										if(o=='successful!'){
 											_this.parent().remove();
+										}else if(o=='pending approval.'){
+											_this.parent().remove();
+											info_modal('Submission received. A moderator will review your request ASAP.')
 										}
 									})
 									return false;
 								})
+							}else if(o=='pending approval.'){
+								info_modal('Submission received. A moderator will review your request ASAP.')
 							}
 						})
 					}
