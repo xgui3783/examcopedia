@@ -521,7 +521,7 @@ app.post('/ocr',function(req,res){
 					res.send(e);
 				}else{
 					var form2 = {
-						apikey : '0f9c664db188957',
+						apikey : authConfig.ocrspace.apikey,
 						file : fs.createReadStream('ocrStorage/'+tempFilename)
 					}
 					
@@ -2883,6 +2883,7 @@ function checkAPI(req,res,next){
 	if(/^http\:\/\/join\.examcopedia\.club/.test(ref)||/^http\:\/\/127\.0\.0\.1/.test(ref)){
 		return next();
 	}else{
+		console.log(req.body)
 		if(req.body.apikey==''||req.body.apikey==undefined||req.body.apikey==0){
 			res.send({error:'Error when searching api key.'})
 		}else{
