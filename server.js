@@ -862,31 +862,35 @@ io.on('connection',function(socket){
 			/* arrFlag gets populated. After asynch img size determined, they will be spliced away */
 			arrFlag.push(false);
 		})
-		for(var j = 0; j<arrImg.length; j++){
-			var styler='';
-			arrImg[j].replace(/style\=\\?\".*?\\?\"/,function(s){
-				styler=s.replace(/style\=|\\\"/g,'');
-			})
-			arrImg[j].replace(/src\=\\?\".*?\\?\"/,function(s){
-				var imgUrl = s.replace(/src\=|\\\"/g,'')
-				
-				/* gm operations are asynch. if styler is in the loop then the width of all images will be the same */
-				jsonImgData[imgUrl]={};
-				jsonImgData[imgUrl]['style']=styler;
-				
-				gm(app.get('persistentDataDir')+imgUrl).size(function(e,v){
-					if(e&&e.code==1){
-						/* file cannot be found */
-					}else if(e){
-						catch_error(e);
-						callback(e);
-					}else{
-						jsonImgData[imgUrl]['dimension']=v;
-						arrFlag.splice(0,1);
-						callToPdf(arrFlag,i,callback);
-					}
+		if(arrImg.length>0){
+			for(var j = 0; j<arrImg.length; j++){
+				var styler='';
+				arrImg[j].replace(/style\=\\?\".*?\\?\"/,function(s){
+					styler=s.replace(/style\=|\\\"/g,'');
 				})
-			})
+				arrImg[j].replace(/src\=\\?\".*?\\?\"/,function(s){
+					var imgUrl = s.replace(/src\=|\\\"/g,'')
+					
+					/* gm operations are asynch. if styler is in the loop then the width of all images will be the same */
+					jsonImgData[imgUrl]={};
+					jsonImgData[imgUrl]['style']=styler;
+					
+					gm(app.get('persistentDataDir')+imgUrl).size(function(e,v){
+						if(e&&e.code==1){
+							/* file cannot be found */
+						}else if(e){
+							catch_error(e);
+							callback(e);
+						}else{
+							jsonImgData[imgUrl]['dimension']=v;
+							arrFlag.splice(0,1);
+							callToPdf(arrFlag,i,callback);
+						}
+					})
+				})
+			}
+		}else{
+			callToPdf(arrFlag,i,callback)
 		}
 	})
 	
@@ -1907,7 +1911,7 @@ app.use(express.static('public'));
 function callToPdf(arrFlag,i,callback){
 	/* empty arrFlag indicates all of the image have been parsed */
 	if(arrFlag.length!=0){
-		return;
+		return false;
 	}
 	/* title page and other misc */
 	var doc = new PDFDoc({bufferPages : true});
@@ -2071,10 +2075,14 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 						percentWidth = s.replace(/width\:|%/g,'');
 					})
 				}
+				if(!percentWidth){
+					percentWidth = 1;
+				}
 				//full width = 400px
 				//thisImgData.dimension.width
 				var targetWidth = 400/100*percentWidth;
 				var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
+
 				height += targetHeight;	
 				arrAsyncCallBack.push(false);
 			});
@@ -2880,10 +2888,9 @@ function systemCommentLog(user,target,mode){
 /* check if req has valid api key or if it's from local/trusted source */
 function checkAPI(req,res,next){
 	var ref = req.headers.referer;
-	if(/^http\:\/\/join\.examcopedia\.club/.test(ref)||/^http\:\/\/127\.0\.0\.1/.test(ref)){
+	if(/^http\:\/\/join\.examcopedia\.club/.test(ref)){
 		return next();
 	}else{
-		console.log(req.body)
 		if(req.body.apikey==''||req.body.apikey==undefined||req.body.apikey==0){
 			res.send({error:'Error when searching api key.'})
 		}else{
