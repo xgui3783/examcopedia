@@ -1503,7 +1503,7 @@ function adminModDecide(decision,id,socket,cb){
 										var i = JSON.parse(d);
 										connection.query('SELECT id FROM table_masterquestions WHERE id = ?',i.hashed_id,function(e3,r3){
 											if(e3){
-												catch_eror(e3)
+												catch_error(e3)
 											}else{
 												systemCommentLog(socket.request.user.id,r3[0].id,{file:'admin',decision:'reject',originalEvent:r[0].mode});
 											}
@@ -1539,7 +1539,7 @@ function adminModDecide(decision,id,socket,cb){
 										var i = JSON.parse(d);
 										connection.query('SELECT id FROM table_masterquestions WHERE id = ?',i.hashed_id,function(e3,r3){
 											if(e3){
-												catch_eror(e3)
+												catch_error(e3)
 											}else{
 												systemCommentLog(socket.request.user.id,r3[0].id,{file:'admin',decision:'approve',originalEvent:r[0].mode});
 											}
@@ -3206,6 +3206,56 @@ app.get('/test',function(req,res){
 app.get('/changelog',function(req,res){
 	res.sendfile('changelog.txt');
 })
+
+app.get('/purge',checkAuth,function(req,res){
+	if(req.user.admin<9){
+		res.send('Why? How?')
+		return false;
+	}
+	fs.readdir(app.get('persistentDataDir')+'/img/',function(e,files){
+		if(e){
+			catch_error(e)
+			return false
+		}
+		for(var i = 0; i<files.length; i++){
+			if(files[i]=='banner'){
+				continue;
+			}
+			var stat = fs.statSync(app.get('persistentDataDir')+'/img/'+files[i])
+			if(stat.isDirectory()){
+				purge(files[i])
+			}
+		}
+	})
+})
+
+function purge(hashed_id){
+	connection.query('SELECT question, answer FROM table_masterquestions WHERE hashed_id = ?',hashed_id,function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			if(r.length!=1){
+				catch_error('purging hashed id return rows doesn\'t equal to 1.')
+				catch_error('r\.length\='+r.length)
+			}else{
+				var masterString = r[0].question+r[0].answer
+				var files = fs.readdirSync(app.get('persistentDataDir')+'/img/'+hashed_id)
+				
+				for(var j = 0; j<files.length; j++){
+					var searchString = files[j].substring(0,files[j].lastIndexOf('.'))+'_'+files[j].substring(files[j].lastIndexOf('.')+1)
+					var patt = new RegExp(searchString)
+					if(!patt.test(masterString)){
+						fs.unlink(app.get('persistentDataDir')+'/img/'+hashed_id+'/'+files[j],function(e){
+							if(e){
+								catch_error(e)
+							}
+						})
+					}
+				}
+			}
+		}
+	})
+}
 
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
