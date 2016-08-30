@@ -853,6 +853,7 @@ io.on('connection',function(socket){
 	
 	/* generate pdf */
 	socket.on('make pdf',function(i,callback){
+		console.log('make pdf')
 		/* need to parse async info, like image size */
 		var arrImg = [];
 		var arrFlag = [];

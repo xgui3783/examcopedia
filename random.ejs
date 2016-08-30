@@ -152,6 +152,7 @@ $(document).ready(function(){
 		json.options.noAnswer = true
 	}
 	socket.emit('make pdf',json,function(o){
+		console.log(o)
 		if(o.result=='success'){
 			window.location.href = o.url
 		}
