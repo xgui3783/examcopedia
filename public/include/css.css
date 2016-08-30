@@ -493,3 +493,26 @@ border-bottom: 1px solid #dedede;
 	cursor:pointer;
 	background-color:#f0f0f0;
 	}
+
+div#id_slider_div_sampler
+{
+background: url('../img/banner/sampler.jpg') no-repeat;
+background-size:cover;
+background-position:center;
+}
+
+	div#id_slider_div_sampler img
+	{
+	visibility:hidden;
+	}
+	
+	div#id_slider_div_sampler div
+	{
+	margin-top:-30%;
+	height:100%
+	}
+	
+	div#id_slider_div_sampler div a
+	{
+	margin-bottom:20px;	
+	}

@@ -552,7 +552,6 @@ var connection = mysql.createConnection({
 });
 
 io.on('connection',function(socket){
-	
 	/* check if db exist. if not, create db */
 	/* table_masterquestions */
 	connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "table_masterquestions"',function(e,r){
@@ -878,6 +877,11 @@ io.on('connection',function(socket){
 					gm(app.get('persistentDataDir')+imgUrl).size(function(e,v){
 						if(e&&e.code==1){
 							/* file cannot be found */
+							jsonImgData[imgUrl]['dimension']={}
+							jsonImgData[imgUrl]['dimension']['width']=400
+							jsonImgData[imgUrl]['dimension']['height']=200
+							arrFlag.splice(0,1);
+							callToPdf(arrFlag,i,callback);							
 						}else if(e){
 							catch_error(e);
 							callback(e);
@@ -1200,6 +1204,7 @@ io.on('connection',function(socket){
 						if(e){
 							catch_error(e);
 						}else{
+							purge(i.hashed_id)
 							systemCommentLog(socket.request.user.id,r.insertId,{file:'file',action:'add',result:'pass'})
 							callback('Addition of question successful!');
 							/* trash cleaning function here. do the rotation, remove the unneeded photos */
@@ -1214,6 +1219,7 @@ io.on('connection',function(socket){
 							if(e){
 								catch_error(e);
 							}else{
+								purge(i.hashed_id)
 								systemCommentLog(socket.request.user.id,r.insertId,{file:'file',action:'add',result:'approval'});
 								callback('Submission of question received. A moderator will assess the submission ASAP.');
 							}
@@ -1927,6 +1933,10 @@ function callToPdf(arrFlag,i,callback){
 	
 	var j = 1;
 	
+	
+	var iOptions = i.options
+	delete i.options
+	
 	for(var block in i){
 		
 		doc.addPage();
@@ -1962,6 +1972,32 @@ function callToPdf(arrFlag,i,callback){
 		doc.font('Times-Roman').text('Page '+ (k+1) + ' of '+ range.count,50,700,{width : doc.width, align:'center'});
 	}
 	
+	/* when pdf is done writing */
+	stream.on('finish',function(){
+		var json = {
+			result : 'success',
+			url : 'pdfout/'+pdfFilename,
+		}
+		callback(json);
+		setTimeout(function(){
+			fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
+				if(e){
+					catch_error(e);
+				}
+			})
+		},1000*60*30)
+	})
+	
+	/* if noAnswer is set to true, just finish the stream */
+	if(iOptions){
+		if(iOptions.noAnswer){
+			if(iOptions.noAnswer==true){
+				docEnd(arrAsyncCallBack,doc);
+				return;
+			}
+		}
+	}
+	
 	/* start to write the answers */
 	doc.addPage();
 	pdfNormalTitle(doc,'Answer Keys');
@@ -1990,21 +2026,7 @@ function callToPdf(arrFlag,i,callback){
 		}
 	}
 	
-	/* when pdf is done writing */
-	stream.on('finish',function(){
-		var json = {
-			result : 'success',
-			url : 'pdfout/'+pdfFilename,
-		}
-		callback(json);
-		setTimeout(function(){
-			fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
-				if(e){
-					catch_error(e);
-				}
-			})
-		},1000*60*30)
-	})
+	/* after answers has been written */
 	docEnd(arrAsyncCallBack,doc);
 }
 
@@ -2047,7 +2069,6 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 	doc.fontSize(12);
 	
 	var qBodyTrimSplitFlag = true;
-	
 	var qBodyTrim = jsonWriteToPDF[target].replace(/<h4>|<\/h4>|&nbsp;|<\/div>|<div class = "row">|<div class="row".*?>/g,'');
 	
 	qBodyTrim = qBodyTrim.replace(/\<br\>\(.?.?.\)/g,function(s){
@@ -2134,8 +2155,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 				while(obj[frag].search(pattReplAll)>-1){
 					var index = obj[frag].search(pattReplAll);
 					if(boxLines!=0&&obj[frag].search('<div class="col-md-12 spaces_box">')!=0){
-						doc.rect(100,qDocY+24,400,boxLines*24).stroke();
-						qDocY += boxLines * 24;
+						doc.rect(100,qDocY,400,boxLines*24).stroke();
+						qDocY += boxLines * 24 + 24;
 						boxLines = 0;
 					}
 					if(index==0){
@@ -2184,8 +2205,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 									doc.fontSize(12);
 								break;
 								case '<div class="col-md-12 spaces_lines">':
-									qDocY += 24;
 									doc.moveTo(100,qDocY+14).lineTo(500,qDocY+14).stroke();
+									qDocY += 20;
 									
 								break;
 								case '<div class="col-md-12 spaces_box">':
@@ -2259,8 +2280,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 				}
 				
 				if(boxLines!=0){
-					doc.rect(100,qDocY+24,400,boxLines*24).stroke();
-					qDocY += boxLines * 24;
+					doc.rect(100,qDocY,400,boxLines*24).stroke();
+					qDocY += boxLines * 24 + 24;
 					boxLines = 0;
 				}
 				
@@ -3203,15 +3224,48 @@ app.get('/test',function(req,res){
 	*/
 })
 
+app.get('/random',function(req,res){
+	getRandom(req.query.v,res)
+})
+
+function getRandom(v,res){
+	switch(v){
+		case 'physics':
+		case 'chemistry':
+		case 'biology':
+		case 'test':
+			connection.query('SELECT hashed_id,question,mark FROM table_masterquestions WHERE subject = ? AND delete_flag = 0;',v,function(e,r){
+				if(e){
+					catch_error(e)
+					res.send(e)
+				}else{
+					if(r.length==0){
+						res.send('Where did all the questions go?')
+					}else{
+						res.render('../random',{
+							arrQuestions : JSON.stringify(r)
+						})
+					}
+				}
+			})
+		break;
+		default:
+			res.send('You sure you are at the right place?')
+		break;
+	}
+}
+
 app.get('/changelog',function(req,res){
 	res.sendfile('changelog.txt');
 })
 
+/*
 app.get('/purge',checkAuth,function(req,res){
 	if(req.user.admin<9){
 		res.send('Why? How?')
 		return false;
 	}
+	res.send('Ok')
 	fs.readdir(app.get('persistentDataDir')+'/img/',function(e,files){
 		if(e){
 			catch_error(e)
@@ -3228,6 +3282,7 @@ app.get('/purge',checkAuth,function(req,res){
 		}
 	})
 })
+*/
 
 function purge(hashed_id){
 	connection.query('SELECT question, answer FROM table_masterquestions WHERE hashed_id = ?',hashed_id,function(e,r){
