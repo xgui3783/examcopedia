@@ -79,7 +79,8 @@ io.use(passportSocketIO.authorize({
 		/* funciton to call when passport socketio auth succeeds. needs to call accept(); */
 		accept();
 		},
-	fail : function(obj){
+	fail : function(data,message,error,accept){
+		accept(null,!error)
 		/* function to call when passport socket io auth fails for whatever reason */
 		},
 }))
@@ -552,6 +553,7 @@ var connection = mysql.createConnection({
 });
 
 io.on('connection',function(socket){
+	
 	/* check if db exist. if not, create db */
 	/* table_masterquestions */
 	connection.query('SELECT TABLE_NAME FROM information_schema.tables WHERE TABLE_SCHEMA = "'+app.get('mysqldb')+'" AND TABLE_NAME = "table_masterquestions"',function(e,r){
@@ -853,7 +855,6 @@ io.on('connection',function(socket){
 	
 	/* generate pdf */
 	socket.on('make pdf',function(i,callback){
-		console.log('make pdf')
 		/* need to parse async info, like image size */
 		var arrImg = [];
 		var arrFlag = [];
@@ -898,8 +899,6 @@ io.on('connection',function(socket){
 			callToPdf(arrFlag,i,callback)
 		}
 	})
-	
-	/* user login db. to be implemented */
 	
 	/* retrieve general chat */
 	socket.on('retrieve general chat',function(callback){
@@ -2068,7 +2067,6 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 	
 	var lineHeight = 12;
 	doc.fontSize(12);
-	
 	var qBodyTrimSplitFlag = true;
 	var qBodyTrim = jsonWriteToPDF[target].replace(/<h4>|<\/h4>|&nbsp;|<\/div>|<div class = "row">|<div class="row".*?>/g,'');
 	
@@ -2863,7 +2861,7 @@ app.get('/mobileupload',function(req,res){
 	res.sendfile('mobileupload.html');
 });
 
-app.get('/pdfout/*',checkAuth,function(req,res){
+app.get('/pdfout/*',function(req,res){
 	fs.stat(app.get('persistentDataDir')+req.url,function(e,s){
 		if(e){
 			res.send('no file found')
@@ -3244,7 +3242,7 @@ function getRandom(v,res){
 					}else{
 						
 						res.render('../random',{
-							arrQuestions : JSON.stringify(shuffleArray(r))
+							arrQuestions : JSON.stringify(shuffleArray(r).slice(0,5))
 						})
 					}
 				}
