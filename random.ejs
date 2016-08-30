@@ -72,7 +72,7 @@ function parsing_img(i,h_id){
 	var filename = isplit[0].substring(3,isplit[0].lastIndexOf('_'));
 	var fileextension = isplit[0].substring(isplit[0].lastIndexOf('_')+1);
 	var returnstring = '<img class = "col-md-12" src="img/'+ h_id +'/'+filename+'.'+fileextension+'">';
-	console.log('img')
+	
 	returnstring = returnstring.slice(0,returnstring.indexOf(' style="'))+'>';
 	if(i.replace(/\[|\]/g,'').split(' ').length>1){
 		for(var j=0;j<i.replace(/\[|\]/g,'').split(' ').length;j++){
@@ -152,6 +152,7 @@ setTimeout(function(){
 		json.options.noAnswer = true
 	}
 	socket.emit('make pdf',json,function(o){
+		console.log(o)
 		if(o.result=='success'){
 			window.location.href = o.url
 		}

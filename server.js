@@ -3233,7 +3233,6 @@ function getRandom(v,res){
 		case 'physics':
 		case 'chemistry':
 		case 'biology':
-		case 'test':
 			connection.query('SELECT hashed_id,question,mark FROM table_masterquestions WHERE subject = ? AND delete_flag = 0;',v,function(e,r){
 				if(e){
 					catch_error(e)
@@ -3242,15 +3241,16 @@ function getRandom(v,res){
 					if(r.length==0){
 						res.send('Where did all the questions go?')
 					}else{
+						
 						res.render('../random',{
-							arrQuestions : JSON.stringify(r)
+							arrQuestions : JSON.stringify(shuffleArray(r))
 						})
 					}
 				}
 			})
 		break;
 		default:
-			res.send('You sure you are at the right place?')
+			res.redirect('/login')
 		break;
 	}
 }
