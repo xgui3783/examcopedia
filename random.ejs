@@ -155,6 +155,7 @@
 				json.options = {}
 				json.options.noAnswer = true
 			}
+			console.log(json)
 			socket.emit('make pdf',json,function(o){
 				if(o.result=='success'){
 					window.location.href = o.url
@@ -166,7 +167,7 @@
 </head>
 <body>
 Your PDF is being generated. Please wait.
-<div  id = "guinea">
+<div style="display:none" id = "guinea">
 </div>
 </body>
 </html>

@@ -3258,6 +3258,49 @@ app.get('/changelog',function(req,res){
 	res.sendfile('changelog.txt');
 })
 
+app.get('/trim',checkAuth,function(req,res){
+	if(req.user.admin<9){
+		res.send('Why? How?')
+		return false;
+	}
+	trim();
+	res.send('OK')
+	
+})
+
+function trim(){
+	connection.query('SELECT * FROM table_masterquestions',function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			for(var i = 0; i<r.length; i++){
+				if(r[i].space!=''){
+					var flag = false
+					var newSpace = ''
+					var space = r[i].space.split('_')
+					for(var j = 1; j<space.length; j++){
+						if(space[j].split('.')[0]==''){
+							continue
+						}else{
+							flag = true
+							newSpace += '[space '+ space[j].split('.')[0] + ' '+space[j].split('.')[1]+']'
+						}
+					}
+					if(flag){
+						r[i].space = ''
+						r[i].question += newSpace
+						connection.query('UPDATE table_masterquestions SET ? WHERE id = ?',[r[i],r[i].id],function(e1,r1){
+							if(e1){
+								catch_error(e1)
+							}
+						})
+					}
+				}
+			}
+		}
+	})
+}
+
 /*
 app.get('/purge',checkAuth,function(req,res){
 	if(req.user.admin<9){
@@ -3281,7 +3324,6 @@ app.get('/purge',checkAuth,function(req,res){
 		}
 	})
 })
-*/
 
 function purge(hashed_id){
 	connection.query('SELECT question, answer FROM table_masterquestions WHERE hashed_id = ?',hashed_id,function(e,r){
@@ -3311,6 +3353,7 @@ function purge(hashed_id){
 	})
 }
 
+*/
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
 
