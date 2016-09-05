@@ -2111,16 +2111,16 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 				/* img info should be in jsonImgData */
 				var objId = v.replace(/src\=|\"/g,'');
 				var thisImgData = jsonImgData[objId];
-				var percentWidth;
+				var percentWidth=0;
 				if(/width/.test(thisImgData.style)){
 					thisImgData.style.replace(/width\:.*?\%/,function(s){
 						percentWidth = s.replace(/width\:|%/g,'');
 					})
 				}
-				if(!percentWidth){
-					percentWidth = 1;
+				if(percentWidth==0){
+					percentWidth = 100;
 				}
-				//full width = 400px
+				//full width = 400pt
 				//thisImgData.dimension.width
 				var targetWidth = 400/100*percentWidth;
 				var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
