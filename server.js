@@ -22,8 +22,7 @@ var passportSocketIO = require('passport.socketio');
 var nodemailer = require('nodemailer');
 
 var logos = [
-	'join.examcopedia.club',
-	'deal.studywild.cards'
+	'join.examcopedia.club'
 	];
 
 
@@ -1920,7 +1919,10 @@ function callToPdf(arrFlag,i,callback){
 		return false;
 	}
 	/* title page and other misc */
-	var doc = new PDFDoc({bufferPages : true});
+	var doc = new PDFDoc({
+		bufferPages : true,
+		margins : pdfConfig.newPage.margin
+		});
 	var pdfFilename = String(Date.now())+'.pdf';
 	var stream = doc.pipe(fs.createWriteStream(app.get('persistentDataDir')+'pdfout/'+ pdfFilename));
 	docy = doc.y+20;
@@ -1947,8 +1949,8 @@ function callToPdf(arrFlag,i,callback){
 			j++;
 			
 			doc.addPage();
-			doc.fontSize(12).font('Times-Roman');
-			doc.lineWidth(0.3);
+			doc.fontSize(14).font('Times-Roman');
+			doc.lineWidth(pdfConfig.lineWidth);
 			docy = doc.y + 20;
 		}
 		
@@ -1965,11 +1967,11 @@ function callToPdf(arrFlag,i,callback){
 	//doc.switchToPage(idx) //0 indexed
 	for(var k=1; k<range.count; k++){
 		doc.switchToPage(k);
-		doc.fontSize(12);
-		doc.moveTo(50,70).lineTo(570,70).stroke();
-		doc.font('Times-Italic').text(logo,50,55,{width : doc.width, align:'center'});
-		doc.moveTo(50,690).lineTo(570,690).stroke();
-		doc.font('Times-Roman').text('Page '+ (k+1) + ' of '+ range.count,50,700,{width : doc.width, align:'center'});
+		doc.fontSize(11).opacity(pdfConfig.headerFooterOpacity);
+		doc.moveTo(100,50).lineTo(500,50).undash().stroke();
+		doc.font('Times-Italic').text(logo,50,38,{width : doc.width, align:'center'});
+		doc.moveTo(100,730).lineTo(500,730).stroke();
+		doc.font('Times-Roman').text('Page '+ (k+1) + ' of '+ range.count,50,735,{width : doc.width, align:'center'});
 	}
 	
 	/* when pdf is done writing */
@@ -2017,7 +2019,7 @@ function callToPdf(arrFlag,i,callback){
 			
 			doc.addPage();
 			doc.fontSize(12).font('Times-Roman');
-			doc.lineWidth(0.3);
+			doc.lineWidth(pdfConfig.lineWidth);
 			docy = doc.y + 20;
 		}
 		
@@ -2054,7 +2056,7 @@ function pdfTitlePage(doc,title){
 	doc.text('panda@pandamakes.com.au');
 	
 	doc.fontSize(12).font('Times-Roman');
-	doc.lineWidth(0.3);
+	doc.lineWidth(pdfConfig.lineWidth);
 }
 
 function pdfNormalTitle(doc,title){
@@ -2063,10 +2065,30 @@ function pdfNormalTitle(doc,title){
 	})
 }
 
+var pdfConfig = {
+	lineHeight : 12,
+	bodyTextSize : 10,
+	lineWidth : 0.0001,
+	dashLength : 1,
+	dashSpace : 2,
+	newLine : false,
+	headerFooterOpacity : 0.3,
+	newPage : {
+		margin : {
+			left : 24,
+			right : 24,
+			top : 48,
+			bottom : 36
+		}
+	}
+}
+
+/* A4 is 595 x 842 pts */
+
 function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 	
 	var lineHeight = 12;
-	doc.fontSize(12);
+	doc.fontSize(pdfConfig.bodyTextSize);
 	var qBodyTrimSplitFlag = true;
 	var qBodyTrim = jsonWriteToPDF[target].replace(/<h4>|<\/h4>|&nbsp;|<\/div>|<div class = "row">|<div class="row".*?>/g,'');
 	
@@ -2106,13 +2128,13 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 				height += targetHeight;	
 				arrAsyncCallBack.push(false);
 			});
-			if(height > 690){
+			if(height > 750){
 				doc.addPage();
 				docy = doc.y + 20;
 			}
 		}else{
 		/* if there are no images in this block */
-			if((docy+lines*lineHeight)>690){
+			if((docy+lines*lineHeight)>750){
 				doc.addPage();
 				docy = doc.y + 20;
 			}
@@ -2154,14 +2176,20 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 				while(obj[frag].search(pattReplAll)>-1){
 					var index = obj[frag].search(pattReplAll);
 					if(boxLines!=0&&obj[frag].search('<div class="col-md-12 spaces_box">')!=0){
+						if(pdfConfig.newLine){
+							qDocY += pdfConfig.lineHeight+8;
+						}else{
+							qDocY += 2 * pdfConfig.lineHeight+3;
+						}
 						doc.rect(100,qDocY,400,boxLines*24).stroke();
-						qDocY += boxLines * 24 + 24;
+						pdfConfig.newLine = false;
 						boxLines = 0;
 					}
 					if(index==0){
 						/* implement drawing answering spaces for lines boxes and blank spaces */
 						/* need switch statement to find if it's newline or imgtag or space tag */
 						obj[frag] = obj[frag].replace(pattReplAll,function(s){
+							
 							switch(s){
 								case '<br>':
 								case '<div class="col-md-12 spaces_blank">':
@@ -2170,6 +2198,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 										width : 400,
 										continued : false
 									});
+									
+									pdfConfig.newLine = true;
 									
 									//so that there are no more than 3 consecutive new line characters
 									if(newLineCounter<2){
@@ -2188,31 +2218,42 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 									})
 								break;
 								case '<sup>':
+									pdfConfig.newLine = false;
 									qDocY -= 3;
-									doc.fontSize(9);								
+									doc.fontSize(pdfConfig.bodyTextSize-2);								
 								break;
 								case '</sup>':
+									pdfConfig.newLine = false;
 									qDocY += 3;
-									doc.fontSize(12);
+									doc.fontSize(pdfConfig.bodyTextSize);
 								break;
 								case '<sub>':
+									pdfConfig.newLine = false;
 									qDocY += 3;
-									doc.fontSize(9);
+									doc.fontSize(pdfConfig.bodyTextSize-2);
 								break;
 								case '</sub>':
+									pdfConfig.newLine = false;
 									qDocY -= 3;
-									doc.fontSize(12);
+									doc.fontSize(pdfConfig.bodyTextSize);
 								break;
 								case '<div class="col-md-12 spaces_lines">':
-									doc.moveTo(100,qDocY+14).lineTo(500,qDocY+14).stroke();
-									qDocY += 20;
+									if(pdfConfig.newLine){
+										qDocY += pdfConfig.lineHeight+8;
+									}else{
+										qDocY += 2 * pdfConfig.lineHeight+3;
+									}
+									doc.moveTo(100,qDocY).lineTo(500,qDocY).dash(pdfConfig.dashLength,pdfConfig.dashSpace).stroke();
+									pdfConfig.newLine = false;
 									
 								break;
 								case '<div class="col-md-12 spaces_box">':
+									pdfConfig.newLine = false;
 									boxLines++;
 								break;
 								default:
 								/* img tag */
+									pdfConfig.newLine = true;
 									var imageFilename = s.split('src="')[1].split('"')[0];
 									try{
 										var stat = fs.statSync(app.get('persistentDataDir')+imageFilename);
@@ -2235,7 +2276,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 										doc.image(app.get('persistentDataDir')+'img/imageunlinked.png',100,qDocY,{fit : [400,200]});
 										imgFullDir = app.get('persistentDataDir')+'img/imageunlinked.png';
 									}
-									qDocY += 15;
+									qDocY += 40;
 									arrAsyncCallBack.splice(0,1);
 									/*
 									// cannot invoke async, as writing pdf is either sync or async and asyc obtaining dimensions ruins the format
@@ -2272,6 +2313,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 						
 						//reset new line counter so new new line characters can be drawn
 						newLineCounter = 0;
+						pdfConfig.newLine = false;
 						
 						obj[frag] = obj[frag].substring(index);
 						qDocY = doc.y;

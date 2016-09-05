@@ -1031,6 +1031,7 @@ function catego(){
 						$(this).animate({'opacity':'0.6'},400,function(){})						
 						})
 					.off('mousedown').on('mousedown',function(e){
+						$(this).css('cursor','-webkit-grabbing')
 						e.preventDefault();
 						/*
 						$('#id_cate_canvas_grabbingAid').removeClass('hidden');
@@ -1045,6 +1046,9 @@ function catego(){
 							$('#id_cate_canvas_grabbingAid').addClass('hidden');
 						})
 						*/
+					})
+					.off('mouseup').on('mouseup',function(){
+						$(this).css('cursor','-webkit-grab')
 					})
 					.draggable({
 						revert : true,
