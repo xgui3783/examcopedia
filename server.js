@@ -3366,6 +3366,7 @@ app.get('/purge',checkAuth,function(req,res){
 		}
 	})
 })
+*/
 
 function purge(hashed_id){
 	connection.query('SELECT question, answer FROM table_masterquestions WHERE hashed_id = ?',hashed_id,function(e,r){
@@ -3377,7 +3378,12 @@ function purge(hashed_id){
 				catch_error('r\.length\='+r.length)
 			}else{
 				var masterString = r[0].question+r[0].answer
-				var files = fs.readdirSync(app.get('persistentDataDir')+'/img/'+hashed_id)
+				try{
+					var files = fs.readdirSync(app.get('persistentDataDir')+'/img/'+hashed_id)
+				}catch(error){
+					catch_error(error)
+					return;
+				}
 				
 				for(var j = 0; j<files.length; j++){
 					var searchString = files[j].substring(0,files[j].lastIndexOf('.'))+'_'+files[j].substring(files[j].lastIndexOf('.')+1)
@@ -3395,7 +3401,7 @@ function purge(hashed_id){
 	})
 }
 
-*/
+
 app.set('port', process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 3002 );
 app.set('ip', process.env.OPENSHIFT_NODEJS_IP || "127.0.0.1");
 
