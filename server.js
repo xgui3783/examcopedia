@@ -631,7 +631,6 @@ io.on('connection',function(socket){
 				})
 			break;
 			case 'undo':
-			
 				connection.query('SELECT * FROM req_log WHERE id = ?',json.target,function(e,r){
 					if(e){
 						catch_error(e);
@@ -665,6 +664,7 @@ io.on('connection',function(socket){
 												cb(e2);
 											}else{
 												cb({success:true})
+												systemCommentLogAdminUndo(socket.request.user.id,jsonData.hashed_id,r[0].mode)
 											}
 										})
 										
@@ -677,6 +677,7 @@ io.on('connection',function(socket){
 												cb(e2);
 											}else{
 												cb({success:true})
+												systemCommentLogAdminUndo(socket.request.user.id,jsonData.hashed_id,r[0].mode)
 											}
 										})
 									
@@ -714,6 +715,10 @@ io.on('connection',function(socket){
 													}else if(r2.length!=1){
 														cb({error:'Found multiple questions with the same hash_id'})
 													}else{
+														systemCommentLog(socket.request.user.id,r2[0].id,{
+															file : 'admin',
+															decision : 'undo',
+															originalEvent : 'categorise'})
 														connection.query('DELETE FROM ?? WHERE lvl = ? AND f_id = ?',['curriculum_'+jsonData.target_syl,jsonData.lvl,r2[0].id],function(e3,r3){
 															if(e3){
 																catch_error(e3);
@@ -733,6 +738,10 @@ io.on('connection',function(socket){
 													}else if(r2.length!=1){
 														cb({error:'Found multiple questions with the same hash_id'})
 													}else{
+														systemCommentLog(socket.request.user.id,r2[0].id,{
+															file : 'admin',
+															decision : 'undo',
+															originalEvent : 'categorise'})
 														connection.query('INSERT INTO ?? (lvl,f_id) VALUES (?,?);',['curriculum_'+jsonData.target_syl,jsonData.lvl,r2[0].id],function(e3,r3){
 															if(e3){
 																catch_error(e3);
@@ -768,6 +777,10 @@ io.on('connection',function(socket){
 														catch_error(e3);
 														cb(e3);
 													}else{
+														systemCommentLog(socket.request.user.id,newJsonData2.id,{
+															file : 'admin',
+															decision : 'undo',
+															originalEvent : 'save'})
 														cb({success:true})
 													}
 												})
@@ -921,7 +934,11 @@ io.on('connection',function(socket){
 					catch_error(e);
 					cb(e)
 				}else{
-					cb(r[0].displayName);
+					if(r.length!=1){
+						cb('User not found!');
+					}else{
+						cb(r[0].displayName);
+					}
 				}
 			})
 		}
@@ -2946,10 +2963,141 @@ app.get('/reqlog/*',checkAuth,function(req,res){
 	})
 })
 
+function systemCommentLogAdminUndo(userId,targetHashedId,mode){
+	connection.query('SELECT id FROM table_masterquestions WHERE hashed_id = ?',targetHashedId,function(e,r){
+		if(e){
+			catch_error(e)
+		}else if(r.length!=1){
+			catch_error('hash id not unique!'+targetHashedId)
+		}else{
+			systemCommentLog(userId,r[0].id,{
+				file : 'admin',
+				action : 'undo',
+				originalEvent : mode
+			})
+		}
+	})
+}
+
 function systemCommentLog(user,target,mode){
+	connection.query('SELECT hashed_id FROM table_masterquestions WHERE id = ?',target,function(e,r){
+		if(e){
+			catch_error(e)
+		}else{
+			var alertClass;
+			var comment = '<span class = "hidden class_core_span_userName">' + user + '</span>';
+			switch(mode.file){
+				case 'file':
+					switch(mode.action){
+						case 'add':
+							alertClass = 'info'
+							comment += ' added this question'
+						break;
+						case 'save':
+							alertClass = 'warning'
+							comment += ' updated this question'
+						break;
+						case 'remove':
+							alertClass = 'danger'
+							comment += ' removed this question'
+						break;
+						default:
+							comment += ' filed this question'
+						break;
+					}
+					switch(mode.result){
+						case 'pass':
+							comment += '.'
+						break;
+						case 'approval':
+							comment += ' pending approval.'
+						break;
+						default:
+							comment += ' with unknown consequences.'
+						break;
+					}
+				break;
+				case 'categorise':
+					switch(mode.action){
+						case 'add':
+							alertClass = 'success'
+							comment += ' categorised this question according to ' + mode.target_syl + ' under ' + mode.dp
+						break;
+						case 'delete':
+							alertClass = 'success'
+							comment += ' removed the categorisation of this question in ' + mode.target_syl + ' under ' + mode.dp
+						break;
+						default:
+							comment += ' categorised this question'
+						break;
+					}
+					switch(mode.result){
+						case 'pass':
+							comment += '.'
+						break;
+						case 'approval':
+							comment += ' pending approval.'
+						break;
+						default:
+							comment += ' with unknown consequences.'
+						break;
+					}
+				break;
+				case 'admin':
+					switch(mode.action){
+						case 'approve':
+							alertClass = 'danger'
+							comment += ' approved'
+						break;
+						case 'reject':
+							alertClass = 'danger'
+							comment += ' rejected'
+						break;
+						case 'undo':
+							alertClass = 'danger'
+							comment += ' undid'
+						break;
+						default:
+							comment += ' action admin power this question'
+						break;
+					}
+					switch(mode.originalEvent){
+						case 'add submit':
+							comment += ' the request to add this question'
+						break;
+						case 'categorise':
+							comment += ' the request to categorise this question.'
+						break;
+						case 'save':
+							comment += ' the request to update this question.'
+						break;
+						case 'remove':
+							comment += ' the request to delete this question.'
+						break;
+						default:
+							comment += ' with unknown targets.'
+						break;
+					}
+				break;
+				default:
+					comment += ' did something not quite right.'
+				break;
+			}
+			var json = {
+				username : "system",
+				ref : r[0].hashed_id,
+				comment : comment,
+			}
+			connection.query('INSERT INTO comment_db (username, comment, ref) VALUES (?,?,?);',[json.username,'{{' + alertClass + '}}'+json.comment,json.ref],function(e1,r1){
+				if(e1){
+					catch_error(e1)
+				}
+			})
+		}
+	})
 	//user = userId
 	//target = questionid
-	//mode.file=file => mode.action = add | save | remove; 
+	//mode.file=file => mode.action = add | save | remove; result = approval | pass
 	//mode.file=categorise => mode.action = delete | add; result= approval | pass; mode.target_syl mode.dp
 	//mode.file=admin =>mode.decision=approve | reject | undo; mode.originalEvent = add submit | categorise | save | remove
 }
@@ -3259,9 +3407,11 @@ app.get('/api',function(req,res){
 	})
 })
 
+/*
 app.get('/test',function(req,res){
 	res.send('hello!')
-	/*
+	return;
+	
 	fs.readFile(app.get('persistentDataDir')+'/reqlog/100_overwritten.json',function(e,d){
 		if(e){
 			catch_error(e)
@@ -3269,9 +3419,9 @@ app.get('/test',function(req,res){
 			res.send(JSON.parse(d))
 		}
 	})
-	*/
+	
 })
-
+*/
 app.get('/random',function(req,res){
 	getRandom(req.query.v,res)
 })
@@ -3307,6 +3457,7 @@ app.get('/changelog',function(req,res){
 	res.sendfile('changelog.txt');
 })
 
+/*
 app.get('/trim',checkAuth,function(req,res){
 	if(req.user.admin<9){
 		res.send('Why? How?')
@@ -3349,6 +3500,8 @@ function trim(){
 		}
 	})
 }
+
+*/
 
 /*
 app.get('/purge',checkAuth,function(req,res){

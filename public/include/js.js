@@ -1674,7 +1674,7 @@ function appendComment(name,comment,timestamp,target,animation){
 		})
 		appendCommentString = '<div class = "row">'+
 					'<div class = "alert alert-'+alertClass+'">System: '+
-						escapeHtml(alertComment)+
+						alertComment+
 						' <span class = "text-muted">(' + escapeHtml(timestamp.split('T')[0])+' '+escapeHtml(timestamp.split('T')[1].split('.')[0])+')</span>'+
 					'</div>'+
 				'</div>'
