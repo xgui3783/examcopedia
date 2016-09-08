@@ -22,7 +22,7 @@ var passportSocketIO = require('passport.socketio');
 var nodemailer = require('nodemailer');
 
 var logos = [
-	'join.examcopedia.club'
+	'join.examcopedia.club - crowd sourced, free forever'
 	];
 
 
@@ -2045,14 +2045,14 @@ var arrAns = [];
 var docy = 0;
 
 function pdfTitlePage(doc,title){
-	doc.image(app.get('persistentDataDir')+'img/logoLg.png',50,50,{fit : [100,100]});
-	doc.font('Times-Roman').fontSize(24).text('examcopedia',50,170);
-	doc.font('Helvetica').fontSize(50).text(title,50,300,{
+	doc.image(app.get('persistentDataDir')+'img/logoLg.png',50,50,{fit : [75,75]});
+	doc.font('Helvetica').fontSize(16).text('examcopedia',50,140);
+	doc.font('Times-Roman').fontSize(50).text(title,60,380,{
 		width : 500,
 	})
-	doc.font('Times-Roman').fontSize(16).text('Comments & Suggestions?',50,600);
-	doc.font('Times-Italic').fontSize(14);
-	doc.text('join.examcopedia.club/',70,doc.y);
+	doc.font('Times-Roman').fontSize(14).text('Comments & Suggestions?',60,680);
+	doc.font('Times-Italic').fontSize(12);
+	doc.text('join.examcopedia.club',80,doc.y);
 	doc.text('panda@pandamakes.com.au');
 	
 	doc.fontSize(12).font('Times-Roman');
@@ -2181,7 +2181,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 						}else{
 							qDocY += 2 * pdfConfig.lineHeight+3;
 						}
-						doc.rect(100,qDocY,400,boxLines*24).stroke();
+						doc.dash(pdfConfig.dashLength,pdfConfig.dashSpace).rect(100,qDocY,400,boxLines*24).stroke();
+						qDocY += boxLines*24+24;
 						pdfConfig.newLine = false;
 						boxLines = 0;
 					}
@@ -2321,8 +2322,14 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 				}
 				
 				if(boxLines!=0){
-					doc.rect(100,qDocY,400,boxLines*24).stroke();
-					qDocY += boxLines * 24 + 24;
+					if(pdfConfig.newLine){
+						qDocY += pdfConfig.lineHeight+8;
+					}else{
+						qDocY += 2 * pdfConfig.lineHeight+3;
+					}
+					doc.dash(pdfConfig.dashLength,pdfConfig.dashSpace).rect(100,qDocY,400,boxLines*24).stroke();
+					pdfConfig.newLine = false;
+					qDocY += boxLines*24+24;
 					boxLines = 0;
 				}
 				
