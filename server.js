@@ -1493,7 +1493,7 @@ function weighting_function(i){
 	/* try to return a monotoneous decreasing function, which is defined by all i>=0 */
 	/* this is because the weighing value is designed to be inversely proportional to the pick frequency */
 	
-	return Math.exp(1/i);
+	return Math.exp(1/(i+0.01));
 }
 
 /* on everything except undos */
