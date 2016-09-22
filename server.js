@@ -3193,7 +3193,7 @@ fs.stat(app.get('persistentDataDir')+'apilog',function(e,s){
 
 function writeAPICallLog(req,res,json){
 	var jsonIn = {
-		referer : req.referer,
+		referer : req.headers.referer,
 		request : req.body,
 		response : json
 		}
@@ -3298,7 +3298,7 @@ app.post('/pingQ',checkAPI,function(req,res){
 								case 'categorise':
 									var json  = {
 										method : 'random',
-										length : req.body.length
+										length : Math.min(req.body.length,r.length)
 									}
 									view_submit_filter_cb(json,r,function(o){
 										/* need to remove note */
