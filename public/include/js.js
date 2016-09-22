@@ -1749,7 +1749,7 @@ function bind_viewdiv_overlay(target){
 			$('#id_core_select_subject').val($(this).find('div#id_view_div_subject').html());
 			$('#id_core_textarea_qn').val(returnNewLine($(this).find('div#id_view_div_qnMarkdown').html()));
 			$('#id_core_textarea_ans').val(returnNewLine($(this).find('div#id_view_div_ansMarkdown').html()));
-			$('#id_core_input_marks').val($(this).find('div#id_view_div_mark').html());
+			$('#id_core_input_marks').val($(this).find('div#id_view_div_mark').text());
 			
 			/*
 			//instead of pinging the question, just get question and answer from local
@@ -2165,10 +2165,12 @@ function parsing_img(i,h_id){
 		var isplit = i.replace(/\[|\]/g,'').split(' ');
 		var filename = isplit[0].substring(3,isplit[0].lastIndexOf('_'));
 		var fileextension = isplit[0].substring(isplit[0].lastIndexOf('_')+1);
-		var returnstring = '<img class = "col-md-12" src = img/'+ h_id +'/'+filename+'.'+fileextension+'>';
+		var returnstring = '<img src = img/'+ h_id +'/'+filename+'.'+fileextension+'>';
 	}
 	
-	returnstring = returnstring.slice(0,returnstring.indexOf(' style="'))+'>';
+	if(returnstring.indexOf(' style="')>-1){		
+		returnstring = returnstring.slice(0,returnstring.indexOf(' style="'))+'>';
+	}
 	
 	if(i.replace(/\[|\]/g,'').split(' ').length>1){
 		for(var j=0;j<i.replace(/\[|\]/g,'').split(' ').length;j++){
