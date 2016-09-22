@@ -1493,7 +1493,7 @@ function weighting_function(i){
 	/* try to return a monotoneous decreasing function, which is defined by all i>=0 */
 	/* this is because the weighing value is designed to be inversely proportional to the pick frequency */
 	
-	return Math.exp(-i);
+	return Math.exp(1/i);
 }
 
 /* on everything except undos */
@@ -3215,7 +3215,6 @@ function writeAPICallLog(req,res,json){
 				catch_error(e);
 			}
 		})
-		
 		res.send(json);
 		
 	}else{
@@ -3298,7 +3297,7 @@ app.post('/pingQ',checkAPI,function(req,res){
 								case 'categorise':
 									var json  = {
 										method : 'random',
-										length : Math.min(r.length,req.body.length)
+										length : req.body.length
 									}
 									view_submit_filter_cb(json,r,function(o){
 										/* need to remove note */
@@ -3340,7 +3339,7 @@ app.post('/pingQ',checkAPI,function(req,res){
 					case 'categorise':
 						var json  = {
 							method : 'random',
-							length : Math.min(req.body.length,r.length)
+							length : req.body.length
 						}
 						view_submit_filter_cb(json,r,function(o){
 							writeAPICallLog(req,res,o);
