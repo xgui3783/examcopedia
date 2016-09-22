@@ -318,9 +318,21 @@
 					$('.class_view_btn_makePDF').removeClass('disabled');
 					info_modal(o.warning);
 				}else if(o.result=='success'){
-					$('.class_view_btn_makePDF').removeClass('disabled');
-					info_modal('PDF generated and opened in a new window.');
-					window.open(o.url,'_blank');	
+					if(o.URLCallback){
+						if(o.URLCallback=='failed'){
+							$('.class_view_btn_makePDF').removeClass('disabled');
+							info_modal('PDF generated and opened in a new window. However, URLCallback has failed.'+o.URLCallbackError);
+							window.open(o.url,'_blank');
+						}else if(o.URLCallback=='success'){
+							$('.class_view_btn_makePDF').removeClass('disabled');
+							info_modal('PDF generated and opened in a new window. URLCallback successful.');
+							window.open(o.url,'_blank');	
+						}
+					}else{
+						$('.class_view_btn_makePDF').removeClass('disabled');
+						info_modal('PDF generated and opened in a new window.');
+						window.open(o.url,'_blank');	
+					}
 				}
 			})
 		})

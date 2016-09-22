@@ -11,15 +11,18 @@ var rightMargin = 15;
 var ellipseW1 = 10;
 var ellipseW2 = 6;
 
+var shortCode;
+
 module.exports = function(socket,doc,pdfConfig,mode){
 	switch(mode){
 		case 'coverpage':
-			//doc.image(app.get('persistentDataDir')+'img/gened.png',50,50,{fit : [75,75]});
+			shortCode = 'P'+ makeid();
 			doc.image('./public/img/gened.png',50,50,{fit : [75,75]});
 			doc.font('Helvetica').fontSize(32).text('Generation Education',125,95);
 			doc.font('Times-Roman').fontSize(50).text('Mock Exam',60,380,{
 				width : 500,
 			})
+			doc.font('Times-Roman').fontSize(14).text('Short Code:'+shortCode,60,660);
 			doc.font('Times-Roman').fontSize(14).text('Powered by examcopedia',60,680);
 			doc.font('Times-Italic').fontSize(12);
 			doc.text('gen-ed.com.au',80,doc.y);
@@ -37,6 +40,7 @@ module.exports = function(socket,doc,pdfConfig,mode){
 		break;
 		case 'pre end':
 			doc.addPage();
+			doc.text('Short Code:'+shortCode,{align:'right'});
 			doc.image('./public/img/gened.png',50,50,{fit : [75,75]});
 			//doc.font('Helvetica').fontSize(10).text('Generation Education',50,120,{width:75, align:'center'});
 			doc.font('Helvetica').fontSize(32).text('Answer Sheet',125,95,{align:'left'});
@@ -65,6 +69,7 @@ module.exports = function(socket,doc,pdfConfig,mode){
 			
 		break;
 	}
+	return shortCode;
 }
 
 function drawCircle(left,top,idx,doc){
@@ -72,7 +77,7 @@ function drawCircle(left,top,idx,doc){
 	
 	for (var j = 0; j<4; j++){
 		doc.fillColor('#666').fontSize(8).text(mc[j],left+35+j*25,top,{width:ellipseW1*2,align:'center'});
-		doc.ellipse(left+35+j*25+ellipseW1,top+4,ellipseW1,ellipseW2)
+		doc.ellipse(left+35+j*25+ellipseW1,top+3,ellipseW1,ellipseW2)
 	}
 	
 	if((idx)%5==0){
@@ -80,6 +85,18 @@ function drawCircle(left,top,idx,doc){
 	}else{
 		doc.y += 5;
 	}
+}
+
+/* make 4 random characters */
+/* http://stackoverflow.com/a/1349426/6059235 */
+function makeid(){
+    var text = "";
+    var possible = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+
+    for( var i=0; i < 4; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
 }
 
 var mc = ['A','B','C','D'];
