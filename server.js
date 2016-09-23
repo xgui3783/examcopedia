@@ -2014,7 +2014,7 @@ function callToPdf(arrFlag,socket,i,callback){
 		}
 		if(/URLCallback\:/.test(socket.request.user.notes1)){
 			socket.request.user.notes1.replace(/URLCallback\:.*?;/,function(s){
-				var CBUrl = s.split(':')[1].replace(';','');
+				var CBUrl = s.split(/\:(.+)?/)[1].replace(';','');
 				var form2 = {
 					user : socket.request.user,
 					socketCall : i,
