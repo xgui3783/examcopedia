@@ -1765,7 +1765,7 @@ function view_submit_filter_cb(i,r,cb){
 			}
 			
 			var num = 0;
-			while(num<i.length&&r.length>0){
+			while(num<i.length&&r.length>0&&totalWeight>0){
 				var counting=0;
 				var dice = Math.random()*totalWeight;
 				var j = -1;
@@ -2014,7 +2014,7 @@ function callToPdf(arrFlag,socket,i,callback){
 		}
 		if(/URLCallback\:/.test(socket.request.user.notes1)){
 			socket.request.user.notes1.replace(/URLCallback\:.*?;/,function(s){
-				var CBUrl = s.split(':').replace(';','');
+				var CBUrl = s.split(':')[1].replace(';','');
 				var form2 = {
 					user : socket.request.user,
 					socketCall : i,
