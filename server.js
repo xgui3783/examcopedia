@@ -1957,7 +1957,7 @@ function callToPdf(arrFlag,socket,i,callback){
 	}
 	
 	if(socket.request.user.customPDF){
-		require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'coverpage');
+		CBData = require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'coverpage');
 	}else{
 		pdfTitlePage(doc,'Compiled Exam');
 	}
@@ -1998,7 +1998,7 @@ function callToPdf(arrFlag,socket,i,callback){
 		doc.fontSize(11).opacity(pdfConfig.headerFooterOpacity);
 		doc.moveTo(100,50).lineTo(500,50).undash().stroke();
 		if(socket.request.user.customPDF){
-			require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'header');
+			CBData = require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'header');
 		}else{
 			doc.font('Times-Italic').text(logo,50,38,{width : doc.width, align:'center'});
 		}
@@ -2012,29 +2012,36 @@ function callToPdf(arrFlag,socket,i,callback){
 			result : 'success',
 			url : 'pdfout/'+pdfFilename,
 		}
+		var CBUrl;
+		
 		if(/URLCallback\:/.test(socket.request.user.notes1)){
 			socket.request.user.notes1.replace(/URLCallback\:.*?;/,function(s){
 				var CBUrl = s.split(/\:(.+)?/)[1].replace(';','');
 				var form2 = {
-					user : socket.request.user,
-					socketCall : i,
+					user : JSON.stringify(socket.request.user),
+					socketCall : JSON.stringify(i),
 					CBData : CBData
 				}
-				request.post({url : CBUrl, formData : form2},function(e,h,b){
+				request.post({url : CBUrl, form : form2},function(e,h,b){
 					if(e){
 						catch_error(e);
 						json.URLCallback = 'failed';
-						json.URLCallbackError = e;
+						json.URLCallbackError = JSON.stringify(e);
 					}else{
-						json.URLCallback = 'success'
+						if(b.error){
+							json.URLCallback = 'failed';
+							json.URLCallbackError = b.error;
+						}else{
+							json.URLCallback = 'success'
+						}
 					}
 					callback(json)
 				})
-				
 			})
 		}else{
 			callback(json);
 		}
+			
 		setTimeout(function(){
 			fs.unlink(app.get('persistentDataDir')+'pdfout/'+pdfFilename,function(e){
 				if(e){
@@ -2049,7 +2056,7 @@ function callToPdf(arrFlag,socket,i,callback){
 		if(iOptions.noAnswer){
 			if(iOptions.noAnswer==true){
 				if(socket.request.user.customPDF){
-					require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'pre end');
+					CBData = require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'pre end');
 				}
 				docEnd(arrAsyncCallBack,doc);
 				return;
@@ -2087,7 +2094,7 @@ function callToPdf(arrFlag,socket,i,callback){
 	
 	/* after answers has been written */
 	if(socket.request.user.customPDF){
-		require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'pre end');
+		CBData = require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'pre end');
 	}
 	docEnd(arrAsyncCallBack,doc);
 }
@@ -2135,10 +2142,10 @@ var pdfConfig = {
 	headerFooterOpacity : 0.3,
 	newPage : {
 		margin : {
-			left : 24,
-			right : 24,
-			top : 48,
-			bottom : 36
+			left : 37,
+			right : 37,
+			top : 52,
+			bottom : 40
 		}
 	}
 }
@@ -2188,13 +2195,13 @@ function parseBody(jsonWriteToPDF,target,doc,arrAsyncCallBack){
 				height += targetHeight;	
 				arrAsyncCallBack.push(false);
 			});
-			if(height > 750){
+			if(height > 700){
 				doc.addPage();
 				docy = doc.y + 20;
 			}
 		}else{
 		/* if there are no images in this block */
-			if((docy+lines*lineHeight)>750){
+			if((docy+lines*lineHeight)>700){
 				doc.addPage();
 				docy = doc.y + 20;
 			}
@@ -2300,9 +2307,9 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 								break;
 								case '<div class="col-md-12 spaces_lines">':
 									if(pdfConfig.newLine){
-										qDocY += pdfConfig.lineHeight+8;
+										qDocY += pdfConfig.lineHeight+10;
 									}else{
-										qDocY += 2 * pdfConfig.lineHeight+3;
+										qDocY += 2 * pdfConfig.lineHeight + 3;
 									}
 									doc.moveTo(100,qDocY).lineTo(500,qDocY).dash(pdfConfig.dashLength,pdfConfig.dashSpace).stroke();
 									pdfConfig.newLine = false;
@@ -2408,7 +2415,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 			break;
 		}
 	}
-	docy = newdocy+15;
+	docy = newdocy+13;
 	return docy;
 }
 

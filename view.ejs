@@ -308,6 +308,7 @@
 					var questionNumber = 'question' + j;
 					json[blockNumber][questionNumber]={};
 					json[blockNumber][questionNumber]['questionNumber'] = rows.eq(j).children('div').eq(0).text();
+					json[blockNumber][questionNumber]['questionHashedId'] = rows.eq(j).attr('id');
 					json[blockNumber][questionNumber]['questionMark'] = rows.eq(j).children('div').eq(6).text();
 					json[blockNumber][questionNumber]['questionBody'] = rows.eq(j).children('div').eq(1).html();
 					json[blockNumber][questionNumber]['questionAnswer'] = rows.eq(j).children('div').eq(4).html();/*,rows.eq(j).attr('id');*/
