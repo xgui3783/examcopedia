@@ -3456,6 +3456,55 @@ app.get('/api',function(req,res){
 	})
 })
 
+app.post('/categoriseQ',checkAPI,function(req,res){
+	var hashedId = req.body.hashedId
+	var syl = 'curriculum_'+req.body.syl
+	
+	var query = '';
+	for(var i = 0; i<hashedId.length; i++){
+		if(query !=''){
+			query += ','
+		}
+		query += connection.escape(hashedId[i]) 
+	}
+	
+	connection.query(
+	'SELECT table_masterquestions.hashed_id, ??.lvl '+
+	'FROM table_masterquestions '+
+	'INNER JOIN ?? '+
+	'ON ??.f_id = table_masterquestions.id '+
+	'WHERE table_masterquestions.hashed_id IN ('+query+')',
+		[syl,syl,syl],
+		function(e1,r1){
+		if(e1){
+			catch_error(e1)
+		}else{
+			var query1 = ''
+			for(var j = 0; j<r1.length; j++){
+				if(query1!=''){
+					query1 += ','
+				}
+				query1 +=connection.escape(r1[j].lvl+'.info')
+			}
+			connection.query('SELECT lvl,description FROM ?? WHERE lvl IN ('+query1+')',syl,function(e,r){
+				if(e){
+					catch_error(e)
+				}else{
+					for(var l = 0; l<r1.length; l++){
+						for(var k = 0; k<r.length; k++){
+							if(r1[l].lvl+'.info'==r[k].lvl){
+								r1[l].description = r[k].description
+								break;
+							}
+						}
+					}
+					res.send(r1)
+				}
+			})
+		}
+	})
+})
+
 /*
 app.get('/test',function(req,res){
 	res.send('hello!')
