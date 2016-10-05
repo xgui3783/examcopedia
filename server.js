@@ -3457,8 +3457,6 @@ app.get('/api',function(req,res){
 })
 
 app.post('/categoriseQ',checkAPI,function(req,res){
-	console.log('categorising q')
-	
 	var hashedId = req.body.hashedId
 	var syl = 'curriculum_'+req.body.syl
 	
