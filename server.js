@@ -1071,7 +1071,7 @@ io.on('connection',function(socket){
 		if(/exhaustive\:.*?\;/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
 			socket.request.user.notes1.replace(/exhaustive\:.*?\;/,function(s){
-				var ssplit = s.relace(/\;/g,'').split(/exhaustive\:|\r|\n|\r\n| /);
+				var ssplit = s.replace(/\;/g,'').split(/exhaustive\:|\r|\n|\r\n| /);
 				var optionFlag = true;
 				optionalString += ' id NOT IN ( '
 				for(var j = 0; j<ssplit.length; j++){
