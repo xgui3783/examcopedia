@@ -1068,10 +1068,10 @@ io.on('connection',function(socket){
 	
 	socket.on('view submit',function(i,callback){
 		var optionalString = '';
-		if(/exhaustive.*?;/.test(socket.request.user.notes1)){
+		if(/exhaustive\:.*?\;/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
-			socket.request.user.notes1.replace(/exhaustive.*?;/,function(s){
-				var ssplit = s.split(/exhaustive|\r|\n|\r\n| /);
+			socket.request.user.notes1.replace(/exhaustive\:.*?\;/,function(s){
+				var ssplit = s.relace(/\;/g,'').split(/exhaustive\:|\r|\n|\r\n| /);
 				var optionFlag = true;
 				optionalString += ' id NOT IN ( '
 				for(var j = 0; j<ssplit.length; j++){
@@ -1167,7 +1167,7 @@ io.on('connection',function(socket){
 					appendExhaustString += r[l].id;
 				}
 				
-				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?;/,function(s){
+				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?\;/,function(s){
 					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString;
 				});
 				
