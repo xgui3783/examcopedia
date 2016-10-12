@@ -1167,8 +1167,8 @@ io.on('connection',function(socket){
 					appendExhaustString += r[l].id;
 				}
 				
-				var notes1 = socket.request.user.notes1.replace(/exhaustive.*?\;/,function(s){
-					return s.replace(/\r|\n|\r\n/,'') + ' ' + appendExhaustString;
+				var notes1 = socket.request.user.notes1.replace(/exhaustive\:.*?\;/,function(s){
+					return s.replace(/\;|\r|\n|\r\n/,'') + ' ' + appendExhaustString+';';
 				});
 				
 				connection.query('UPDATE user_db SET notes1=? WHERE email = ?',[notes1,socket.request.user.email],function(e1,r1){
