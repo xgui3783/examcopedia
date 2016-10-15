@@ -2230,8 +2230,8 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 
 		switch (frag) {
 			case 'questionNumber':
-				doc.text(obj[frag],50,docy,{
-					width : 50
+				doc.text(obj[frag],65,docy,{
+					width : 35
 				});
 			break;
 			case 'questionAnswer':
@@ -2334,7 +2334,7 @@ function writeToPDF(obj,doc,arrAsyncCallBack){
 										}
 										//full width = 400px
 										//thisImgData.dimension.width
-										var targetWidth = 400/100*percentWidth;
+										var targetWidth = Math.min(400/100*percentWidth,thisImgData.dimension.width);
 										var targetHeight = targetWidth /thisImgData.dimension.width * thisImgData.dimension.height;
 										doc.image(app.get('persistentDataDir')+imageFilename,100,qDocY,{fit : [targetWidth,targetHeight]});
 										imgFullDir = app.get('persistentDataDir')+imageFilename;
