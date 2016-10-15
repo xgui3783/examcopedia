@@ -1139,7 +1139,7 @@ io.on('connection',function(socket){
 	})
 	
 	socket.on('picked questions',function(input,callback){
-		
+		console.log(input.length)
 		var queryString='';
 		for (var j = 0; j<input.length; j++){
 			if(queryString!=''){
@@ -1167,15 +1167,21 @@ io.on('connection',function(socket){
 					appendExhaustString += r[l].id;
 				}
 				
-				var notes1 = socket.request.user.notes1.replace(/exhaustive\:.*?\;/,function(s){
-					return s.replace(/\;|\r|\n|\r\n/,'') + ' ' + appendExhaustString+';';
-				});
-				
-				connection.query('UPDATE user_db SET notes1=? WHERE email = ?',[notes1,socket.request.user.email],function(e1,r1){
-					if(e1){
-						catch_error(e1);
+				connection.query('SELECT * FROM user_db WHERE authMethod = ? AND email = ?',[socket.request.user.authMethod,socket.request.user.email],function(e2,r2){
+					if(e2){
+						catch_error(e2)
 					}else{
-						socket.request.user.notes1 = notes1;
+						var notes1 = r2[0].notes1.replace(/exhaustive\:.*?\;/,function(s){
+							return s.replace(/\;|\r|\n|\r\n/,'') + ' ' + appendExhaustString+';';
+						})
+						
+						connection.query('UPDATE user_db SET notes1=? WHERE authMethod = ? AND email = ?',[notes1,socket.request.user.authMethod,socket.request.user.email],function(e1,r1){
+							if(e1){
+								catch_error(e1);
+							}else{
+								socket.request.user.notes1 = notes1;
+							}
+						})
 					}
 				})
 			}
