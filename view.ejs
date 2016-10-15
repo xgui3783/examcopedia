@@ -299,6 +299,7 @@
 			}
 			$('.class_view_btn_makePDF').addClass('disabled');
 			var json = {};
+			var bookkeeper = []
 			var panelBody = $('#id_view_div_preview').find('div.panel-body');
 			for (var i = 0; i<panelBody.children('div.row').length;i++){
 				var blockNumber = 'block' + i;
@@ -312,8 +313,16 @@
 					json[blockNumber][questionNumber]['questionMark'] = rows.eq(j).children('div').eq(6).text();
 					json[blockNumber][questionNumber]['questionBody'] = rows.eq(j).children('div').eq(1).html();
 					json[blockNumber][questionNumber]['questionAnswer'] = rows.eq(j).children('div').eq(4).html();/*,rows.eq(j).attr('id');*/
+					
+					bookkeeper.push(rows.eq(j).attr('id'));
 				}
 			}
+			
+			/* important to keep track of the questions picked, for exhaustive method */
+			socket.emit('picked questions',bookkeeper,function(o){
+				
+			});
+			
 			socket.emit('make pdf',json,function(o){
 				if(o.warning){
 					$('.class_view_btn_makePDF').removeClass('disabled');

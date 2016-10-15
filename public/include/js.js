@@ -1856,13 +1856,11 @@ function shuffleArray(array) {
 
 /* according to mode and length, append row units to appropriate targets */
 function view_append_preview(mode, length, target, row){
-	var bookkeeper = [];
 	switch (mode){
 		case 'random':
 		case 'all':
 			for (var i=0;i<row.length;i++){
 				append_one(i+1,target,row[i]);
-				bookkeeper.push(row[i].hashed_id);
 			}
 		break;
 		case 'select':
@@ -1870,7 +1868,6 @@ function view_append_preview(mode, length, target, row){
 			if(decode_l==null){
 				for (var i=0;i<row.length;i++){
 					append_one(i+1,target,row[i]);
-					bookkeeper.push(row[i].hashed_id);
 				}
 			}else{
 				/* introduction of upper and lower bound, in case user inputted a number outside the bound */
@@ -1878,7 +1875,6 @@ function view_append_preview(mode, length, target, row){
 				var lower_bound = Math.min(Number(decode_l[0])-1,Number(row.length)-1);
 				for (var i=lower_bound;i<upper_bound;i++){
 					append_one(i+1,target,row[i]);
-					bookkeeper.push(row[i].hashed_id);
 				}
 			}
 		break;
@@ -1886,10 +1882,6 @@ function view_append_preview(mode, length, target, row){
 		break;
 	}
 	
-	/* important to keep track of the questions picked, for exhaustive method */
-	socket.emit('picked questions',bookkeeper,function(o){
-		
-	});
 }
 
 function decode_select(i){
