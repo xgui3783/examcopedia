@@ -493,6 +493,11 @@ border-bottom: 1px solid #dedede;
 	cursor:pointer;
 	background-color:#f0f0f0;
 	}
+	
+div.row.ui-sortable:nth-child(even)
+{
+	background-color:#eed
+}
 
 div#id_slider_div_sampler
 {

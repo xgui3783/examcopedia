@@ -1071,7 +1071,7 @@ io.on('connection',function(socket){
 		if(/exhaustive\:.*?\;/.test(socket.request.user.notes1)){
 			optionalString += ' AND ';
 			socket.request.user.notes1.replace(/exhaustive\:.*?\;/,function(s){
-				var ssplit = s.replace(/\;/g,'').split(/exhaustive\:|\r|\n|\r\n| /);
+				var ssplit = s.replace(/\;|\,/g,'').split(/exhaustive\:|\r|\n|\r\n| /);
 				var optionFlag = true;
 				optionalString += ' id NOT IN ( '
 				for(var j = 0; j<ssplit.length; j++){
@@ -1108,7 +1108,7 @@ io.on('connection',function(socket){
 				}
 			break;
 			case 'curriculum':
-				connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
+				connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl NOT LIKE "0%"AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
 					if(e){
 						catch_error(e);
 					}else{
@@ -1172,7 +1172,7 @@ io.on('connection',function(socket){
 						catch_error(e2)
 					}else{
 						var notes1 = r2[0].notes1.replace(/exhaustive\:.*?\;/,function(s){
-							return s.replace(/\;|\r|\n|\r\n/,'') + ' ' + appendExhaustString+';';
+							return s.replace(/\;|\r|\n|\r\n/,'') + ' ' + appendExhaustString+',;';
 						})
 						
 						connection.query('UPDATE user_db SET notes1=? WHERE authMethod = ? AND email = ?',[notes1,socket.request.user.authMethod,socket.request.user.email],function(e1,r1){
