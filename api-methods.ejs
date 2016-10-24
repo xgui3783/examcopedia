@@ -1,46 +1,95 @@
+<div class = "panel panel-default">
+	<div  >
+		<button data-target = "#api1" class = "btn btn-block btn-default" data-toggle = "collapse"><h2>Request Questions</h2></button>
+	</div>
+	<div id = "api1" class = "panel-body collapse">
+		<h3>request:</h3>
+		<pre>
+url : 'http://join.examcopedia.club/pingQ',
+type : 'post',
+data : {
+		apikey : YOUR-SECRET-KEY,
+		mode : 'random'|'all',
+		[subject : SUBJECT,]
+		[syllabus : SYLLABUS,
+			[dp : DP,]]
+		[hashed_id : HASHED_ID,]
+	}
+		</pre>
+		nb: <br>
+		[] are optional selection criteria.<br>
+		mode : random will respond with one random question (weighted) that satisfy the selection criteria<br>
+		mode : all will return ALL questions that satisfy the selection criteria.<br><br>
 
-<h3>request:</h3>
-<pre>
-	url : 'http://join.examcopedia.club/pingQ',
-	type : 'post',
-	data : {
-			apikey : YOUR-SECRET-KEY,
-			mode : 'random'|'all',
-			[subject : SUBJECT,]
-			[syllabus : SYLLABUS,
-				[dp : DP,]]
-			[hashed_id : HASHED_ID,]
-		}
-</pre>
-nb: <br>
-[] are optional selection criteria.<br>
-mode : random will respond with one random question (weighted) that satisfy the selection criteria<br>
-mode : all will return ALL questions that satisfy the selection criteria.<br><br>
-
-<h3>response:</h3>
-<pre>
-	[
-		{
-		subject : SUBJECT,
-		hashed_id : HASHED_ID,
-		question : QUESTION,
-		answer : ANSWER,
-		space : SPACE,
-		mark : MARK,
-		note : NOTE
-		},
-		...
-	]
-</pre>
-nb: <br>
-returns array <br>
-decode tags: <br>
-[imgFILENAME_jpg w=50] translates to 
-<pre>
+		<h3>response:</h3>
+		if error:
+		<pre>
+{
+	error : ERROR_MESSAGE,
+}
+		</pre>
+		else
+		<pre>
+\[
+	{
+	subject : SUBJECT,
+	hashed_id : HASHED_ID,
+	question : QUESTION,
+	answer : ANSWER,
+	space : SPACE,
+	mark : MARK,
+	note : NOTE
+	},
+	...
+\]
+		</pre>
+		nb: <br>
+		returns array <br>
+		decode tags: <br>
+		[imgFILENAME_jpg w=50] translates to 
+		<pre>
 GET
 http://join.examcopedia.club/img/HASHED_ID/FILENAME.jpg
-</pre> 
-and set width to 50% <br>
-[sub SUBSCRIPT]<br>
-[sup SUPERSCRIPT] <br>
-If error, res.error will be populated with the error message.
+		</pre> 
+		and set width to 50% <br>
+		[sub SUBSCRIPT]<br>
+		[sup SUPERSCRIPT] <br>
+
+	</div>
+</div>
+<div class = "panel panel-default">
+	<div >
+		<button data-target = "#api2" class = "btn btn-block btn-default" data-toggle = "collapse"><h2>Request Categorisation</h2></button>
+	</div>
+	<div id = "api2" class = "panel-body collapse">
+		<h3>request:</h3>
+		<pre>
+url : 'http://join.examcopedia.club/categoriseQ',
+type : 'post',
+data : {
+	apikey : YOUR-SECRET-KEY,
+	hashedId : \[HASHED_ID1,HASHED_ID2 ... \], /* nb: this field HAS to be an array. Even if you are only requesting a single hashed_id */
+	syl : SYLLABUS,
+	}
+		</pre>
+
+		<h3> response:</h3>
+		if error:
+		<pre>
+{
+	error: ERROR_MESSAGE,
+}
+		</pre>
+		else
+		<pre>
+\[
+{
+hashed_id : HASHED_ID1,
+lvl : CATEGORISATION,
+description : DESCRIPTION_OF_THE_CATEGORY,
+},
+...
+\]
+		</pre>
+	</div>
+</div>

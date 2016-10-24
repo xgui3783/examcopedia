@@ -2,7 +2,9 @@
 <html lang = "en">
 <head>
 <%- include('header') %>
-	
+	<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
 </head>
 <body>
 <%- include('modal') %>
@@ -39,7 +41,13 @@
 									<div class = "panel-body">
 										<div class = "row">
 											<div class = "form-group">
-												<label class = "control-label col-md-3" for = "id_core_select_syllabus">Syllabus <span id = "id_cate_tooltip_syllabusTooltip" class = "hovershow glyphicon glyphicon-question-sign" title = "Find all questions NOT already categorised under the selected syllabus."></span> </label>
+												<label class = "control-label col-md-3" for = "idSyllabusCtrl">Exclude syllabus</label>
+												<div class = "col-md-5">
+													<input id = "idSyllabusCtrl" type = "checkbox" data-toggle = "toggle"> <span id = "id_cate_tooltip_syllabusTooltip" class = "hovershow glyphicon glyphicon-question-sign" title = "If ON, search results will ONLY show questions ALREADY categorised in the syllabus.<br /><br /> If OFF, search results will ONLY show questions NOT YET categorised in the syllabus."></span> 
+												</div>
+											</div>
+											<div class = "form-group">
+												<label class = "control-label col-md-3" for = "id_core_select_syllabus">Syllabus </label>
 												<div class = "col-md-5">
 													<select class = "form-control" id = "id_core_select_syllabus">
 														<option></option>

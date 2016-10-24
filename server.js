@@ -3281,6 +3281,7 @@ app.post('/pingQ',checkAPI,function(req,res){
 						}
 						qs+=r0[i].f_id;
 					}
+					// qs = r0.join(',')
 					querystring1 = 'SELECT note,subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND id';
 					if(/not syllabus/.test(req.body.option)){
 						querystring1 += ' NOT';
@@ -3485,6 +3486,11 @@ app.post('/categoriseQ',checkAPI,function(req,res){
 		if(e1){
 			catch_error(e1)
 		}else{
+			
+			if(r1.length==0){
+				res.send({error:'hashed id(s) not found categorised in the syllabus'})
+			}
+			
 			var query1 = ''
 			for(var j = 0; j<r1.length; j++){
 				if(query1!=''){

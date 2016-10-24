@@ -989,10 +989,10 @@ function catego(){
 	
 	if($('.panel-success #id_core_select_syllabus').val().replace(/ /g,'')!=''){
 		json.syllabus = $('.panel-success #id_core_select_syllabus').val();
-		if(json.option==undefined){
-			json.option = 'not syllabus';
+		if($('#idSyllabusCtrl').is(':checked')){
+			json.option = 'only syllabus';
 		}else{
-			json.option +='not syllabus';
+			json.option = 'not syllabus';
 		}
 	}
 	
