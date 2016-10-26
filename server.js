@@ -2029,7 +2029,6 @@ function callToPdf(arrFlag,socket,i,callback){
 				return 'customCounter:'+newCounter+';'
 			})
 			socket.request.user.notes1 = newNote;
-			console.log(socket.request.user)
 			
 			connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?',[newNote,socket.request.user.id],function(e,r){
 				if(e){
