@@ -1952,6 +1952,7 @@ function callToPdf(arrFlag,socket,i,callback){
 	var arrAsyncCallBack = [];
 	var CBData;
 	
+	/* title, metadata */
 	if(/customPDF\:.*?;/.test(socket.request.user.notes1)){
 		socket.request.user.notes1.replace(/customPDF\:.*?;/,function(s){
 			socket.request.user.customPDF = s.split(':')[1].replace(';','');
@@ -1962,6 +1963,7 @@ function callToPdf(arrFlag,socket,i,callback){
 		doc.info['Author'] = 'examcopedia';			
 	}
 	
+	/* cover page */
 	if(socket.request.user.customPDF){
 		CBData = require('./'+socket.request.user.customPDF)(socket,doc,pdfConfig,'coverpage');
 	}else{
