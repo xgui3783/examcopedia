@@ -2030,13 +2030,12 @@ function callToPdf(arrFlag,socket,i,callback){
 			})
 			socket.request.user.notes1 = newNote;
 			console.log(socket.request.user)
-			/*
+			
 			connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?',[newNote,socket.request.user.id],function(e,r){
 				if(e){
 					catch_error(e)
 				}
 			})
-			*/
 		}
 		
 		if(/URLCallback\:/.test(socket.request.user.notes1)){
