@@ -2022,6 +2022,23 @@ function callToPdf(arrFlag,socket,i,callback){
 		}
 		var CBUrl;
 		
+		if(/customCounter\:.*?\;/.test(socket.request.user.notes1)){
+			var newNote = socket.request.user.notes1.replace(/customCounter\:.*?\;/,function(s){
+				var oldCounter = s.replace(/customCounter\:|\;/g,'')
+				var newCounter = Number(oldCounter) + 1
+				return 'customCounter:'+newCounter+';'
+			})
+			socket.request.user.notes1 = newNote;
+			console.log(socket.request.user)
+			/*
+			connection.query('UPDATE user_db SET notes1 = ? WHERE id = ?',[newNote,socket.request.user.id],function(e,r){
+				if(e){
+					catch_error(e)
+				}
+			})
+			*/
+		}
+		
 		if(/URLCallback\:/.test(socket.request.user.notes1)){
 			socket.request.user.notes1.replace(/URLCallback\:.*?;/,function(s){
 				var CBUrl = s.split(/\:(.+)?/)[1].replace(';','');
