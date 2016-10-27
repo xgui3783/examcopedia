@@ -591,17 +591,26 @@ io.on('connection',function(socket){
 	socket.join(socket.request.user.sessionID);
 	
 	socket.on('delete dp',function(i,cb){
-		restricting_access(socket.request.user, 'delete dp', json, null, function(o){
-			if(o.error){
-				cb(o)
+		if(socket.request.user.admin>=1){
+			/* delete stuff here */
+			if(!i.syllabus){
+				cb({error:'Syllabus is required, but not sent!'})
+			}else if(!i.dp){
+				cb({error:'DP is required, but not sent!'})
 			}else{
-				if(o=='true'){
-					/* delete stuff here */
-				}else if(o=='pending'){
-					/* pending? going to be a pain in the ass to implement */
-				}
+				var syl = 'curriculum_'+i.syllabus
+				var blurryDP = i.dp+'%'
+				connection.query('DELETE FROM ?? WHERE lvl LIKE ?',[syl,blurryDP],function(e,r){
+					if(e){
+						catch_error(e)
+					}else{
+						cb({success:'ok'})
+					}
+				})
 			}
-		})
+		}else{
+			cb({error:'You are not authorised to delete dot points. Please contact a system admin.'})
+		}
 	})
 	
 	socket.on('check api',function(cb){
@@ -2643,7 +2652,6 @@ function restricting_access(user, mode, json, res, callback){
 						callback({'error':'admin lvl not found'})
 					}else{
 						switch(mode){
-							case 'delete dp':
 							case 'add dp':
 								if(r1[0].addNewDP=='1'){
 									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){

@@ -1,5 +1,6 @@
 /* id/class _ scope(name or core) _ type (btn/a etc) _ name */
 var socket = io();
+var focusedSyllabus;
 
 /* google analytics */
 (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -255,8 +256,10 @@ $(document).ready(function(){
 	/* when the syllabus select field changes, enable the choose dp button */
 	$('.class_core_select_syllabus').change(function(){
 		if($(this).val()!=''){
+			focusedSyllabus = $(this).val()
 			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').removeClass('disabled');
 		}else{
+			focusedSyllabus = ''
 			$(this).parents('#id_view_div_tabcontainer').find('#id_core_btn_choosedp').addClass('disabled');
 		}
 		$('#id_core_input_dp').val('');
@@ -800,6 +803,7 @@ $(document).ready(function(){
 			});
 		$('#id_cate_container_answer .panel-success #id_core_select_syllabus').off('change').change(function(){
 			var newSyllabus = $(this).val()
+			focusedSyllabus = $(this).val()
 			if($(this).val().replace(/ /g,'')==''){
 				return;
 			}
@@ -2354,6 +2358,7 @@ function load_dp_map(t,o,option){
 	t.empty();
 	for(var i=0;i<o.length;i++){
 		var obj = o[i].lvl.replace('.info','');
+		/* it's a pity. there's no easy dynamic way of hiding the x button. Had I known Angular when I made examcopedia, this problem would have been much MUCH easier to solve. */
 		var concatString = obj+' '+o[i].description + '<span class = "deleteDP badge">&times;</span>';
 		var strIn;
 		
@@ -2406,15 +2411,24 @@ function load_dp_map(t,o,option){
 
 function deleteDP(e){
 	$('#id_core_modal .modal-title').html('Are you sure?')
-	$('#id_core_modal .modal-body').html('Deleting a dot point will result in the deletion of ALL sub dot points, ALL categorisation of questions under this dot point and its sub dot points.<br /><br />Are you sure you want to do this?')
-	$('#id_core_modal .btn-primary').off('click').click(function(){
+	$('#id_core_modal .modal-body').html('Deleting a dot point will result in the deletion of ALL sub dot points, ALL categorisation of questions under this dot point and its sub dot points.<br /><br />You are deleting dot point <strong>'+$(e.target).parent().attr('data-target').split('-')[1].split('_').join('.')+'</strong> from <strong>'+ focusedSyllabus +'</strong>. <br /><br />Are you sure you want to do this?')
+	$('#id_core_modal .btn-primary').text('I am sure').off('click').click(function(){
 		/* delete this: */
-		console.log($(e.target).parent().attr('data-target').split('-')[1].split('_').join('.'))
-		/*
+		var json ={
+			syllabus : focusedSyllabus,
+			dp : $(e.target).parent().attr('data-target').split('-')[1].split('_').join('.'),
+		}
+		
 		socket.emit('delete dp',json,function(o){
-			
+			if(o.error){
+				info_modal('Error:'+o.error)
+			}else if(o.success){
+				/* remove things */
+				
+			}else{
+				info_modal('Error: server not responding correctly.'+JSON.stringify(o))
+			}
 		})
-		*/
 	})
 	$('#id_core_modal').modal('show')
 }
