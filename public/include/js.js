@@ -2424,7 +2424,12 @@ function deleteDP(e){
 				info_modal('Error:'+o.error)
 			}else if(o.success){
 				/* remove things */
-				
+				if($(e.target).parent().parent().index==0){
+					$(e.target).parent().prev().remove()
+					$(e.target).parent().remove()
+				}else{
+					$(e.target).parent().parent().remove()
+				}
 			}else{
 				info_modal('Error: server not responding correctly.'+JSON.stringify(o))
 			}

@@ -600,11 +600,22 @@ io.on('connection',function(socket){
 			}else{
 				var syl = 'curriculum_'+i.syllabus
 				var blurryDP = i.dp+'%'
-				connection.query('DELETE FROM ?? WHERE lvl LIKE ?',[syl,blurryDP],function(e,r){
-					if(e){
-						catch_error(e)
+				
+				connection.query('SELECT * FROM ?? WHERE lvl LIKE ?',[syl,blurryDP],function(e1,r1){
+					if(e1){
+						catch_error(e1)
 					}else{
-						cb({success:'ok'})
+						/* failsafe. make a record of the things that are deleted */
+						fs.writeFile(app.get('persistentDataDir')+'apilog/dpdeletelog_'+String(Date.now())+'.json',JSON.stringify(r1),'utf8',function(){
+							
+						})
+						connection.query('DELETE FROM ?? WHERE lvl LIKE ?',[syl,blurryDP],function(e,r){
+							if(e){
+								catch_error(e)
+							}else{
+								cb({success:'ok'})
+							}
+						})
 					}
 				})
 			}
