@@ -1008,6 +1008,7 @@ function catego(){
 	window.addEventListener('popstate',function(e){
 		$('#id_cate_container_form').first().css('opacity','1.0').removeClass('hidden')
 		$('#id_cate_container_answer').addClass('hidden')
+		$('.panel-footer .btn-success').removeClass('disabled')
 	})
 	
 	json.mode = 'categorise';
@@ -1918,7 +1919,7 @@ function append_one(counter,target,json){
 			'</div>'+
 			'<div class = "hidden" id = "id_view_div_anscontainer"></div>'+
 			'<div class = "hidden" id = "id_view_div_qnMarkdown"></div>'+
-			'<div class = "well" id = "id_view_div_ansMarkdown"></div>'+
+			'<div class = "col-xs-8 col-sm-8 col-lg-8 col-md-8 col-xs-offset-2 col-sm-offset-2 col-md-offset-2 col-lg-offset-2 well" id = "id_view_div_ansMarkdown"></div>'+
 			'<div class = "hidden" id = "id_view_div_subject"></div>'+
 			'<div class = "col-sm-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
