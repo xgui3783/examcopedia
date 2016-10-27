@@ -590,6 +590,20 @@ io.on('connection',function(socket){
 	
 	socket.join(socket.request.user.sessionID);
 	
+	socket.on('delete dp',function(i,cb){
+		restricting_access(socket.request.user, 'delete dp', json, null, function(o){
+			if(o.error){
+				cb(o)
+			}else{
+				if(o=='true'){
+					/* delete stuff here */
+				}else if(o=='pending'){
+					/* pending? going to be a pain in the ass to implement */
+				}
+			}
+		})
+	})
+	
 	socket.on('check api',function(cb){
 		connection.query('SELECT api FROM user_db WHERE id = ?',socket.request.user.id,function(e,r){
 			if(e){
@@ -2629,6 +2643,7 @@ function restricting_access(user, mode, json, res, callback){
 						callback({'error':'admin lvl not found'})
 					}else{
 						switch(mode){
+							case 'delete dp':
 							case 'add dp':
 								if(r1[0].addNewDP=='1'){
 									connection.query('UPDATE ?? SET notes1=? WHERE id = ?',['req_log','true',r.insertId],function(e2,r2){

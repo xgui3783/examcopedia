@@ -1002,6 +1002,14 @@ function catego(){
 		json.length = $('#id_cate_input_number').val();
 	}
 	
+	/* add replace state and push state */
+	history.replaceState(null,null,'/categorise');
+	history.pushState(null,null,'/categorise');
+	window.addEventListener('popstate',function(e){
+		$('#id_cate_container_form').first().css('opacity','1.0').removeClass('hidden')
+		$('#id_cate_container_answer').addClass('hidden')
+	})
+	
 	json.mode = 'categorise';
 	$.ajax({
 		type : 'POST',
@@ -1910,7 +1918,7 @@ function append_one(counter,target,json){
 			'</div>'+
 			'<div class = "hidden" id = "id_view_div_anscontainer"></div>'+
 			'<div class = "hidden" id = "id_view_div_qnMarkdown"></div>'+
-			'<div class = "hidden" id = "id_view_div_ansMarkdown"></div>'+
+			'<div class = "well" id = "id_view_div_ansMarkdown"></div>'+
 			'<div class = "hidden" id = "id_view_div_subject"></div>'+
 			'<div class = "col-sm-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
@@ -2316,6 +2324,13 @@ function load_dp_map_bind_event_listeners(t){
 		})
 	});
 	
+	/* bind the delete dot point button */
+	$('.badge.deleteDP').off('click').click(function(e){
+		deleteDP(e)
+		e.preventDefault()
+		e.stopPropagation()
+	})
+	
 	/* bind create new button */
 	$('#id_core_div_dpmap li.btn-link').off('click').click(function(){
 		adddp($(this),t,function(cb){
@@ -2338,7 +2353,7 @@ function load_dp_map(t,o,option){
 	t.empty();
 	for(var i=0;i<o.length;i++){
 		var obj = o[i].lvl.replace('.info','');
-		var concatString = obj+' '+o[i].description;
+		var concatString = obj+' '+o[i].description + '<span class = "deleteDP badge">&times;</span>';
 		var strIn;
 		
 		if(option.collapse){
@@ -2379,6 +2394,28 @@ function load_dp_map(t,o,option){
 			$(this).html('<ul class = "list-group"><li class = "list-group-item btn-link class_dp_btn_createnew">+ new dot point</li></ul>');
 		}
 	});
+	
+	/* bind the delete dot point button */
+	$('.badge.deleteDP').off('click').click(function(e){
+		deleteDP(e)
+		e.preventDefault()
+		e.stopPropagation()
+	})
+}
+
+function deleteDP(e){
+	$('#id_core_modal .modal-title').html('Are you sure?')
+	$('#id_core_modal .modal-body').html('Deleting a dot point will result in the deletion of ALL sub dot points, ALL categorisation of questions under this dot point and its sub dot points.<br /><br />Are you sure you want to do this?')
+	$('#id_core_modal .btn-primary').off('click').click(function(){
+		/* delete this: */
+		console.log($(e.target).parent().attr('data-target').split('-')[1].split('_').join('.'))
+		/*
+		socket.emit('delete dp',json,function(o){
+			
+		})
+		*/
+	})
+	$('#id_core_modal').modal('show')
 }
 
 /* list existing items in modal dialog */
