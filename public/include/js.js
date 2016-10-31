@@ -1521,7 +1521,7 @@ function viewgo(){
 				case 'id_view_tab1':
 					var json = {
 						'mode' : 'subject',
-						'subject' : $(this).find('#id_query_select_subject').val(),
+						'subject' : $(this).find('#id_core_select_subject').val(),
 						'hashed_id' : $(this).find('#id_query_input_hashedid').val(),
 						'method' : mode,
 						'length' : length
