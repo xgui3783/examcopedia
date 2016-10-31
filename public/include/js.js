@@ -991,6 +991,10 @@ function catego(){
 		json.subject = $('.panel-success #id_core_select_subject').val();
 	}
 	
+	if($('.panel-success #id_query_input_hashedid').val().replace(/ /g,'')!=''){
+		json.hashed_id = $('.panel-success #id_query_input_hashedid').val();
+	}
+	
 	if($('.panel-success #id_core_select_syllabus').val().replace(/ /g,'')!=''){
 		json.syllabus = $('.panel-success #id_core_select_syllabus').val();
 		if($('#idSyllabusCtrl').is(':checked')){
@@ -1036,6 +1040,11 @@ function catego(){
 				})
 				view_append_preview('all',null,$('#id_cate_div_leftAns'),o);
 				$('.affix-top,.affix').css('width',$('#id_cate_div_leftAns').width())
+				
+				$('.queryHashedId').tooltip({
+					placement : 'bottom',
+					trigger : 'click'
+				})
 				
 				$('#id_cate_div_leftAns').children('div.row')
 					.off('hover').hover(function(){
@@ -1807,6 +1816,11 @@ function bind_viewdiv_overlay(target){
 			renumber(ui.item.parent());
 		}
 	});
+	
+	$('.queryHashedId').tooltip({
+		placement : 'bottom',
+		trigger : 'click'
+	})
 }
 
 function decodeUsername(target){
@@ -1917,7 +1931,7 @@ function decode_select(i){
 function append_one(counter,target,json){
 	var qn_container = 
 		'<div id="'+escapeHtml(json.hashed_id)+'" class = "row id_sync_active">'+
-			'<div class = "col-xs-1 col-xs-offset-1"><h4>'+counter+'.</h4>'+
+			'<div class = "col-xs-1 col-xs-offset-1"><span class = "glyphicon glyphicon-ice-lolly-tasted queryHashedId" title = "'+json.hashed_id+'"></span>><h4>'+counter+'.</h4>'+
 			'</div>'+
 			'<div class = "col-xs-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
@@ -1926,7 +1940,7 @@ function append_one(counter,target,json){
 			'<div class = "hidden" id = "id_view_div_qnMarkdown"></div>'+
 			'<div class = "col-xs-8 col-sm-8 col-lg-8 col-md-8 col-xs-offset-2 col-sm-offset-2 col-md-offset-2 col-lg-offset-2 well" id = "id_view_div_ansMarkdown"></div>'+
 			'<div class = "hidden" id = "id_view_div_subject"></div>'+
-			'<div class = "col-sm-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
+			'<div class = "col-xs-pull-11 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
 	target.append(qn_container);
 	$('.id_sync_active').find('#id_view_div_qncontainer').children('h4').html(parsing_preview(json.question,json.hashed_id));

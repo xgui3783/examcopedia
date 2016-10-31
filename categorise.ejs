@@ -41,9 +41,16 @@
 									<div class = "panel-body">
 										<div class = "row">
 											<div class = "form-group">
-												<label class = "control-label col-md-3" for = "idSyllabusCtrl">Exclude syllabus</label>
+												<label class = "control-label col-md-3" for = "id_query_input_hashedid">Hashed id</label>
+												<input class = "form-control" type = "text" id = "id_query_input_hashedid">
+											</div>
+										</div>
+										<hr>
+										<div class = "row">
+											<div class = "form-group">
+												<label class = "control-label col-md-3" for = "idSyllabusCtrl">Find the questions</label>
 												<div class = "col-md-5">
-													<input id = "idSyllabusCtrl" type = "checkbox" data-toggle = "toggle"> <span id = "id_cate_tooltip_syllabusTooltip" class = "hovershow glyphicon glyphicon-question-sign" title = "If ON, search results will ONLY show questions ALREADY categorised in the syllabus.<br /><br /> If OFF, search results will ONLY show questions NOT YET categorised in the syllabus."></span> 
+													<input id = "idSyllabusCtrl" type = "checkbox" data-toggle = "toggle" data-on="already in" data-off="not yet in"> <span id = "id_cate_tooltip_syllabusTooltip" class = "hovershow glyphicon glyphicon-question-sign hidden" title = "If ON, search results will ONLY show questions ALREADY categorised in the syllabus.<br /><br /> If OFF, search results will ONLY show questions NOT YET categorised in the syllabus."></span> 
 												</div>
 											</div>
 											<div class = "form-group">
@@ -60,6 +67,7 @@
 												</div>
 											</div>
 										</div>
+										<hr>
 										<div class = "row">
 											<div class = "form-group">
 												<label class = "control-label col-md-3" for = "id_cate_input_number">Number of Questions</label>
