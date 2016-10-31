@@ -1130,6 +1130,8 @@ io.on('connection',function(socket){
 							optionalString += ' AND hashed_id = "' + connection.escape(i.hashed_id) + '"'
 						}
 					}
+					
+					console.log('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 '+optionalString+';')
 					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 '+optionalString+';',function(e,r){
 						if(e){
 							catch_error(e);
@@ -1143,6 +1145,7 @@ io.on('connection',function(socket){
 							optionalString += ' AND hashed_id = "' + connection.escape(i.hashed_id) + '"'
 						}
 					}
+					console.log('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 '+optionalString+';')
 					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 AND subject = ? '+optionalString+';',i.subject,function(e,r){
 						if(e){
 							catch_error(e);
