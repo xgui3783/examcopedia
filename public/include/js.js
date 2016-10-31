@@ -1043,7 +1043,14 @@ function catego(){
 				
 				$('.queryHashedId').tooltip({
 					placement : 'bottom',
-					trigger : 'click'
+					trigger : 'hover',
+					delay : {
+						show : 100,
+						hide : 3000
+					},
+					html : true,
+					template : '<div class="tooltip hashedIdTooltipContainer" role="tooltip"><div class="tooltip-arrow"></div><div class="hashedIdTooltip tooltip-inner"></div></div>',
+					container : 'body'
 				})
 				
 				$('#id_cate_div_leftAns').children('div.row')
@@ -1819,7 +1826,14 @@ function bind_viewdiv_overlay(target){
 	
 	$('.queryHashedId').tooltip({
 		placement : 'bottom',
-		trigger : 'click'
+		trigger : 'hover',
+		delay : {
+			show : 100,
+			hide : 3000
+		},
+		html : true,
+		template : '<div class="tooltip hashedIdTooltipContainer" role="tooltip"><div class="tooltip-arrow"></div><div class="hashedIdTooltip tooltip-inner"></div></div>',
+		container : 'body'
 	})
 }
 
@@ -1931,16 +1945,16 @@ function decode_select(i){
 function append_one(counter,target,json){
 	var qn_container = 
 		'<div id="'+escapeHtml(json.hashed_id)+'" class = "row id_sync_active">'+
-			'<div class = "col-xs-1 col-xs-offset-1"><span class = "glyphicon glyphicon-ice-lolly-tasted queryHashedId" title = "'+json.hashed_id+'"></span>><h4>'+counter+'.</h4>'+
+			'<div class = "col-xs-1 col-xs-offset-1"><h4><span class = "glyphicon glyphicon-ice-lolly-tasted queryHashedId" title = "<h4>Hashed ID:</h4> <textarea class = '+"'"+'textareaQueryHashedId'+"'"+'>'+json.hashed_id+'</textarea><div onclick = '+"'"+'copyHashedId(this)'+"'"+' class = '+"'"+'copyHashedId btn btn-default'+"'"+'>Copy to Clipboard</div>"></span>'+counter+'.</h4>'+
 			'</div>'+
 			'<div class = "col-xs-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
 			'</div>'+
 			'<div class = "hidden" id = "id_view_div_anscontainer"></div>'+
 			'<div class = "hidden" id = "id_view_div_qnMarkdown"></div>'+
+			'<div class = "col-xs-offset-1 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 			'<div class = "col-xs-8 col-sm-8 col-lg-8 col-md-8 col-xs-offset-2 col-sm-offset-2 col-md-offset-2 col-lg-offset-2 well" id = "id_view_div_ansMarkdown"></div>'+
 			'<div class = "hidden" id = "id_view_div_subject"></div>'+
-			'<div class = "col-xs-pull-11 col-xs-1" id = "id_view_div_mark"><strong><h4></h4></strong></div>'+
 		'</div>';
 	target.append(qn_container);
 	$('.id_sync_active').find('#id_view_div_qncontainer').children('h4').html(parsing_preview(json.question,json.hashed_id));
@@ -1951,6 +1965,19 @@ function append_one(counter,target,json){
 	append_spaces($('.id_sync_active #id_view_div_spaces'),json.space+'_1.blank');
 	$('.id_sync_active #id_view_div_mark').find('h4').html(json.mark);
 	$('.id_sync_active').removeClass('id_sync_active');
+}
+
+function copyHashedId(btn){
+	if($(btn).hasClass('disabled')){
+		return false;
+	}
+	$(btn).prev().select();
+	if(document.execCommand('copy')){
+		$(btn).addClass('disabled').html('Copied');
+	}else{
+		$(btn).addClass('disabled').html('Error! Copy manually!');
+	}
+	//info_modal($(btn).prev().text())
 }
 
 function append_spaces(home,instring){

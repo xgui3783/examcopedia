@@ -50,6 +50,26 @@ div#id_add_divContainer_OCREditor > .well > .btn + .tooltip > .tooltip-inner
 width : 200px;
 }
 
+.hashedIdTooltipContainer
+{
+width : 500px	
+}
+
+.textareaQueryHashedId
+{
+width: 450px;
+height:25px;
+resize:none;
+background-color:#000;
+border:none;
+}
+
+.hashedIdTooltip
+{
+width : 500px;
+max-width:500px;
+}
+
 canvas
 {
 width:100%;
