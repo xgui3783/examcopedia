@@ -1124,6 +1124,11 @@ io.on('connection',function(socket){
 		switch(i.mode){
 			case 'subject':
 				if(i.subject.replace(' ','')==''||i.subject==undefined){
+					if(i.hashed_id){
+						if(i.hashed_id.replace(/ /g,'')!=''){
+							optionalString += ' AND hashed_id = "' + connection.escape(i.hashed_id) + '"'
+						}
+					}
 					connection.query('SELECT subject, hashed_id, question, answer,space,mark FROM table_masterquestions WHERE delete_flag = 0 '+optionalString+';',function(e,r){
 						if(e){
 							catch_error(e);
@@ -1142,7 +1147,7 @@ io.on('connection',function(socket){
 				}
 			break;
 			case 'curriculum':
-				connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl NOT LIKE "0%"AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
+				connection.query('SELECT f_id FROM ?? WHERE lvl NOT LIKE "%info" AND lvl NOT LIKE "0%" AND lvl <>"" AND lvl LIKE ? ORDER BY id;',['curriculum_'+i.syllabus,i.dp+'%'],function(e,r){
 					if(e){
 						catch_error(e);
 					}else{

@@ -1522,6 +1522,7 @@ function viewgo(){
 					var json = {
 						'mode' : 'subject',
 						'subject' : $(this).find('#id_core_select_subject').val(),
+						'hashed_id' : $(this).find('#id_core_input_hashedid').val(),
 						'method' : mode,
 						'length' : length
 						}
