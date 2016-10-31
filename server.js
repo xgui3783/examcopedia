@@ -1127,7 +1127,7 @@ io.on('connection',function(socket){
 				if(!i.subject||i.subject.replace(' ','')==''){
 					if(i.hashed_id){
 						if(i.hashed_id.replace(/ /g,'')!=''){
-							optionalString += ' AND hashed_id = "' + connection.escape(i.hashed_id) + '"'
+							optionalString += ' AND hashed_id =' + connection.escape(i.hashed_id) 
 						}
 					}
 					
