@@ -1945,7 +1945,7 @@ function decode_select(i){
 function append_one(counter,target,json){
 	var qn_container = 
 		'<div id="'+escapeHtml(json.hashed_id)+'" class = "row id_sync_active">'+
-			'<div class = "col-xs-1 col-xs-offset-1"><h4><span class = "glyphicon glyphicon-ice-lolly-tasted queryHashedId" title = "<h4>Hashed ID:</h4> <textarea class = '+"'"+'textareaQueryHashedId'+"'"+'>'+json.hashed_id+'</textarea><div onclick = '+"'"+'copyHashedId(this)'+"'"+' class = '+"'"+'copyHashedId btn btn-default'+"'"+'>Copy to Clipboard</div>"></span>'+counter+'.</h4>'+
+			'<div class = "col-xs-1 col-xs-offset-1"><h4>'+counter+'.</h4><h3><span class = "glyphicon glyphicon-ice-lolly-tasted queryHashedId" title = "<h4>Hashed ID:</h4> <textarea class = '+"'"+'textareaQueryHashedId'+"'"+'>'+json.hashed_id+'</textarea><div onclick = '+"'"+'copyHashedId(this)'+"'"+' class = '+"'"+'copyHashedId btn btn-default'+"'"+'>Copy to Clipboard</div>"></span></h3>'+
 			'</div>'+
 			'<div class = "col-xs-8" id = "id_view_div_qncontainer"><h4></h4>'+
 				'<div class = "row" id = "id_view_div_spaces"></div>'+
