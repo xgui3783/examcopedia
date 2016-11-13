@@ -57,7 +57,7 @@ module.exports = function(socket,doc,pdfConfig,mode){
 			//doc.font('Helvetica').fontSize(10).text('Generation Education',50,120,{width:75, align:'center'});
 			doc.font('Helvetica').fontSize(32).text('Answer Sheet',125,95,{align:'left'});
 			
-			doc.fontSize(10).text('Name: _____________________  Date: _____________________  Class: _____________________',50,140,{align:'left'})
+			doc.fontSize(10).text('First name: ________________  Family name: _________________  Date: ____________  Class: ____________',50,140,{align:'left'})
 			
 			doc.fillColor('#000').font('Helvetica').fontSize(16).text('English',firstBoxX+leftMargin,firstBoxY+topMargin,{width:boxWidth-leftMargin-rightMargin,align:'center'})
 			doc.y += 12;

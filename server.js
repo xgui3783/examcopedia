@@ -2087,9 +2087,10 @@ function callToPdf(arrFlag,socket,i,callback){
 				var form2 = {
 					user : JSON.stringify(socket.request.user),
 					socketCall : JSON.stringify(i),
-					CBData : CBData
+					CBData : CBData,
+					file : fs.createReadStream(app.get('persistentDataDir')+'pdfout/'+pdfFilename)
 				}
-				request.post({url : CBUrl, form : form2},function(e,h,b){
+				request.post({url : CBUrl, formData : form2},function(e,h,b){
 					if(e){
 						catch_error(e);
 						json.URLCallback = 'failed';
