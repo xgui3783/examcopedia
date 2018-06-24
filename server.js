@@ -19,7 +19,7 @@ var session = require('express-session');
 var PDFDoc = require('pdfkit');
 var request = require('request');
 var passportSocketIO = require('passport.socketio');
-var nodemailer = require('nodemailer');
+// var nodemailer = require('nodemailer');
 
 var logos = [
 	'join.examcopedia.club - crowd sourced, free forever'
@@ -30,23 +30,23 @@ app.set('persistentDataDir',process.env.OPENSHIFT_DATA_DIR||'./public/');
 
 var authConfig = require(app.get('persistentDataDir')+'include/config.js');
 
-var transporter = nodemailer.createTransport(authConfig.email);
+// var transporter = nodemailer.createTransport(authConfig.email);
 
-var verifyEmail = transporter.templateSender({
-	subject : 'examcopedia registration - confirmation of your e-mail address',
-	text : 'Dear {{username}}: \n\nTo complete your registration at examcopedia, copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. \n\n{{link}}\n\nIf you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.\n\n🐼',
-	html : 'Dear {{username}}: <br><br>To complete your registration at examcopedia, click the link below or copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. <br><br><a href = "{{link}}">{{link}}</a><br><br>If you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.<br><br>🐼',
-},{
-	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
-})
+// var verifyEmail = transporter.templateSender({
+// 	subject : 'examcopedia registration - confirmation of your e-mail address',
+// 	text : 'Dear {{username}}: \n\nTo complete your registration at examcopedia, copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. \n\n{{link}}\n\nIf you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.\n\n🐼',
+// 	html : 'Dear {{username}}: <br><br>To complete your registration at examcopedia, click the link below or copy and paste the link below to the address bar and hit Enter. This link will expire in 1 hour and 39 minutes. Why 1 hour and 39 minutes? I don\'t know. I think it\'s a rather nice number. <br><br><a href = "{{link}}">{{link}}</a><br><br>If you did not request the registration at examcopedia, you can safely ignore and delete this e-mail.<br><br>🐼',
+// },{
+// 	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
+// })
 
-var thankyouEmail = transporter.templateSender({
-	subject : 'Confirmation of registration',
-	text : 'Dear {{username}}: \n\nThank you for registering. \n\nWe hate spam mails, too. We promise this is the last e-mail we will send.\n\n\n\n🐼',
-	html : 'Dear {{username}}: <br><br>Thank you for registering.  <br><br>We hate spam mails, too. We promise this is the last e-mail we will send.<br><br>🐼',
-},{
-	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
-})
+// var thankyouEmail = transporter.templateSender({
+// 	subject : 'Confirmation of registration',
+// 	text : 'Dear {{username}}: \n\nThank you for registering. \n\nWe hate spam mails, too. We promise this is the last e-mail we will send.\n\n\n\n🐼',
+// 	html : 'Dear {{username}}: <br><br>Thank you for registering.  <br><br>We hate spam mails, too. We promise this is the last e-mail we will send.<br><br>🐼',
+// },{
+// 	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
+// })
 
 app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
 app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
