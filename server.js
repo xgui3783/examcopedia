@@ -2835,7 +2835,7 @@ app.post('/localRegister',function(req,res){
 								}
 							})
 						}else{
-							connection.query('INSERT INTO user_db (authId,passtoken,email,salt,displayName) VALUES (?,?,?,?,?)',[newAuthId,newPswd,req.body.username,newSalt,req.body.fullname],function(e2,r2){
+							connection.query('INSERT INTO user_db (authId,passtoken,email,salt,displayName,authMethod) VALUES (?,?,?,?,?,?)',[newAuthId,newPswd,req.body.username,newSalt,req.body.fullname,'local'],function(e2,r2){
 								if(e2){
 									catch_error(e2)
 									res.send(e2)
@@ -2853,6 +2853,8 @@ app.post('/localRegister',function(req,res){
 })
 
 function verifyTimout(authId,body){
+
+	return
 	
 	setTimeout(function(){
 		connection.query('DELETE from user_db WHERE authId = ? AND (authMethod IS NULL OR authMethod = ?)',[authId,''],function(e,r){
