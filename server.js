@@ -48,9 +48,9 @@ var authConfig = require(app.get('persistentDataDir')+'include/config.js');
 // 	from : '"No Reply" <noreply-examcopedia@pandamakes.com.au>',
 // })
 
-app.set('mysqlhost',process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
-app.set('mysqluser',process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
-app.set('mysqlpswd',process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
+app.set('mysqlhost',process.env.DB_HOST || process.env.OPENSHIFT_MYSQL_DB_HOST||'localhost');
+app.set('mysqluser',process.env.MYSQL_DB_USERNAME || process.env.OPENSHIFT_MYSQL_DB_USERNAME||'root');
+app.set('mysqlpswd',process.env.MYSQL_DB_PASSWORD || process.env.OPENSHIFT_MYSQL_DB_PASSWORD||'');
 app.set('mysqldb','examcopedia');
 
 var MySQLStore = require('express-mysql-session')(session);
