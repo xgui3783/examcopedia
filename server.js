@@ -2612,7 +2612,7 @@ function subscriptionDelivery(target,json){
 function userNotification(mode,objId,user){
 	switch(mode){
 		case 'news':
-			if(/news:.*?;/.test(user.notes1)){
+			if(/news\:.*?;/.test(user.notes1)){
 				var newNotes1 = user.notes1.replace(/news:.*?;/,function(s){
 					//only keep the latest 20 entries
 					var ssplit = s.replace(/news:|;/,'').split(',');

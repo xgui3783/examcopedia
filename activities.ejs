@@ -8,7 +8,12 @@ $('#id_core_well_news')
 		$('#id_navbar_news').parent().removeClass('active');
 	})
 
+var arrData = []
+var arrDelay = [];
+var jsonString = {};
+
 socket.emit('populate activities',function(o){
+	console.log('populate activities callback')
 	for (var i = 0; i<o.data.length; i++){
 		arrDelay.push(false);
 		arrData.push(o.data[i]);
@@ -34,10 +39,6 @@ socket.emit('populate activities',function(o){
 	}
 })
 
-var arrData = []
-var arrDelay = [];
-var jsonString = {};
-	
 function populateActivities(l){
 	if(arrDelay.length!=0){
 		return;
@@ -307,7 +308,6 @@ function bindActivities(){
 									url : 'pingQ',
 									data : {mode : 'all', hashed_id : o.json.hashed_id},
 									success : function(p){
-										console.log(p)
 										if(p.message=='failed'){
 											info_modal(p.reason)
 										}else{
