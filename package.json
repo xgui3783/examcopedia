@@ -1,33 +1,47 @@
 {
-  "name": "OpenShift-Sample-App",
+  "name": "examcopedia",
   "version": "1.0.0",
-  "description": "OpenShift Sample Application",
-  "keywords": [
-    "OpenShift",
-    "Node.js",
-    "application",
-    "openshift"
-  ],
-  "author": {
-    "name": "OpenShift",
-    "email": "ramr@example.org",
-    "url": "http://www.openshift.com/"
-  },
-  "homepage": "http://www.openshift.com/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/openshift/origin-server"
-  },
-  "engines": {
-    "node": ">= 0.6.0",
-    "npm": ">= 1.0.0"
-  },
+  "description": "The OpenShift `nodejs` cartridge documentation can be found at:",
+  "main": "server.js",
   "dependencies": {
-    "express": "~3.4.4",
-    "multer": "^1.1.0"
+    "body-parser": "^1.15.1",
+    "connect-flash": "^0.1.1",
+    "ejs": "^2.4.2",
+    "cookie-parser": "^1.4.3",
+    "express": "^3.4.8",
+    "express-mysql-session": "^1.1.1",
+    "express-session": "^1.13.0",
+    "form-data": "^1.0.0-rc4",
+    "fs-extra": "^0.30.0",
+    "js-sha256": "^0.3.0",
+    "gm": "^1.22.0",
+    "nodemailer": "^2.5.0",
+    "node-mysql": "^0.4.2",
+    "mysql": "^2.10.2",
+    "multer": "^1.1.0",
+    "passport": "^0.3.2",
+    "passport-facebook": "^2.1.1",
+    "passport-google-oauth": "^1.0.0",
+    "passport-local": "^1.0.0",
+    "passport.socketio": "^3.6.1",
+    "pdfkit": "^0.7.2",
+    "request": "^2.73.0",
+    "socket.io": "^1.4.6"
   },
   "devDependencies": {},
-  "bundleDependencies": [],
-  "private": true,
-  "main": "server.js"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xgui3783/examcopedia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xgui3783/examcopedia/issues"
+  },
+  "homepage": "https://github.com/xgui3783/examcopedia#readme"
 }
