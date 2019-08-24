@@ -3,13 +3,16 @@ const app = express()
 
 if (process.env.NODE_ENV !== 'production') {
   app.use(require('cors')())
+  require('dotenv').config()
 }
 
-const routes = require('./routes')
+const api = require('./api')
+
+require('./db')
 
 /**
  * routes
  */
-app.use('/routes', routes)
+app.use('/api', api)
 
 module.exports = app
