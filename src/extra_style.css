@@ -1,0 +1,21 @@
+.r-90
+{
+  transform: rotate(90deg);
+}
+.r-270
+{
+  transform: rotate(270deg);
+}
+.animate
+{
+  transition: all ease-in-out 200ms;
+}
+.w-80vw
+{
+  width: 80vw;
+}
+
+.mh-90vh
+{
+  max-height:90vh;
+}

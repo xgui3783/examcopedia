@@ -4,14 +4,20 @@ import Chip from '@material-ui/core/Chip'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardActions from '@material-ui/core/CardActions'
+import Modal from '@material-ui/core/Modal'
+import Backdrop from '@material-ui/core/Backdrop'
 import Button from '@material-ui/core/Button'
+import Fade from '@material-ui/core/Fade'
 import Divider from '@material-ui/core/Divider'
 import { UserContext } from '../context/User'
 import { getFetchHeader } from '../util'
 
+import { Syllabus } from './Syllabus'
+import { QuestionContext } from '../context/QuestionContext'
+
 const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
-const getGetCategoriseUrl = ({ questionId }) => `${BACKENDURL}/api/categorise/questionId/${questionId}`
-const getPutDeleteCategoriseUrl = ({ categoryId }) => `${BACKENDURL}/api/categorise/categoryId/${categoryId}`
+const getGetCategoriesUrl = ({ questionId }) => `${BACKENDURL}/api/categories/questionId/${questionId}`
+const getPutDeleteCategoriesUrl = ({ categoryId }) => `${BACKENDURL}/api/categories/categoryId/${categoryId}`
 const questionUrl = `${BACKENDURL}/api/questions`
 /**
  * As this component may need to listen to socket message, it may not be suitable as a functional component
@@ -24,6 +30,7 @@ export const Question = ({ question, renderMeta }) => {
   const [ stateQuestionText, setStateQuestionText ] = useState(questionText)
   const [ stateAnswerText, setStateAnswerText ] = useState(answer)
   const [ stateId, setStateId ] = useState(id)
+  const [ modalOpen, setModalOpen ] = useState(false)
 
   /**
    * UPDATE the question itself
@@ -55,9 +62,9 @@ export const Question = ({ question, renderMeta }) => {
 
   const updateCategory = () => {
     if (!stateId) return
-    fetch(getGetCategoriseUrl({ questionId: stateId }))
+    fetch(getGetCategoriesUrl({ questionId: stateId }))
       .then(res => res.json())
-      .then(arr =>setCategories(arr))
+      .then(setCategories)
       .catch(console.error)
   }
 
@@ -65,7 +72,7 @@ export const Question = ({ question, renderMeta }) => {
 
   const onCategoryDeleteHandler = (ev, category) => {
     const { id: categoryId } = category
-    fetch(getPutDeleteCategoriseUrl({ categoryId }), {
+    fetch(getPutDeleteCategoriesUrl({ categoryId }), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json'
@@ -74,6 +81,14 @@ export const Question = ({ question, renderMeta }) => {
     })
       .then(updateCategory)
       .catch(console.error)
+  }
+
+  const handleModalClose = () => {
+    setModalOpen(false)
+  }
+
+  const handleModalOpen = () => {
+    setModalOpen(true)
   }
 
   const getEditable = user => user && user.admin && user.admin > 1
@@ -99,9 +114,24 @@ export const Question = ({ question, renderMeta }) => {
           ? <>
             <Divider />
             <CardActions>
-              <Button>
+              <Button onClick={handleModalOpen}>
                 + add
               </Button>
+              <Modal
+                onClose={handleModalClose}
+                closeAfterTransition
+                className="d-flex align-items-center justify-content-center"
+                BackdropComponent={Backdrop}
+                BackdropProps={{timeout: 500}}
+                open={modalOpen}>
+                <Fade in={modalOpen}>
+                  <QuestionContext.Provider value={{id: stateId, categorisedUnder: categories}}>
+                    <div className="w-80vw mh-90vh overflow-auto">
+                      <Syllabus />
+                    </div>
+                  </QuestionContext.Provider>
+                </Fade>
+              </Modal>
               {categories.map(c => (
                 <Chip
                   onDelete={ev => onCategoryDeleteHandler(ev, c)}

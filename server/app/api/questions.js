@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const bodyParser = require('body-parser')
-const getCollection = require('../db')
+const { getCollection } = require('../db')
 const crypto = require('crypto')
 
 router.get('/', async (req, res) => {
@@ -12,7 +12,9 @@ router.get('/', async (req, res) => {
 })
 
 router.get('/:questionId', (req, res) => {
-
+  /**
+   * TODO
+   */
 })
 
 /**

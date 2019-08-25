@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
 import { Question } from '../components/Question'
-import { Syllabus } from '../components/Syllabus'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardHeader from '@material-ui/core/CardHeader'
@@ -9,28 +8,6 @@ import Divider from '@material-ui/core/Divider'
 import Grid from '@material-ui/core/Grid'
 import Container from '@material-ui/core/Container'
 import Button from '@material-ui/core/Button'
-
-const obj = {
-  name: 'root',
-  children: [{
-    name: 'c1'
-  },{
-    name: 'c2'
-  }]
-}
-
-const question = {
-  question: 'hello world',
-  answer: 'rabbit jimmy 2'
-}
-
-const onQuestionUpdate = ({ id, question, answer }) => {
-  console.log({
-    id,
-    question,
-    answer
-  })
-}
 
 const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const allQUrl = `${BACKENDURL}/api/questions/`
@@ -81,7 +58,6 @@ export const MaterialLandingPage = () => {
             </Button>
           </div>
           <Divider />
-          <Syllabus lvl={0} syllabus={obj} />
         </CardContent>
       </Card>
     </Grid>

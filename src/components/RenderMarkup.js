@@ -29,7 +29,7 @@ const RenderTextMarkup = ({ markup, onClickHandler = () => {} }) => markup.repla
   ? <div onClick={onClickHandler}>{ markup }</div>
   : <div onClick={onClickHandler} className="text-muted font-italics">click here to edit this field</div>
 
-export const RenderMarkup = ({ markup, valueChangeHandler, editable = true }) => {
+export const RenderMarkup = ({ markup, valueChangeHandler, editable = true, placeholder = 'Click to add an entry.' }) => {
   
   const [editMode, setEditMode] = useState(false)
   const [markupValue, setMarkupValue] = useState(markup)
@@ -70,9 +70,13 @@ export const RenderMarkup = ({ markup, valueChangeHandler, editable = true }) =>
 
   // figure out how to do content transclusion
 
-  return <div className="position-relative" onClick={handleOnclick}>
+  return <div className="position-relative w-100" onClick={handleOnclick}>
     <div style={{whiteSpace:'pre-line'}} className="position-relative">
-      {markupValue + '\n'}
+      {
+        !markupValue || markupValue === ''
+          ? <span className="text-muted">{placeholder}</span>
+          : (markupValue + '\n')
+      }
     </div>
     {
       editMode
@@ -82,7 +86,7 @@ export const RenderMarkup = ({ markup, valueChangeHandler, editable = true }) =>
             onChnageHandler={onChnageHandler}
             onBlurHandler={onBlurHandler}
             markup={markupValue}/>
-        : ''
+        : null
     }
   </div>
 

@@ -1,5 +1,4 @@
-const arangojs = require('arangojs')
-const Database = arangojs.Database
+const { Database } = require('arangojs')
 
 const DB_USERNAME = process.env.DB_USERNAME || 'root'
 const DB_PASSWORD = process.env.DB_PASSWORD || ''
