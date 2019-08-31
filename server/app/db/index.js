@@ -1,10 +1,16 @@
 const init = require('./base')
 
+const TIMEOUT = Number(process.env.PORT || '5000') || 5000
 let dbHandle
-init()
-  .then(handle => {
-    dbHandle = handle
-  }).catch(console.error)
+
+const intervalId = setInterval(async () => {
+  try {
+    dbHandle = await init()
+    clearInterval(intervalId)
+  } catch (e) {
+    console.log(`db init error, retry in ${TIMEOUT}ms`)
+  }
+}, TIMEOUT)
 
 exports.getCollection = async collectionName => {
   if (!dbHandle) throw new Error('dbHandle not yet defined')
