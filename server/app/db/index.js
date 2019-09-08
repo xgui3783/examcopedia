@@ -8,7 +8,7 @@ const intervalId = setInterval(async () => {
     dbHandle = await init()
     clearInterval(intervalId)
   } catch (e) {
-    console.log(`db init error, retry in ${TIMEOUT}ms`)
+    console.log(`db init error, retry in ${TIMEOUT}ms`, e)
   }
 }, TIMEOUT)
 
