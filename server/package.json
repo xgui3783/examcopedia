@@ -5,17 +5,21 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "mocha": "mocha"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "arangojs": "^6.11.0",
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "request": "^2.88.0"
   },
   "devDependencies": {
-    "dotenv": "^8.1.0"
+    "chai": "^4.2.0",
+    "dotenv": "^8.1.0",
+    "mocha": "^6.2.2",
+    "nock": "^11.7.1"
   }
 }

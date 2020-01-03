@@ -1,26 +1,56 @@
-const { Database } = require('arangojs')
+const request = require('request')
+const constants = require('./constants')
+const { log, error } = require("../../log")
 
 const DB_USERNAME = process.env.DB_USERNAME || 'root'
 const DB_PASSWORD = process.env.DB_PASSWORD || ''
-const DB_PORT = process.env.DB_PORT || 8529
+
+const DB_PORT = process.env.DB_PORT || 5984
 const DB_HOST = process.env.DB_HOST || 'localhost'
 const DB_PROTOCOL = process.env.DB_PROTOCOL || 'http'
 
-const DATABASE_NAME = process.env.DATABASE_NAME || 'examcopedia'
+const getDatabaseUri = ({ name, suffix = '' } = {}) => name
+  ? `${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}/${name}/${suffix}`
+  : `${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}`
 
-const db = new Database(`${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}`)
-db.useBasicAuth(DB_USERNAME, DB_PASSWORD)
+const createDb = async ({ dbname }) => new Promise((rs, rj) => {
+  const uri = getDatabaseUri({ name: dbname })
+  request.put({
+    uri
+  }, (err, resp, body) => {
+    if (err) return rj(err)
+    if (resp.statusCode >= 400) return rj(body)
+    rs(body)
+  })
+})
 
-const getListDb = async () => await db.listDatabases()
+const initDb = async ({ dbname }) => new Promise((rs, rj) => {
+  const uri = getDatabaseUri({ name: dbname })
+  request.get({
+    uri
+  }, async (err, resp, body) => {
+    if (err) return rj(err)
+    if (resp.statusCode === 404) {
+      log(`db ${dbname} does not yet exist, creating db ...`)
+      const created = await createDb({ dbname })
+      log(`successfully created db: ${dbname}`)
+      rs(created)
+    }
+    if (resp.statusCode >= 400) return rj(body)
+    log(`db ${dbname} already exist, skipping ... `)
+    rs(body)
+  })
+})
 
 const init = async () => {
-  const arr = await getListDb()
-  const exists = arr.find(name => name === DATABASE_NAME)
-  if (!exists) {
-    await db.createDatabase(DATABASE_NAME)
+  for (const key in constants){
+    const dbname = constants[key]
+    log(`creating db: ${dbname}`)
+    await initDb({ dbname })
   }
-  console.log('db init success')
-  return db.useDatabase(DATABASE_NAME)
 }
 
-module.exports = init
+module.exports = {
+  getDatabaseUri,
+  init
+}

@@ -72,6 +72,9 @@ router.delete('/questionId/:questionId/categoryId/:categoryId', async (req, res)
   }
 })
 
+/**
+ * Get all questions from a category
+ */
 router.get('/:categoryId', async (req, res) => {
   const { categoryId } = req.params
   const db = await getDb()
@@ -117,7 +120,7 @@ router.get('/', async (req, res) => {
 /**
  * get all questions from categoryId
  */
-router.get('/categoryId/:categoryId', (req, res) => {
+router.get('/:categoryId/questions', (req, res) => {
 
 })
 
