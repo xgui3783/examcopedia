@@ -42,6 +42,36 @@ router.post('/questionId/:questionId/categoryId/:categoryId', async (req, res) =
   return res.status(200).json(result)
 })
 
+/**
+ * remove links
+ */
+router.delete('/questionId/:questionId/categoryId/:categoryId', async (req, res) => {
+  const { questionId, categoryId } = req.params
+
+  const db = await getDb()
+  const categorisedUnder = await getEdgeCollection('categorisedUnder')
+  console.log('delete called', { questionId, categoryId })
+  const cursor = await db.query(aql`
+  FOR c IN categorisedUnder
+  FILTER c._to == "dotPoint/${categoryId}"
+  FILTER c._from == "questions/${questionId}"
+  RETURN c
+  `)
+  const results = await cursor.all()
+  console.log({ results })
+  if (results.length === 0) {
+    return res.status(404).end()
+  } else {
+    const delCursor = await db.query(aql`
+    FOR key IN ${JSON.stringify(results)}
+    REMOVE key IN categorisedUnder
+    `)
+    const delResult = await delCursor.all()
+    console.log({ delResult })
+    return res.status(200).end()
+  }
+})
+
 router.get('/:categoryId', async (req, res) => {
   const { categoryId } = req.params
   const db = await getDb()

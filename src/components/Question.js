@@ -15,6 +15,8 @@ import { getFetchHeader } from '../util'
 import { Syllabus } from './Syllabus'
 import { QuestionContext } from '../context/QuestionContext'
 
+import CircularProgress from '@material-ui/core/CircularProgress'
+
 const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const getGetCategoriesUrl = ({ questionId }) => `${BACKENDURL}/api/categories/questionId/${questionId}`
 const getPutDeleteCategoriesUrl = ({ categoryId }) => `${BACKENDURL}/api/categories/categoryId/${categoryId}`
@@ -59,12 +61,15 @@ export const Question = ({ question, renderMeta }) => {
   }
 
   const [ categories, setCategories ] = useState([])
+  const [ fetchingCategories, setFetchCategories ] = useState(false)
 
   const updateCategory = () => {
     if (!stateId) return
+    setFetchCategories(true)
     fetch(getGetCategoriesUrl({ questionId: stateId }))
       .then(res => res.json())
       .then(setCategories)
+      .then(() => setFetchCategories(false))
       .catch(console.error)
   }
 
@@ -132,8 +137,13 @@ export const Question = ({ question, renderMeta }) => {
                   </QuestionContext.Provider>
                 </Fade>
               </Modal>
+              {fetchingCategories
+                ? <CircularProgress />
+                : null
+              }
               {categories.map(c => (
                 <Chip
+                  color={fetchingCategories ? 'default' : 'primary'}
                   onDelete={ev => onCategoryDeleteHandler(ev, c)}
                   key={c.id}
                   label={c.name} />))}

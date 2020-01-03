@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import Card from '@material-ui/core/Card'
 import CardHeader from '@material-ui/core/CardHeader'
 import CardContent from '@material-ui/core/CardContent'
-import Button from '@material-ui/core/Button'
 import { UserContext } from '../context/User'
 import { DotPoints } from './DotPoint'
 import { RenderMarkup } from './RenderMarkup'
@@ -13,6 +12,8 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import Typography from '@material-ui/core/Typography'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
+
+import CircularProgress from '@material-ui/core/CircularProgress'
 
 // TODO use arango for syllabus
 // one way edge for hierarchy description
@@ -34,14 +35,19 @@ export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
   const [rootSyllabi, setRootSyllabi] = useState([])
   const [renderMarkupKey, setRenderMarkupKgy] = useState(new Date().toString())
   const [focusedSyllabus, setFocusedSyllabus] = useState(null)
+  const [fetchInProgress, setFetchInProgress] = useState(false)
 
   /**
    * use effect must either return null or function. cannot return promise
    */
-  const updateRootSyllabus = () => fetch(`${dotpointUrl}/`)
-    .then(res => res.json())
-    .then(setRootSyllabi)
-    .catch(console.error) && setRenderMarkupKgy(new Date().toString())
+  const updateRootSyllabus = () => {
+    setFetchInProgress(true)
+    fetch(`${dotpointUrl}/`)
+      .then(res => res.json())
+      .then(setRootSyllabi)
+      .then(() => setFetchInProgress(false))
+      .catch(console.error) && setRenderMarkupKgy(new Date().toString())
+  } 
 
   useEffect(updateRootSyllabus, [])
 
@@ -65,22 +71,24 @@ export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
       <CardHeader title="Available Syllabi" />
       <CardContent>
         {
-          rootSyllabi.map(s => <ExpansionPanel
-            TransitionProps={{unmountOnExit:true}}
-            expanded={focusedSyllabus === s.id}
-            onChange={handleToggleSyllabus(s.id)}
-            key={s.id}>
-            <ExpansionPanelSummary>
-              <Typography>
-                {s.name}
-              </Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetail>
-              <List className="w-100">
-                <DotPoints parentId={s.id} />
-              </List>
-            </ExpansionPanelDetail>
-          </ExpansionPanel>)
+          fetchInProgress
+            ? <CircularProgress />
+            : rootSyllabi.map(s => <ExpansionPanel
+                TransitionProps={{unmountOnExit:true}}
+                expanded={focusedSyllabus === s.id}
+                onChange={handleToggleSyllabus(s.id)}
+                key={s.id}>
+                <ExpansionPanelSummary>
+                  <Typography>
+                    {s.name}
+                  </Typography>
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetail>
+                  <List className="w-100">
+                    <DotPoints parentId={s.id} />
+                  </List>
+                </ExpansionPanelDetail>
+              </ExpansionPanel>)
         }
         <List>
           <ListItem className="w-100">

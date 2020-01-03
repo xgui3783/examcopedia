@@ -10,13 +10,15 @@ import { getFetchHeader } from '../util';
 import Collapse from '@material-ui/core/Collapse'
 import { QuestionContext } from '../context/QuestionContext'
 
+import CircularProgress from '@material-ui/core/CircularProgress'
+
 // TODO use arango for syllabus
 // one way edge for hierarchy description
 
 const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const dotpointUrl = `${BACKENDURL}/api/categories`
 
-const getChildren = ({ id, isOpen }) => <Collapse
+const DotPointLetListItemChildren = ({ id, isOpen }) => <Collapse
     key={`${id}-children`}
     in={isOpen}
     timeout="auto"
@@ -26,7 +28,32 @@ const getChildren = ({ id, isOpen }) => <Collapse
     </ListItemText>
   </Collapse>
 
-const getListItem = ({ name, id, handleToggleCheckBox, toggleCollapse, isOpen }) => {
+const DotPointLetListItem = ({ name, id, toggleCollapse, isOpen }) => {
+
+  const [formingLink, setFormingLink] = useState(false)
+
+  const getHandleToggleCheckBox = ({ contextId, id }) => ev => {
+    const { target = {} } = ev
+    const { checked } = target
+    if (checked === null || typeof checked === 'undefined') return console.error(`handleCheckboxToggle Error. ev.target.checked is undefined`)
+
+    /**
+     * truthy, form the link
+     */
+
+    setFormingLink(true)
+    fetch(`${dotpointUrl}/questionId/${contextId}/categoryId/${id}`, {
+      method: !!checked ? 'POST' : 'DELETE'
+    })
+      .then(res => res.json())
+      /**
+       * refresh
+       */
+      .then(console.log)
+      .then(() => setFormingLink(false))
+      .catch(console.error)
+  }
+
   const isCategorised = arr => arr.findIndex(({ id: _id }) => id === _id) >= 0
   return <ListItem
     button
@@ -44,7 +71,11 @@ const getListItem = ({ name, id, handleToggleCheckBox, toggleCollapse, isOpen })
     {/* checkbox */}
     <ListItemSecondaryAction>
       <QuestionContext.Consumer>
-        {({ categorisedUnder }) => <CheckBox checked={isCategorised(categorisedUnder)} onChange={handleToggleCheckBox} />}
+        {({ categorisedUnder, id: contextId }) => formingLink
+          ? <CircularProgress />
+          : <CheckBox
+              checked={isCategorised(categorisedUnder)}
+              onChange={getHandleToggleCheckBox({ contextId, id })} />}
       </QuestionContext.Consumer>
     </ListItemSecondaryAction>
   </ListItem>
@@ -58,12 +89,15 @@ export const DotPoints = ({ parentId }) => {
   const [ dotPointArray, setDotPointArray ] = useState([])
   const [ newDpKey, setNewDpKey ] = useState(new Date().toString())
   const [ openSet, setOpenSet ] = useState(new Set())
+  const [ fetchChildrenInProgress, setFetchChildrenInProgress ] = useState(false)
 
   const updateDotpoint = () => {
+    setFetchChildrenInProgress(true)
     fetch(`${dotpointUrl}/${parentId}`)
       .then(res => res.json())
       .then(({children}) => children)
       .then(setDotPointArray)
+      .then(() => setFetchChildrenInProgress(false))
       .catch(console.error)
   }
 
@@ -92,48 +126,29 @@ export const DotPoints = ({ parentId }) => {
       .catch(console.error)
   }
 
-  const getHandleToggleCheckBox = ({ contextId, id }) => ev => {
-    const { target = {} } = ev
-    const { checked } = target
-    if (checked === null || typeof checked === 'undefined') return console.error(`handleCheckboxToggle Error. ev.target.checked is undefined`)
-    if (!!checked) {
-      /**
-       * truthy, form the link
-       */
-      fetch(`${dotpointUrl}/questionId/${contextId}/categoryId/${id}`, {
-        method: 'POST'
-      })
-        .then(res => res.json())
-        /**
-         * refresh
-         */
-        .then(console.log)
-        .catch(console.error)
-    }
+  return <>{
+    fetchChildrenInProgress
+      ? <CircularProgress />
+      : <> 
+        {dotPointArray.map(({name, id}) => <React.Fragment key={id}>
+          <DotPointLetListItem
+            id={id}
+            name={name}
+            toggleCollapse={getHandleToggleCollapse(id)}
+            isOpen={openSet.has(id)}/>
+          <DotPointLetListItemChildren
+            id={id}
+            name={name}
+            isOpen={openSet.has(id)}/>
+        </React.Fragment>)}
+        <ListItem>
+          <ListItemText inset>
+            <RenderMarkup
+              key={newDpKey}
+              valueChangeHandler={addNewDotPoint} />
+          </ListItemText>
+        </ListItem>
+      </>
   }
-
-  return <QuestionContext.Consumer>{({ id: contextId }) => <> 
-    {dotPointArray.map(({name, id}) => <React.Fragment key={id}>
-      {getListItem({ 
-        id,
-        name,
-        handleToggleCheckBox: getHandleToggleCheckBox({ contextId, id }),
-        toggleCollapse: getHandleToggleCollapse(id),
-        isOpen: openSet.has(id)
-      })}
-      {getChildren({
-        id,
-        name,
-        isOpen: openSet.has(id)
-      })}
-    </React.Fragment>)}
-    <ListItem>
-      <ListItemText inset>
-        <RenderMarkup
-          key={newDpKey}
-          valueChangeHandler={addNewDotPoint} />
-      </ListItemText>
-    </ListItem>
-    </>
-  }</QuestionContext.Consumer>
+  </> 
 }
