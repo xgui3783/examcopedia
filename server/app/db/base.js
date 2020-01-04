@@ -42,6 +42,10 @@ const initDb = async ({ dbname }) => new Promise((rs, rj) => {
   })
 })
 
+const createIndex = async () => {
+  // TODO create index
+}
+
 const init = async () => {
   for (const key in constants){
     const dbname = constants[key]
