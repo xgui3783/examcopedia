@@ -225,10 +225,12 @@ const getAllQuestionsFromCategoryId = async ({ id: cId }) => {
 const getCategoryInfo = async ({ id: cId } = {}) => {
 
   const uri = getDatabaseUri({ name: CATEGORY, suffix: cId })
-  const getInfoPr = requestUtil({
-    method: 'get',
-    uri
-  })
+  const getInfoPr = cId
+    ? requestUtil({
+        method: 'get',
+        uri
+      })
+    : Promise.resolve({})
 
   const findUri = getDatabaseUri({ name: CATEGORY, suffix: '_find' })
   const getChildrenPr = requestUtil({
@@ -247,10 +249,10 @@ const getCategoryInfo = async ({ id: cId } = {}) => {
   return Promise.all([
     getInfoPr,
     getChildrenPr
-  ]).then(([ obj, { docs: children } ]) => {
+  ]).then(([ obj, { docs: children, ...rest } ]) => {
     return {
       ...obj,
-      children
+      children: children || []
     }
   })
 }

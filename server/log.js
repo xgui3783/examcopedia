@@ -1,4 +1,4 @@
-let flag = false
+let flag = true
 
 const log = (...message) => {
   if (flag) console.log(...message)

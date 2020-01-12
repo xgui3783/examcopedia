@@ -1,3 +1,5 @@
+process.on('uncaughtException', (arg) => console.log(arg))
+
 
 const PORT = process.env.PORT || 3001
 

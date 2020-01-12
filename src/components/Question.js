@@ -27,12 +27,35 @@ const questionUrl = `${BACKENDURL}/api/questions`
 
 export const Question = ({ question, renderMeta }) => {
 
-  const { question: questionText, answer, id } = question
+  const { question: questionText, answer, id, ...rest } = question
 
+  const [ stateFetchingInProgress, setStateFetchingInProgress ] = useState(false)
   const [ stateQuestionText, setStateQuestionText ] = useState(questionText)
   const [ stateAnswerText, setStateAnswerText ] = useState(answer)
   const [ stateId, setStateId ] = useState(id)
+  const [ stateRest, setStateRest ] = useState(rest)
   const [ modalOpen, setModalOpen ] = useState(false)
+
+  const updateQuestion = ({ question, answer, id, ...rest }) => {
+    if(id) setStateId(id)
+    setStateRest(rest)
+    setStateAnswerText(answer)
+    setStateQuestionText(question)
+  }
+
+  // on init, if question an answer not populated, fetch it
+
+  useEffect(() => {
+    if (!stateId) return
+    if (!!stateQuestionText || stateQuestionText === '') return
+    if (!!stateAnswerText || stateAnswerText === '') return
+    setStateFetchingInProgress(true)
+    fetch(`${questionUrl}/${stateId}`)
+      .then(res => res.json())
+      .then(updateQuestion)
+      .catch(console.error)
+      .finally(() => setStateFetchingInProgress(false))
+  }, [])
 
   /**
    * UPDATE the question itself
@@ -41,6 +64,7 @@ export const Question = ({ question, renderMeta }) => {
   const valueChangeHandler = ({previous, current}, mode) => {
     if (previous === current) return
     const questionToBeSaved = {
+      ...stateRest,
       id: stateId,
       question: mode === 'question' ? current : stateQuestionText,
       answer: mode === 'answer' ? current : stateAnswerText
@@ -52,11 +76,7 @@ export const Question = ({ question, renderMeta }) => {
       body: JSON.stringify(questionToBeSaved)
     })
       .then(res => res.json())
-      .then(({ question, answer, id }) => {
-        setStateId(id)
-        setStateAnswerText(answer)
-        setStateQuestionText(question)
-      })
+      .then(updateQuestion)
       .catch(console.error)
   }
 
@@ -99,21 +119,24 @@ export const Question = ({ question, renderMeta }) => {
   const getEditable = user => user && user.admin && user.admin > 1
   return <UserContext.Consumer>
     {user => <Card>
-      <CardContent>
+      {
+        stateFetchingInProgress
+          ? <CircularProgress />
+          : <CardContent>
+              <RenderMarkup
+                valueChangeHandler={event => valueChangeHandler(event, 'question')}
+                markup={stateQuestionText}
+                editable={getEditable(user)}/>
 
-        <RenderMarkup
-          valueChangeHandler={event => valueChangeHandler(event, 'question')}
-          markup={stateQuestionText}
-          editable={getEditable(user)}/>
+              <Divider />
 
-        <Divider />
+              <RenderMarkup
+                valueChangeHandler={event => valueChangeHandler(event, 'answer')}
+                markup={stateAnswerText} 
+                editable={getEditable(user)}/>
 
-        <RenderMarkup
-          valueChangeHandler={event => valueChangeHandler(event, 'answer')}
-          markup={stateAnswerText} 
-          editable={getEditable(user)}/>
-
-      </CardContent>
+            </CardContent>
+      }
       {
         renderMeta
           ? <>
@@ -145,7 +168,7 @@ export const Question = ({ question, renderMeta }) => {
                 <Chip
                   color={fetchingCategories ? 'default' : 'primary'}
                   onDelete={ev => onCategoryDeleteHandler(ev, c)}
-                  key={c.id}
+                  key={c._id}
                   label={c.name} />))}
             </CardActions>
             </>

@@ -5,7 +5,7 @@ import CardContent from '@material-ui/core/CardContent'
 import { UserContext } from '../context/User'
 import { DotPoints } from './DotPoint'
 import { RenderMarkup } from './RenderMarkup'
-import { getFetchHeader } from '../util';
+import { getFetchHeader, populateKeyProp } from '../util';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel'
 import ExpansionPanelDetail from '@material-ui/core/ExpansionPanelDetails'
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
@@ -44,6 +44,7 @@ export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
     setFetchInProgress(true)
     fetch(`${dotpointUrl}/`)
       .then(res => res.json())
+      .then(arr => arr.map(populateKeyProp))
       .then(setRootSyllabi)
       .then(() => setFetchInProgress(false))
       .catch(console.error) && setRenderMarkupKgy(new Date().toString())
@@ -75,9 +76,9 @@ export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
             ? <CircularProgress />
             : rootSyllabi.map(s => <ExpansionPanel
                 TransitionProps={{unmountOnExit:true}}
-                expanded={focusedSyllabus === s.id}
-                onChange={handleToggleSyllabus(s.id)}
-                key={s.id}>
+                expanded={focusedSyllabus === s.key}
+                onChange={handleToggleSyllabus(s.key)}
+                key={s.key}>
                 <ExpansionPanelSummary>
                   <Typography>
                     {s.name}
@@ -85,7 +86,7 @@ export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetail>
                   <List className="w-100">
-                    <DotPoints parentId={s.id} />
+                    <DotPoints parentId={s.key} />
                   </List>
                 </ExpansionPanelDetail>
               </ExpansionPanel>)

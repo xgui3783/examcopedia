@@ -6,7 +6,7 @@ import IconButton from '@material-ui/core/IconButton'
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction'
 import CheckBox from '@material-ui/core/Checkbox'
 import { RenderMarkup } from './RenderMarkup'
-import { getFetchHeader } from '../util';
+import { getFetchHeader, populateKeyProp } from '../util';
 import Collapse from '@material-ui/core/Collapse'
 import { QuestionContext } from '../context/QuestionContext'
 
@@ -45,11 +45,6 @@ const DotPointLetListItem = ({ name, id, toggleCollapse, isOpen }) => {
     fetch(`${dotpointUrl}/questionId/${contextId}/categoryId/${id}`, {
       method: !!checked ? 'POST' : 'DELETE'
     })
-      .then(res => res.json())
-      /**
-       * refresh
-       */
-      .then(console.log)
       .then(() => setFormingLink(false))
       .catch(console.error)
   }
@@ -95,7 +90,7 @@ export const DotPoints = ({ parentId }) => {
     setFetchChildrenInProgress(true)
     fetch(`${dotpointUrl}/${parentId}`)
       .then(res => res.json())
-      .then(({children}) => children)
+      .then(({children}) => children.map(populateKeyProp))
       .then(setDotPointArray)
       .then(() => setFetchChildrenInProgress(false))
       .catch(console.error)
@@ -117,11 +112,10 @@ export const DotPoints = ({ parentId }) => {
       method: 'POST',
       headers: getFetchHeader(),
       body: JSON.stringify({
-        parent: parentId,
+        parent: {id: parentId},
         name: current
       })
     })
-      .then(res => res.json())
       .then(updateDotpoint)
       .catch(console.error)
   }
@@ -130,7 +124,7 @@ export const DotPoints = ({ parentId }) => {
     fetchChildrenInProgress
       ? <CircularProgress />
       : <> 
-        {dotPointArray.map(({name, id}) => <React.Fragment key={id}>
+        {dotPointArray.map(({name, key: id}) => <React.Fragment key={id}>
           <DotPointLetListItem
             id={id}
             name={name}

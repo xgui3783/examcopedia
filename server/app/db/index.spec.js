@@ -137,6 +137,11 @@ describe('index.js', () => {
         expect(resp.desc).to.equal(randomNumber)
         expect(resp.parentId).to.equal(null)
       })
+
+      it('should repond root category in correct format', async () => {
+        const resp = await getCategoryInfo()
+        expect(resp).to.have.key(['children'])
+      })
     })
 
     describe('updateCategory', () => {
