@@ -99,8 +99,14 @@ router.get('/', async (req, res) => {
 router.get('/:categoryId/questions', async (req, res) => {
   try {
     const { categoryId } = req.params
-    const questions = await getAllQuestionsFromCategoryId({ id: categoryId })
-    res.status(200).json(questions)
+    const {docs: questions} = await getAllQuestionsFromCategoryId({ id: categoryId })
+    res.status(200).json(questions.map(({_id, ...rest}) => {
+      return {
+        _id,
+        id: _id,
+        ...rest
+      }
+    }))
   } catch (e) {
     logging.error(e)
     res.status(500).send(e)

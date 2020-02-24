@@ -241,7 +241,7 @@ const getCategoryInfo = async ({ id: cId } = {}) => {
     },
     body: JSON.stringify({
       selector: {
-        parentId: cId
+        parentId: cId || null
       }
     })
   })

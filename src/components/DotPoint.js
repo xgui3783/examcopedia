@@ -8,7 +8,7 @@ import CheckBox from '@material-ui/core/Checkbox'
 import { RenderMarkup } from './RenderMarkup'
 import { getFetchHeader, populateKeyProp } from '../util';
 import Collapse from '@material-ui/core/Collapse'
-import { QuestionContext } from '../context/QuestionContext'
+import { SyllabusContext } from '../context/SyllabusContex'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
 
@@ -28,28 +28,15 @@ const DotPointLetListItemChildren = ({ id, isOpen }) => <Collapse
     </ListItemText>
   </Collapse>
 
-const DotPointLetListItem = ({ name, id, toggleCollapse, isOpen }) => {
+const DotPointLetListItem = ({ name, id, toggleCollapse, isOpen, ...rest }) => {
 
-  const [formingLink, setFormingLink] = useState(false)
-
-  const getHandleToggleCheckBox = ({ contextId, id }) => ev => {
-    const { target = {} } = ev
-    const { checked } = target
-    if (checked === null || typeof checked === 'undefined') return console.error(`handleCheckboxToggle Error. ev.target.checked is undefined`)
-
-    /**
-     * truthy, form the link
-     */
-
-    setFormingLink(true)
-    fetch(`${dotpointUrl}/questionId/${contextId}/categoryId/${id}`, {
-      method: !!checked ? 'POST' : 'DELETE'
-    })
-      .then(() => setFormingLink(false))
-      .catch(console.error)
+  const getHandleCheckEv = ({ check, uncheck }) => ev => {
+    ev.target.checked ? check({ id, name, ...rest }) : uncheck({ id, name, ...rest })
   }
 
-  const isCategorised = arr => arr.findIndex(({ id: _id }) => id === _id) >= 0
+  const isCategorised = arr => {
+    return arr.findIndex(({ id: cId, _id }) => ( _id || cId ) === id) >= 0
+  } 
   return <ListItem
     button
     key={id}>
@@ -65,13 +52,13 @@ const DotPointLetListItem = ({ name, id, toggleCollapse, isOpen }) => {
 
     {/* checkbox */}
     <ListItemSecondaryAction>
-      <QuestionContext.Consumer>
-        {({ categorisedUnder, id: contextId }) => formingLink
-          ? <CircularProgress />
-          : <CheckBox
-              checked={isCategorised(categorisedUnder)}
-              onChange={getHandleToggleCheckBox({ contextId, id })} />}
-      </QuestionContext.Consumer>
+      <SyllabusContext.Consumer>
+        {({ checked, check, uncheck }) => 
+          <CheckBox
+            checked={isCategorised(checked)}
+            onChange={getHandleCheckEv({ check, uncheck })} />
+        }
+      </SyllabusContext.Consumer>
     </ListItemSecondaryAction>
   </ListItem>
 } 

@@ -1,25 +1,38 @@
 import { Question } from '../components/Question'
 import React, { useEffect, useState } from 'react'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import { BACKENDURL } from '../util'
 
-const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const allQUrl = `${BACKENDURL}/api/questions/`
 
-export const QuestionsContainer = () => {
+const getAllQuestionsUnderCategory = ({ id, _id }) => new Promise((rs, rj) => {
+  const categoryId = _id || id
+  fetch(`${BACKENDURL}/api/categories/${categoryId}/questions`)
+    .then(res => res.json())
+    .then(rs)
+    .catch(rj)
+})
+
+export const QuestionsContainer = ({ categoryFilters = [] } = { categoryFilters: [] }) => {
 
   const [fetchingInProgress, setFetchingInProgress] = useState(false)
   const [questions, setQuestions] = useState([])
 
   const updateQuestions = () => {
     setFetchingInProgress(true)
-    fetch(allQUrl)
-      .then(res => res.json())
+    const fetchPr = categoryFilters.length === 0
+      ? fetch(allQUrl).then(res => res.json())
+      : Promise.all(
+          categoryFilters.map(getAllQuestionsUnderCategory)
+        ).then(arrOfArr => arrOfArr.reduce((acc, curr) => acc.concat(curr), []))
+    
+    fetchPr
       .then(setQuestions)
       .then(() => setFetchingInProgress(false))
       .catch(console.error)
   }
 
-  useEffect(updateQuestions, [])
+  useEffect(updateQuestions, [ categoryFilters ])
 
   return <>
   {
