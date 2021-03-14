@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, forwar } from 'react'
 import Modal from '@material-ui/core/Modal'
 import Backdrop from '@material-ui/core/Backdrop'
 import Button from '@material-ui/core/Button'
@@ -10,11 +10,8 @@ export const BtnModal = ({button, modal}) => {
   const mdl = modal || <div>content</div>
   const btn = button || <Button>show</Button>
 
-  const handleClick = () => {
-    setShowMdl(true)
-  }
   return <>
-    <div className="d-inline-block" onClick={handleClick}>
+    <div className="d-inline-block" onClick={() => setShowMdl(true)}>
       {btn}
     </div>
     
@@ -26,7 +23,14 @@ export const BtnModal = ({button, modal}) => {
       BackdropProps={{timeout: 500}}
       open={showMdl}>
       <Fade in={showMdl}>
-        {mdl}
+        {/*
+          fixes bug
+          Transition Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()
+          see https://github.com/atomiks/tippyjs-react#component-children
+        */}
+        <span tabIndex="0">
+          {mdl}
+        </span>
       </Fade>
     </Modal>
 

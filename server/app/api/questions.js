@@ -9,6 +9,10 @@ const {
   getAllQuestionIds
 } = require('../db')
 
+const { Converter } = require('showdown')
+const converter = new Converter()
+converter.setFlavor('github')
+
 router.get('/', async (req, res) => {
   try {
     const { rows } = await getAllQuestionIds()
@@ -27,9 +31,21 @@ router.get('/', async (req, res) => {
 
 router.get('/:questionId', async (req, res) => {
   const { questionId } = req.params
+  const { renderMarkdown } = req.query
   try {
     const doc = await getQuestion({ id: questionId })
-    res.status(200).json(doc)
+    if (renderMarkdown) {
+      const { question, answer } = doc
+      const questionHtml = converter.makeHtml(question)
+      const answerHtml = converter.makeHtml(answer)
+      res.status(200).json({
+        ...doc,
+        questionHtml,
+        answerHtml
+      })
+    } else {
+      res.status(200).json(doc)
+    }
   } catch (e) {
     res.status(500).send(e)
   }
@@ -59,17 +75,34 @@ router.post('/', bodyParser.json(), async (req, res) => {
 router.put('/:questoinId', bodyParser.json(), async (req, res) => {
   const { body } = req
   const { id, rev, ...rest } = body
-  const { ok, id: newId, rev: newRev, error } = await updateQuestion({ id, _rev: rev, ...rest })
-  
-  if (ok) {
+
+  try {
+    const { ok, id: newId, rev: newRev, error } = await updateQuestion({ id, _rev: rev, ...rest })
+    if (!ok) {
+      throw ({
+        status: 500,
+        message: error.toString()
+      })
+    }
     res.status(200).json({
       id,
       rev: newRev,
       ...rest
     })
-  } else {
-    res.status(500).json(error)
+    if (ok) {
+    } else {
+      
+    }
+  } catch (e) {
+    console.warn(e)
+
+    const {
+      status = 500,
+      message = `Untitled error`
+    } = e
+    res.status(status).json(message)
   }
+  
 })
 
 /**

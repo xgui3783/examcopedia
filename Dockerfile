@@ -13,7 +13,7 @@ FROM node:10-alpine
 ENV NODE_ENV=production
 
 RUN mkdir /app
-COPY --from=builder /app/dist /app/public
+COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/server /app/server
 
 WORKDIR /app/server

@@ -38,7 +38,7 @@ export const QuestionsContainer = ({ categoryFilters = [] } = { categoryFilters:
   {
     fetchingInProgress
       ? <CircularProgress />
-      : questions.map(q => <div key={q.id} className="mb-1">
+      : questions.slice(0, 20).map(q => <div key={q.id} className="mb-1">
           <Question
             renderMeta={true}
             question={q} />

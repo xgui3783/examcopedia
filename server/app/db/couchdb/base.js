@@ -1,6 +1,6 @@
 const request = require('request')
-const constants = require('./constants')
-const { log, error } = require("../../log")
+const constants = require('../constants')
+const { log, error } = require("../../../log")
 
 const DB_USERNAME = process.env.DB_USERNAME || 'root'
 const DB_PASSWORD = process.env.DB_PASSWORD || ''
@@ -9,9 +9,15 @@ const DB_PORT = process.env.DB_PORT || 5984
 const DB_HOST = process.env.DB_HOST || 'localhost'
 const DB_PROTOCOL = process.env.DB_PROTOCOL || 'http'
 
-const getDatabaseUri = ({ name, suffix = '' } = {}) => name
-  ? `${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}/${name}/${suffix}`
-  : `${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}`
+const getDatabaseUri = ({ name, prefix, suffix } = {}) => {
+  let url = `${DB_PROTOCOL}://${DB_HOST}:${DB_PORT}`
+  if (prefix) url += `/${prefix}`
+  if (name) {
+    url += `/${name}`
+    if (suffix) url += `/${suffix}`
+  }
+  return url
+}
 
 const createDb = async ({ dbname }) => new Promise((rs, rj) => {
   const uri = getDatabaseUri({ name: dbname })

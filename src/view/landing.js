@@ -15,11 +15,11 @@ import { SyllabusContext } from '../context/SyllabusContex'
 import Chip from '@material-ui/core/Chip'
 
 export const MaterialLandingPage = () => {
-  const [newQuestions, setNewQuestoins] = useState([])
+  const [newQuestions, setNewQuestions] = useState([])
   const [categoryFilters, setCategoryFilters] = useState([])
 
   const addNew = () => {
-    setNewQuestoins(newQuestions.concat({
+    setNewQuestions(newQuestions.concat({
       question: '',
       answer: ''
     }))

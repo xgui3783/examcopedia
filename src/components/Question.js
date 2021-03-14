@@ -4,11 +4,13 @@ import Chip from '@material-ui/core/Chip'
 import Card from '@material-ui/core/Card'
 import CardContent from '@material-ui/core/CardContent'
 import CardActions from '@material-ui/core/CardActions'
+import IconButton from '@material-ui/core/IconButton'
 import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import { UserContext } from '../context/User'
 import { getFetchHeader } from '../util'
 import { BtnModal } from './BtnModal'
+import { QuestionPreview } from './QuestionPreview'
 
 import { Syllabus } from './Syllabus'
 import { SyllabusContext } from '../context/SyllabusContex'
@@ -42,7 +44,7 @@ export const Question = ({ question, renderMeta }) => {
     setStateQuestionText(question)
   }
 
-  // on init, if question an answer not populated, fetch it
+  // on init, if question and answer not populated, fetch it
 
   useEffect(() => {
     if (!stateId) return
@@ -54,7 +56,7 @@ export const Question = ({ question, renderMeta }) => {
       .then(updateQuestion)
       .catch(console.error)
       .finally(() => setStateFetchingInProgress(false))
-  }, [])
+  }, [ stateId ])
 
   /**
    * UPDATE the question itself
@@ -62,8 +64,10 @@ export const Question = ({ question, renderMeta }) => {
 
   const valueChangeHandler = ({previous, current}, mode) => {
     if (previous === current) return
+    const { rev: _rev } = stateRest
     const questionToBeSaved = {
       ...stateRest,
+      ...( _rev ? { _rev } : {} ),
       id: stateId,
       question: mode === 'question' ? current : stateQuestionText,
       answer: mode === 'answer' ? current : stateAnswerText
@@ -92,7 +96,7 @@ export const Question = ({ question, renderMeta }) => {
       .catch(console.error)
   }
 
-  useEffect(updateCategory, [])
+  useEffect(updateCategory, [ stateId ])
 
   const onCategoryDeleteHandler = (ev, category) => {
     const { id: cId, _id } = category
@@ -141,35 +145,41 @@ export const Question = ({ question, renderMeta }) => {
 
             </CardContent>
       }
-      {
-        renderMeta
-          ? <>
-            <Divider />
-            <CardActions>
-              <BtnModal
-                button={<Button>+ add</Button>}
-                modal={
-                  <SyllabusContext.Provider value={{checked: categories, check: getToggleFn(false), uncheck: getToggleFn(true)}}>
-                    <div className="w-80vw mh-90vh overflow-auto">
-                      <Syllabus />
-                    </div>
-                  </SyllabusContext.Provider>
-                  }
-                />
-              {fetchingCategories
-                ? <CircularProgress />
-                : null
-              }
-              {categories.map(c => (
-                <Chip
-                  color={fetchingCategories ? 'default' : 'primary'}
-                  onDelete={ev => onCategoryDeleteHandler(ev, c)}
-                  key={c._id}
-                  label={c.name} />))}
-            </CardActions>
-            </>
-          : null
-      }
+      <Divider />
+
+      <CardActions>
+        {
+          renderMeta
+            ? <>
+                <BtnModal
+                  button={<Button>+ add</Button>}
+                  modal={
+                    <SyllabusContext.Provider value={{checked: categories, check: getToggleFn(false), uncheck: getToggleFn(true)}}>
+                      <div className="w-80vw mh-90vh overflow-auto">
+                        <Syllabus />
+                      </div>
+                    </SyllabusContext.Provider>
+                    }
+                  />
+                {fetchingCategories
+                  ? <CircularProgress />
+                  : null
+                }
+                {categories.map(c => (
+                  <Chip
+                    color={fetchingCategories ? 'default' : 'primary'}
+                    onDelete={ev => onCategoryDeleteHandler(ev, c)}
+                    key={c._id}
+                    label={c.name} />))}
+
+                <BtnModal
+                  button={<IconButton><i className="fas fa-external-link-alt"></i></IconButton>}
+                  modal={<QuestionPreview question={{id: stateId}} renderMetadata={false} />}
+                  />
+              </>
+            : null
+        }
+      </CardActions>
     </Card>}
   </UserContext.Consumer>
 }
