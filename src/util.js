@@ -13,4 +13,6 @@ export function populateKeyProp({ _id, id, ...obj }){
   }
 }
 
-export const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
+export const BACKENDURL = typeof process.env.BACKENDURL === 'undefined'
+  ? 'http://localhost:3001'
+  : process.env.BACKENDURL

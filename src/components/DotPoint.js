@@ -9,13 +9,12 @@ import { RenderMarkup } from './RenderMarkup'
 import { getFetchHeader, populateKeyProp } from '../util';
 import Collapse from '@material-ui/core/Collapse'
 import { SyllabusContext } from '../context/SyllabusContex'
-
+import { BACKENDURL } from '../util'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
 // TODO use arango for syllabus
 // one way edge for hierarchy description
 
-const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const dotpointUrl = `${BACKENDURL}/api/categories`
 
 const DotPointLetListItemChildren = ({ id, isOpen }) => <Collapse

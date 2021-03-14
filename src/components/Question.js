@@ -8,7 +8,7 @@ import IconButton from '@material-ui/core/IconButton'
 import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import { UserContext } from '../context/User'
-import { getFetchHeader } from '../util'
+import { getFetchHeader, BACKENDURL } from '../util'
 import { BtnModal } from './BtnModal'
 import { QuestionPreview } from './QuestionPreview'
 
@@ -17,7 +17,6 @@ import { SyllabusContext } from '../context/SyllabusContex'
 
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const getGetCategoriesUrl = ({ questionId }) => `${BACKENDURL}/api/categories/questionId/${questionId}`
 const getPutDeleteCategoriesUrl = ({ categoryId, questionId }) => `${BACKENDURL}/api/categories/questionId/${questionId}/categoryId/${categoryId}`
 const questionUrl = `${BACKENDURL}/api/questions`

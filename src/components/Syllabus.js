@@ -12,13 +12,12 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import Typography from '@material-ui/core/Typography'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
-
+import { BACKENDURL } from '../util'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
 // TODO use arango for syllabus
 // one way edge for hierarchy description
 
-const BACKENDURL = process.env.BACKENDURL || 'http://localhost:3001'
 const dotpointUrl = `${BACKENDURL}/api/categories`
 
 export const Syllabus = ({selected = [], onToggle, onClick} = {}) => {
